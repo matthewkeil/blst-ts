@@ -1,6 +1,3 @@
-#include "sodium.h"
-#include "../../blst/bindings/blst.h"
-
 #include "blst_ts_addon.h"
 
 int randomBytesNonZero(byte *out, int length)
@@ -16,6 +13,22 @@ int randomBytesNonZero(byte *out, int length)
     }
 };
 
+Napi::Number verifyMultipleAggregateSignatures(const Napi::CallbackInfo &info)
+{
+    Napi::Env env = info.Env();
+
+    Napi::Uint8Array param1 = info[0].As<Napi::Uint8Array>();
+
+    // size_t length = param1.ByteLength();
+
+    uint8_t *data = param1.Data();
+    const blst_p1_affine *p1Affine = blst_p1_affine_generator();
+
+    BLST_ERROR error = blst_p1_deserialize(p1Affine, data);
+
+    return Napi::Number::New(env, error);
+}
+
 Napi::Object Init(Napi::Env env, Napi::Object exports)
 {
     if (sodium_init() < 0)
@@ -29,6 +42,9 @@ Napi::Object Init(Napi::Env env, Napi::Object exports)
     randomBytesNonZero(randomBytes, size);
 
     exports.Set(Napi::String::New(env, "randomBytes"), Napi::Buffer<char>::Copy(env, (char *)randomBytes, size));
+
+    exports.Set(Napi::String::New(env, "verifyMultipleAggregateSignatures"),
+                Napi::Function::New(env, verifyMultipleAggregateSignatures));
 
     return exports;
 }
