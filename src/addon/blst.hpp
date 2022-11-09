@@ -31,6 +31,7 @@ namespace blst
 #pragma GCC diagnostic pop
 #endif
 
+    class Scalar;
     class P1_Affine;
     class P1;
     class P2_Affine;
@@ -53,9 +54,12 @@ namespace blst
      */
     struct SecretKey
     {
-    public:
+    private:
+        friend class Scalar;
+        
         blst_scalar key;
 
+    public:
         void keygen(const byte *IKM, size_t IKM_len,
                     const std::string &info = "")
         {
