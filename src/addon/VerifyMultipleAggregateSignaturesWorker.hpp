@@ -38,7 +38,7 @@ public:
                 this->SetError("SignatureSet.msg must be a string");
                 return;
             }
-            if (!set.Has("publicKey") || !set.Get("publicKey").IsArrayBuffer())
+            if (!set.Has("publicKey") || !set.Get("publicKey").IsTypedArray())
             {
                 this->SetError("SignatureSet.publicKey must be an ArrayBuffer");
                 return;
@@ -49,12 +49,16 @@ public:
                 return;
             }
 
-            size_t publicKeyLength = set.Get("publicKey").As<Napi::ArrayBuffer>().ByteLength();
-            blst::byte *publicKey = static_cast<uint8_t *>(set.Get("publicKey").As<Napi::ArrayBuffer>().Data());
+            Napi::TypedArrayOf<uint8_t> publicKeyArray = set.Get("publicKey").As<Napi::TypedArrayOf<uint8_t>>();
+            size_t publicKeyLength = publicKeyArray.ByteLength();
+            blst::byte *publicKey = publicKeyArray.Data();
             blst::P1_Affine pk = blst::P1_Affine(publicKey, publicKeyLength);
-            size_t signatureLength = set.Get("signature").As<Napi::ArrayBuffer>().ByteLength();
-            uint8_t *signature = static_cast<uint8_t *>(set.Get("signature").As<Napi::ArrayBuffer>().Data());
+
+            Napi::TypedArrayOf<uint8_t> signatureArray = set.Get("signature").As<Napi::TypedArrayOf<uint8_t>>();
+            size_t signatureLength = signatureArray.ByteLength();
+            uint8_t *signature = signatureArray.Data();
             blst::P2_Affine sig = blst::P2_Affine(signature, signatureLength);
+
             uint8_t rand[RAND_BYTES];
             randomBytesNonZero(rand, RAND_BYTES);
             std::string msg = set.Get("msg").As<Napi::String>().Utf8Value();
