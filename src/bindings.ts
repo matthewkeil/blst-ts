@@ -24,7 +24,12 @@ type bytes = Uint8Array;
 type scalar = bigint | bytes;
 type binary_string = string | bytes;
 
-// SecretKey
+/**
+ * 
+ * SecretKey is a Struct not a class and lacks a true
+ * constructor, such as one that accepts IKM key material.
+ * 
+ *  */
 
 export interface SecretKeyConstructor {
   new (): SecretKey;

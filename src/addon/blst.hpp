@@ -27,6 +27,24 @@ namespace blst
 
 #include "blst.h"
 
+    static const char *BLST_ERROR_STRINGS[] = {
+        "BLST_SUCCESS",
+        "BLST_BAD_ENCODING",
+        "BLST_POINT_NOT_ON_CURVE",
+        "BLST_POINT_NOT_IN_GROUP",
+        "BLST_AGGR_TYPE_MISMATCH",
+        "BLST_VERIFY_FAIL",
+        "BLST_PK_IS_INFINITY",
+        "BLST_BAD_SCALAR",
+    };
+
+    inline static const char *
+    get_blst_error_string(BLST_ERROR err)
+    {
+
+        return BLST_ERROR_STRINGS[err];
+    };
+
 #ifdef __clang__
 #pragma GCC diagnostic pop
 #endif
@@ -54,12 +72,8 @@ namespace blst
      */
     struct SecretKey
     {
-    private:
-        friend class Scalar;
-        
         blst_scalar key;
 
-    public:
         void keygen(const byte *IKM, size_t IKM_len,
                     const std::string &info = "")
         {
@@ -69,52 +83,6 @@ namespace blst
                     const std::string &info = "")
         {
             keygen(C_bytes(IKM.data()), IKM.size(), info);
-        }
-        void keygen_v3(const byte *IKM, size_t IKM_len,
-                       const std::string &info = "")
-        {
-            blst_keygen_v3(&key, IKM, IKM_len, C_bytes(info.data()), info.size());
-        }
-        void keygen_v3(const app__string_view IKM, // string_view by value, cool!
-                       const std::string &info = "")
-        {
-            keygen_v3(C_bytes(IKM.data()), IKM.size(), info);
-        }
-        void keygen_v4_5(const byte *IKM, size_t IKM_len,
-                         const byte *salt, size_t salt_len,
-                         const std::string &info = "")
-        {
-            blst_keygen_v4_5(&key, IKM, IKM_len, salt, salt_len,
-                             C_bytes(info.data()), info.size());
-        }
-        void keygen_v4_5(const app__string_view IKM, // string_view by value, cool!
-                         const app__string_view salt,
-                         const std::string &info = "")
-        {
-            keygen_v4_5(C_bytes(IKM.data()), IKM.size(),
-                        C_bytes(salt.data()), salt.size(), info);
-        }
-        void keygen_v5(const byte *IKM, size_t IKM_len,
-                       const byte *salt, size_t salt_len,
-                       const std::string &info = "")
-        {
-            blst_keygen_v5(&key, IKM, IKM_len, salt, salt_len,
-                           C_bytes(info.data()), info.size());
-        }
-        void keygen_v5(const app__string_view IKM, // string_view by value, cool!
-                       const app__string_view salt,
-                       const std::string &info = "")
-        {
-            keygen_v5(C_bytes(IKM.data()), IKM.size(),
-                      C_bytes(salt.data()), salt.size(), info);
-        }
-        void derive_master_eip2333(const byte *IKM, size_t IKM_len)
-        {
-            blst_derive_master_eip2333(&key, IKM, IKM_len);
-        }
-        void derive_child_eip2333(const SecretKey &SK, unsigned int child_index)
-        {
-            blst_derive_child_eip2333(&key, &SK.key, child_index);
         }
         void from_bendian(const byte in[32]) { blst_scalar_from_bendian(&key, in); }
         void from_lendian(const byte in[32]) { blst_scalar_from_lendian(&key, in); }

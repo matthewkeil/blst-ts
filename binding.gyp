@@ -3,8 +3,10 @@
     {
       'target_name': 'blst-ts-addon-native',
       'sources': [
+        'src/addon/utils.h',
+        'src/addon/blst.hpp',
         'src/addon/blst_ts_addon.cc',
-        'src/addon/blst_ts_addon.h' 
+        'src/addon/blst_ts_addon.h',
       ],
       'libraries': [
         "-lsodium",
