@@ -1,15 +1,19 @@
 #include <napi.h>
-#include "sodium.h"
+#include <sodium.h>
+#include "VerifyMultipleAggregateSignaturesWorker.hpp"
 
 Napi::Value verifyMultipleAggregateSignatures(const Napi::CallbackInfo &info)
 {
     Napi::Env env = info.Env();
-
-    Napi::Uint8Array param1 = info[0].As<Napi::Uint8Array>();
-
-    Napi::Promise::Deferred deferred = Napi::Promise::Deferred::New(env);
-
-    return deferred.Promise();
+    Napi::Array signatureSets = info[0].As<Napi::Array>();
+    if (!signatureSets.IsArray())
+    {
+        Napi::Error err = Napi::Error::New(env, "signatureSets must be an array");
+        err.ThrowAsJavaScriptException();
+    }
+    VerifyMultipleAggregateSignaturesWorker *worker = new VerifyMultipleAggregateSignaturesWorker(env, signatureSets);
+    worker->Queue();
+    return worker->deferred.Promise();
 }
 
 Napi::Object Init(Napi::Env env, Napi::Object exports)

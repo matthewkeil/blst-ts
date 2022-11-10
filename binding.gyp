@@ -7,6 +7,7 @@
         'src/addon/blst.hpp',
         'src/addon/blst_ts_addon.cc',
         'src/addon/blst_ts_addon.h',
+        'src/addon/VerifyMultipleAggregateSignaturesWorker.hpp',
       ],
       'libraries': [
         "-lsodium",

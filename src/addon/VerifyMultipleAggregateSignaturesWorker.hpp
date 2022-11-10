@@ -1,37 +1,22 @@
 #include <thread>
-#include "napi.h"
+#include <napi.h>
 #include "blst.hpp"
 #include "utils.h"
 
 const size_t RAND_BYTES = 8;
 
-typedef struct NapiSignatureSet
-{
-    Napi::Uint8Array msg;
-    Napi::Uint8Array publicKey;
-    Napi::Uint8Array signature;
-};
-
-typedef struct SignatureSet
-{
-    char *msg;
-    uint8_t msgLength;
-    blst::P1_Affine publicKey;
-    blst::P2_Affine signature;
-};
-
-class VerifyMultipleAggregateSignatureWorker : public Napi::AsyncWorker
+class VerifyMultipleAggregateSignaturesWorker : public Napi::AsyncWorker
 {
 public:
     Napi::Promise::Deferred deferred;
 
-    VerifyMultipleAggregateSignatureWorker(Napi::Env env, Napi::Array &signatureSets)
-        : Napi::AsyncWorker(env), signatureSets(signatureSets), deferred(env)
+    VerifyMultipleAggregateSignaturesWorker(Napi::Env env, Napi::Array &signatureSets)
+        : Napi::AsyncWorker(env), deferred(env), signatureSets(signatureSets), result(false)
     {
     }
 
-    ~VerifyMultipleAggregateSignatureWorker() {}
-    // This code will be executed on the worker thread
+    ~VerifyMultipleAggregateSignaturesWorker() {}
+
     void Execute() override
     {
         const std::string dst = "BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_";
@@ -50,7 +35,7 @@ public:
             Napi::Object set = element.As<Napi::Object>();
             if (!set.Has("msg") || !set.Get("msg").IsString())
             {
-                this->deferred.Reject(Napi::Error::New(Env(), "SignatureSet.msg must be a string").Value());
+                this->SetError("SignatureSet.msg must be a string");
                 return;
             }
             if (!set.Has("publicKey") || !set.Get("publicKey").IsArrayBuffer())
@@ -83,17 +68,12 @@ public:
         }
 
         ctx->commit();
-        bool result = ctx->finalverify();
-        if (!result)
-        {
-            this->SetError("invalid finalVerify");
-            return;
-        }
+        result = ctx->finalverify();
     }
 
     void OnOK() override
     {
-        this->deferred.Resolve(Napi::Boolean::New(Env(), true));
+        this->deferred.Resolve(Napi::Boolean::New(Env(), result));
     }
 
     void OnError(Napi::Error const &err) override
@@ -103,4 +83,5 @@ public:
 
 private:
     Napi::Array signatureSets;
+    bool result;
 };
