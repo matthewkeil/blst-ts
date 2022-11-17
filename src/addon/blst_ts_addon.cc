@@ -24,6 +24,13 @@ Napi::Object Init(Napi::Env env, Napi::Object exports)
         err.ThrowAsJavaScriptException();
     }
 
+    size_t length = 32;
+    uint8_t randomBytes[length];
+
+    randombytes_buf(randomBytes, length);
+
+    exports.Set(Napi::String::New(env, "randomBytes"), Napi::Buffer<char>::Copy(env, (char *)randomBytes, length));
+
     exports.Set(Napi::String::New(env, "verifyMultipleAggregateSignatures"),
                 Napi::Function::New(env, verifyMultipleAggregateSignatures));
 

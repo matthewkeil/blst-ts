@@ -2,16 +2,17 @@
 #define BLST_TS_UTILS_H
 
 #include <sodium.h>
+#include "blst.hpp"
 
-void randomBytesNonZero(uint8_t *out, const size_t length)
+void randomBytesNonZero(blst::byte &out, const size_t length)
 {
-    randombytes_buf(out, length);
+    randombytes_buf(&out, length);
 
     for (size_t i = 0; i < length; i++)
     {
-        if (out[i] == 0)
+        if ((&out)[i] == 0)
         {
-            out[i] = 1;
+            (&out)[i] = 1;
         }
     }
 };

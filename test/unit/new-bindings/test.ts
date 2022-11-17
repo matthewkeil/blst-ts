@@ -6,7 +6,9 @@ import {
 // import {fromHex} from "../../utils";
 
 import {SignatureSet} from "../../../src/addon-bindings.types";
-import {verifyMultipleAggregateSignatures} from "../../../src/addon-bindings";
+import {randomBytes, verifyMultipleAggregateSignatures} from "../../../src/addon-bindings";
+console.log(randomBytes?.toString("hex"));
+console.log(randomBytes?.length);
 
 // const sample = {
 //   keygen: "********************************", // Must be at least 32 bytes
@@ -17,15 +19,21 @@ import {verifyMultipleAggregateSignatures} from "../../../src/addon-bindings";
 // };
 
 void (async function () {
-  // const n = 3;
-  // const sets: SignatureSet[] = [];
-  // for (let i = 0; i < n; i++) {
-  //   const msg = Buffer.alloc(32, i);
-  //   const sk = SecretKey.fromKeygen(Buffer.alloc(32, i));
-  //   sets.push({msg, publicKey: sk.toPublicKey().serialize(), signature: sk.sign(msg).serialize()});
-  // }
+  const n = 1;
+  const sets: SignatureSet[] = [];
+  for (let i = 0; i < n; i++) {
+    const msg = Uint8Array.from(Buffer.alloc(32, i));
+    const sk = SecretKey.fromKeygen(Buffer.alloc(32, i));
+    sets.push({msg, publicKey: sk.toPublicKey().serialize(), signature: sk.sign(msg).serialize()});
+  }
 
-  const sets: any = [{msg: 2}];
+  // const sets: any = [
+  //   {
+  //     msg:
+  //       // Buffer.alloc(32, "a")
+  //       Uint8Array.from(Buffer.alloc(32, "a")),
+  //   },
+  // ];
   const result = await verifyMultipleAggregateSignatures(sets as any);
   console.log(result);
 })();

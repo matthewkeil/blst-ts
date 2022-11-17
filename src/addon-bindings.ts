@@ -2,6 +2,7 @@ import {SignatureSet} from "./addon-bindings.types";
 
 interface Bindings {
   verifyMultipleAggregateSignatures: (signatureSets: SignatureSet[]) => Promise<boolean>;
+  randomBytes: Buffer;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports

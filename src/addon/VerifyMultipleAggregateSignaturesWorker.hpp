@@ -5,14 +5,21 @@
 #include "blst.hpp"
 #include "utils.h"
 
-const size_t RAND_BYTES = 8;
+size_t RAND_BYTES_LENGTH = 8;
+
+typedef struct
+{
+    std::vector<uint8_t> msg;
+    uint8_t publicKey[96];
+    uint8_t signature[192];
+} SignatureSet;
 
 class VerifyMultipleAggregateSignaturesWorker : public Napi::AsyncWorker
 {
 private:
     Napi::Promise::Deferred deferred;
     bool result;
-    // std::vector<struct SignatureSet> sets;
+    std::vector<SignatureSet> sets;
 
 public:
     VerifyMultipleAggregateSignaturesWorker(Napi::Env env, Napi::Array &signatureSets)
@@ -29,52 +36,62 @@ public:
             }
             Napi::Object set = val.ToObject();
 
-            if (set.Has("msg"))
+            sets.push_back(SignatureSet());
+
+            if (!set.Has("msg"))
             {
                 Napi::Error err = Napi::Error::New(env, "SignatureSet must have a 'msg' property");
                 err.ThrowAsJavaScriptException();
                 return;
             }
+            Napi::Value msgValue = set.Get("msg");
+            if (!msgValue.IsTypedArray())
+            {
+                Napi::Error err = Napi::Error::New(env, "SignatureSet.msg must be a Uint8Array");
+                err.ThrowAsJavaScriptException();
+                return;
+            }
+            Napi::Uint8Array msgArray = set.Get("msg").As<Napi::Uint8Array>();
+            size_t msgLength = msgArray.ByteLength();
+            sets[i].msg.resize(msgLength);
+            uint8_t *msgData = msgArray.Data();
+            sets[i].msg.insert(sets[i].msg.end(), msgData[0], msgData[msgLength]);
 
-            // Napi::Value msgValue = set.Get('msg');
-            // if (!msgValue.IsNumber())
-            // {
-            //     Napi::Error err = Napi::Error::New(env, "SignatureSet.msg must be a Buffer");
-            //     err.ThrowAsJavaScriptException();
-            //     return;
-            // }
+            if (!set.Has("publicKey"))
+            {
+                Napi::Error err = Napi::Error::New(env, "SignatureSet must have a 'publicKey' property");
+                err.ThrowAsJavaScriptException();
+                return;
+            }
+            Napi::Value publicKeyValue = set.Get("publicKey");
+            if (!publicKeyValue.IsTypedArray())
+            {
+                Napi::Error err = Napi::Error::New(env, "SignatureSet.publicKey must be a Uint8Array");
+                err.ThrowAsJavaScriptException();
+                return;
+            }
+            Napi::Uint8Array publicKeyArray = set.Get("publicKey").As<Napi::Uint8Array>();
+            size_t publicKeyLength = publicKeyArray.ByteLength();
+            memcpy(&sets[i].publicKey, publicKeyArray.Data(), publicKeyLength < 96 ? publicKeyLength : 96);
 
-            // Napi::Uint8Array msgArray = set.Get("msg").As<Napi::Buffer<uint8_t>>();
-            // size_t msgLength = msgArray.ByteLength();
-            // blst::byte msg[msgLength];
-            // memcpy(msg, msgArray, msgLength);
-            //  = msgArray.Data();
-            // size_t msgLength = msgArray.ByteLength();
-            // if (!set.Has("msg") || !set.Get("msg").IsString())
-            // {
-            //     Napi::Error err = Napi::Error::New(env, "SignatureSet.msg must be a string");
-            //     err.ThrowAsJavaScriptException();
-            //     return;
-            // }
-            // if (!set.Has("publicKey") || !set.Get("publicKey").IsTypedArray())
-            // {
-            //     this->SetError("SignatureSet.publicKey must be an ArrayBuffer");
-            //     return;
-            // }
-            // if (!set.Has("signature") || !set.Get("signature").IsArrayBuffer())
-            // {
-            //     this->SetError("SignatureSet.signature must be an ArrayBuffer");
-            //     return;
-            // }
-
-            // if (element.IsObject())
-            // {
-            //     Napi::Object obj = element;
-            // }
+            if (!set.Has("signature"))
+            {
+                Napi::Error err = Napi::Error::New(env, "SignatureSet must have a 'signature' property");
+                err.ThrowAsJavaScriptException();
+                return;
+            }
+            Napi::Value signatureValue = set.Get("signature");
+            if (!signatureValue.IsTypedArray())
+            {
+                Napi::Error err = Napi::Error::New(env, "SignatureSet.signature must be a Uint8Array");
+                err.ThrowAsJavaScriptException();
+                return;
+            }
+            Napi::Uint8Array signatureArray = set.Get("signature").As<Napi::Uint8Array>();
+            size_t signatureLength = signatureArray.ByteLength();
+            memcpy(&sets[i].signature, signatureArray.Data(), signatureLength < 192 ? signatureLength : 192);
         }
     }
-
-    ~VerifyMultipleAggregateSignaturesWorker() {}
 
     Napi::Promise GetPromise()
     {
@@ -86,42 +103,15 @@ public:
         const std::string dst = "BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_";
         blst::Pairing ctx = blst::Pairing(true, dst);
 
-        // const uint32_t signatureSetsLength = signatureSets.Length();
-        // for (uint32_t i = 0; i < signatureSetsLength; i++)
-        // {
-        //     // Napi::Value element = signatureSets[i];
-        //     // if (!element.IsObject())
-        //     // {
-        //     //     this->SetError("signatureSets must be an array of objects");
-        //     //     return;
-        //     // }
-
-        //     // Napi::Object set = element.As<Napi::Object>();
-        //     // if (!set.Has("msg") || !set.Get("msg").IsString())
-        //     // {
-        //     //     this->SetError("SignatureSet.msg must be a string");
-        //     //     return;
-        //     // }
-        //     // if (!set.Has("publicKey") || !set.Get("publicKey").IsTypedArray())
-        //     // {
-        //     //     this->SetError("SignatureSet.publicKey must be an ArrayBuffer");
-        //     //     return;
-        //     // }
-        //     // if (!set.Has("signature") || !set.Get("signature").IsArrayBuffer())
-        //     // {
-        //     //     this->SetError("SignatureSet.signature must be an ArrayBuffer");
-        //     //     return;
-        //     // }
-
-        //     // Napi::TypedArrayOf<uint8_t> publicKeyArray = set.Get("publicKey").As<Napi::TypedArrayOf<uint8_t>>();
-        //     // size_t publicKeyLength = publicKeyArray.ByteLength();
-        //     // blst::byte *publicKey = publicKeyArray.Data();
-        //     // blst::P1_Affine pk = blst::P1_Affine(publicKey, publicKeyLength);
-
-        //     // Napi::TypedArrayOf<uint8_t> signatureArray = set.Get("signature").As<Napi::TypedArrayOf<uint8_t>>();
-        //     // size_t signatureLength = signatureArray.ByteLength();
-        //     // uint8_t *signature = signatureArray.Data();
-        //     // blst::P2_Affine sig = blst::P2_Affine(signature, signatureLength);
+        for (size_t i = 0; i < sets.size(); i++)
+        {
+            blst::P1_Affine pk = blst::P1_Affine(sets[i].publicKey);
+            blst::P2_Affine sig = blst::P2_Affine(sets[i].signature);
+            blst::byte randomBytes[8];
+            randombytes_buf(randomBytes, 8);
+            const std::string_view msg(reinterpret_cast<char *>(sets[i].msg.data()), sets[i].msg.size());
+            blst::BLST_ERROR err = ctx.mul_n_aggregate(&pk, &sig, randomBytes, 8, msg);
+        }
 
         //     // uint8_t rand[RAND_BYTES];
         //     // randomBytesNonZero(rand, RAND_BYTES);
