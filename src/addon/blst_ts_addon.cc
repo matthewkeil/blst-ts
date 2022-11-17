@@ -13,7 +13,7 @@ Napi::Value verifyMultipleAggregateSignatures(const Napi::CallbackInfo &info)
     }
     VerifyMultipleAggregateSignaturesWorker *worker = new VerifyMultipleAggregateSignaturesWorker(env, signatureSets);
     worker->Queue();
-    return worker->deferred.Promise();
+    return worker->GetPromise();
 }
 
 Napi::Object Init(Napi::Env env, Napi::Object exports)

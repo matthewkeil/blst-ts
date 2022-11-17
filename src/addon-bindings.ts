@@ -1,8 +1,4 @@
-interface SignatureSet {
-  msg: string;
-  publicKey: Uint8Array;
-  signature: Uint8Array;
-}
+import {SignatureSet} from "./addon-bindings.types";
 
 interface Bindings {
   verifyMultipleAggregateSignatures: (signatureSets: SignatureSet[]) => Promise<boolean>;
