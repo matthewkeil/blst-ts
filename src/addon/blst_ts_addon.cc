@@ -1,5 +1,5 @@
 #include <napi.h>
-#include "utils.h"
+#include <sodium.h>
 #include "VerifyMultipleAggregateSignaturesWorker.hpp"
 
 Napi::Value verifyMultipleAggregateSignatures(const Napi::CallbackInfo &info)
@@ -11,6 +11,7 @@ Napi::Value verifyMultipleAggregateSignatures(const Napi::CallbackInfo &info)
         Napi::Error err = Napi::Error::New(env, "signatureSets must be an array");
         err.ThrowAsJavaScriptException();
     }
+
     VerifyMultipleAggregateSignaturesWorker *worker = new VerifyMultipleAggregateSignaturesWorker(env, signatureSets);
     worker->Queue();
     return worker->GetPromise();
@@ -23,13 +24,6 @@ Napi::Object Init(Napi::Env env, Napi::Object exports)
         Napi::Error err = Napi::Error::New(env, "Error initializing libsodium");
         err.ThrowAsJavaScriptException();
     }
-
-    size_t length = 320;
-    uint8_t randomBytes[length];
-
-    randomBytesNonZero(randomBytes, length);
-
-    exports.Set(Napi::String::New(env, "randomBytes"), Napi::Buffer<char>::Copy(env, (char *)randomBytes, length));
 
     exports.Set(Napi::String::New(env, "verifyMultipleAggregateSignatures"),
                 Napi::Function::New(env, verifyMultipleAggregateSignatures));

@@ -1,13 +1,9 @@
-#include <thread>
-#include <string>
-#include <memory>
 #include <vector>
 #include <napi.h>
 #include <sodium.h>
 #include "blst.hpp"
-#include "utils.h"
 
-size_t RANDOM_BYTES_LENGTH = 8;
+const size_t RANDOM_BYTES_LENGTH = 8;
 
 typedef struct
 {
@@ -25,7 +21,7 @@ private:
 
 public:
     VerifyMultipleAggregateSignaturesWorker(Napi::Env env, Napi::Array &signatureSets)
-        : Napi::AsyncWorker(env), deferred(Napi::Promise::Deferred::New(env)), result(false), sets(0)
+        : Napi::AsyncWorker(env), deferred{Napi::Promise::Deferred::New(env)}, result{false}, sets{0}
     {
         for (size_t i = 0; i < signatureSets.Length(); i++)
         {
@@ -108,42 +104,27 @@ public:
 
         for (size_t i = 0; i < sets.size(); i++)
         {
-            blst::P1_Affine pk = blst::P1_Affine(sets[i].publicKey);
-            blst::P2_Affine sig = blst::P2_Affine(sets[i].signature);
-            size_t length = 32;
-            uint8_t randomBytes[length];
-            randomBytesNonZero(randomBytes, length);
-            // randombytes_buf(randomBytes, length);
-
-            // blst::byte *scalar = new blst::byte[RANDOM_BYTES_LENGTH];
-            // randombytes_buf(scalar, RANDOM_BYTES_LENGTH);
-            // free *scalar;
-            // blst::byte *randomBytes = new blst::byte[RANDOM_BYTES_LENGTH];
-            // auto scalar = std::make_unique<blst::byte[]>(8);
-            // uint8_t err = randomBytesNonZero(scalar.get(), 8);
-            // if (err > 0)
-            // {
-            //     this->SetError("libsodium error");
-            //     return;
-            // }
-            // const std::string_view msg(reinterpret_cast<char *>(sets[i].msg.data()), sets[i].msg.size());
-            // blst::BLST_ERROR err = ctx.mul_n_aggregate(&pk, &sig, scalar.get(), RANDOM_BYTES_LENGTH, msg);
+            blst::P1_Affine pk = blst::P1_Affine{sets[i].publicKey};
+            blst::P2_Affine sig = blst::P2_Affine{sets[i].signature};
+            blst::byte scalar[RANDOM_BYTES_LENGTH];
+            randombytes_buf(scalar, RANDOM_BYTES_LENGTH);
+            const std::string_view msg{reinterpret_cast<char *>(sets[i].msg.data()), sets[i].msg.size()};
+            blst::BLST_ERROR err = ctx.mul_n_aggregate(&pk, &sig, scalar, RANDOM_BYTES_LENGTH, msg);
+            if (err != blst::BLST_SUCCESS)
+            {
+                this->SetError(get_blst_error_string(err));
+                return;
+            }
         }
 
-        //     // uint8_t rand[RAND_BYTES];
-        //     // randomBytesNonZero(rand, RAND_BYTES);
-        //     // std::string msg = set.Get("msg").As<Napi::String>().Utf8Value();
+        printf("after loop\n");
 
-        // blst::BLST_ERROR err = ctx.mul_n_aggregate(&pk, &sig, rand, RAND_BYTES, msg);
-        //     // if (err != blst::BLST_SUCCESS)
-        //     // {
-        //     //     this->SetError(get_blst_error_string(err));
-        //     //     return;
-        //     // }
-        // }
-
-        // ctx.commit();
-        // result = ctx.finalverify();
+        ctx.commit();
+        printf("after commit\n");
+        result = ctx.finalverify();
+        printf("after finalverify\n");
+        printf("result: %d", result);
+        return;
     }
 
     void OnOK() override

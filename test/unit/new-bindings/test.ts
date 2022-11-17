@@ -6,9 +6,9 @@ import {
 // import {fromHex} from "../../utils";
 
 import {SignatureSet} from "../../../src/addon-bindings.types";
-import {randomBytes, verifyMultipleAggregateSignatures} from "../../../src/addon-bindings";
-console.log(randomBytes?.toString("hex"));
-console.log(randomBytes?.length);
+import {verifyMultipleAggregateSignatures} from "../../../src/addon-bindings";
+// console.log(randomBytes?.toString("hex"));
+// console.log(randomBytes?.length);
 
 // const sample = {
 //   keygen: "********************************", // Must be at least 32 bytes
@@ -19,7 +19,7 @@ console.log(randomBytes?.length);
 // };
 
 void (async function () {
-  const n = 1;
+  const n = 3;
   const sets: SignatureSet[] = [];
   for (let i = 0; i < n; i++) {
     const msg = Uint8Array.from(Buffer.alloc(32, i));
