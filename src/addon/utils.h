@@ -4,17 +4,23 @@
 #include <sodium.h>
 #include "blst.hpp"
 
-void randomBytesNonZero(blst::byte &out, const size_t length)
+uint8_t randomBytesNonZero(blst::byte *out, const size_t length)
 {
-    randombytes_buf(&out, length);
-
-    for (size_t i = 0; i < length; i++)
+    if (sodium_init() < 0)
     {
-        if ((&out)[i] == 0)
-        {
-            (&out)[i] = 1;
-        }
+        return 1;
     }
+
+    randombytes_buf(out, length);
+
+    return 0;
+    // for (size_t i = 0; i < length; i++)
+    // {
+    //     if (out[i] == 0)
+    //     {
+    //         out[i] = 1;
+    //     }
+    // }
 };
 
 #endif

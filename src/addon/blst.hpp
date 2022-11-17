@@ -1070,7 +1070,7 @@ namespace blst
         }
 
         void init(bool hash_or_encode, const byte *DST, size_t DST_len)
-        { 
+        {
             // Copy DST to heap, std::string can be volatile, especially in SWIG:-(
             // Commented the lines below because was throwing an error under napi
             // byte *dst = new byte[DST_len];
