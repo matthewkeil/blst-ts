@@ -1,11 +1,13 @@
 #include <thread>
 #include <string>
+#include <memory>
 #include <vector>
 #include <napi.h>
+#include <sodium.h>
 #include "blst.hpp"
 #include "utils.h"
 
-size_t RAND_BYTES_LENGTH = 8;
+size_t RANDOM_BYTES_LENGTH = 8;
 
 typedef struct
 {
@@ -23,7 +25,7 @@ private:
 
 public:
     VerifyMultipleAggregateSignaturesWorker(Napi::Env env, Napi::Array &signatureSets)
-        : Napi::AsyncWorker(env), deferred(Napi::Promise::Deferred::New(env)), result(false)
+        : Napi::AsyncWorker(env), deferred(Napi::Promise::Deferred::New(env)), result(false), sets(0)
     {
         for (size_t i = 0; i < signatureSets.Length(); i++)
         {
@@ -93,24 +95,39 @@ public:
         }
     }
 
-    Napi::Promise GetPromise()
-    {
-        return this->deferred.Promise();
-    }
-
     void Execute() override
     {
         const std::string dst = "BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_";
         blst::Pairing ctx = blst::Pairing(true, dst);
 
+        if (sodium_init() < 0)
+        {
+            this->SetError("Error initializing libsodium");
+            return;
+        }
+
         for (size_t i = 0; i < sets.size(); i++)
         {
             blst::P1_Affine pk = blst::P1_Affine(sets[i].publicKey);
             blst::P2_Affine sig = blst::P2_Affine(sets[i].signature);
-            blst::byte randomBytes[8];
-            randombytes_buf(randomBytes, 8);
-            const std::string_view msg(reinterpret_cast<char *>(sets[i].msg.data()), sets[i].msg.size());
-            blst::BLST_ERROR err = ctx.mul_n_aggregate(&pk, &sig, randomBytes, 8, msg);
+            size_t length = 32;
+            uint8_t randomBytes[length];
+            randomBytesNonZero(randomBytes, length);
+            // randombytes_buf(randomBytes, length);
+
+            // blst::byte *scalar = new blst::byte[RANDOM_BYTES_LENGTH];
+            // randombytes_buf(scalar, RANDOM_BYTES_LENGTH);
+            // free *scalar;
+            // blst::byte *randomBytes = new blst::byte[RANDOM_BYTES_LENGTH];
+            // auto scalar = std::make_unique<blst::byte[]>(8);
+            // uint8_t err = randomBytesNonZero(scalar.get(), 8);
+            // if (err > 0)
+            // {
+            //     this->SetError("libsodium error");
+            //     return;
+            // }
+            // const std::string_view msg(reinterpret_cast<char *>(sets[i].msg.data()), sets[i].msg.size());
+            // blst::BLST_ERROR err = ctx.mul_n_aggregate(&pk, &sig, scalar.get(), RANDOM_BYTES_LENGTH, msg);
         }
 
         //     // uint8_t rand[RAND_BYTES];
@@ -137,5 +154,10 @@ public:
     void OnError(Napi::Error const &err) override
     {
         deferred.Reject(err.Value());
+    }
+
+    Napi::Promise GetPromise()
+    {
+        return this->deferred.Promise();
     }
 };
