@@ -17,14 +17,15 @@ import {verifyMultipleAggregateSignatures} from "../../../src/addon-bindings";
 // };
 
 void (async function () {
-  const n = 3;
-  const sets: SignatureSet[] = [];
-  for (let i = 0; i < n; i++) {
-    const msg = Uint8Array.from(Buffer.alloc(32, i));
-    const sk = SecretKey.fromKeygen(Buffer.alloc(32, i));
-    sets.push({msg, publicKey: sk.toPublicKey().serialize(), signature: sk.sign(msg).serialize()});
-  }
+  // const n = 3;
+  // const sets: SignatureSet[] = [];
+  // for (let i = 0; i < n; i++) {
+  //   const msg = Buffer.alloc(32, i);
+  //   const sk = SecretKey.fromKeygen(Buffer.alloc(32, i));
+  //   sets.push({msg, publicKey: sk.toPublicKey().serialize(), signature: sk.sign(msg).serialize()});
+  // }
 
-  const result = await verifyMultipleAggregateSignatures(sets);
+  const sets: any = [{msg: 2}];
+  const result = await verifyMultipleAggregateSignatures(sets as any);
   console.log(result);
 })();

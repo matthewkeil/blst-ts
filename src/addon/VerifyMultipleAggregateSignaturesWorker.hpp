@@ -21,12 +21,33 @@ public:
         for (size_t i = 0; i < signatureSets.Length(); i++)
         {
             Napi::Value val = signatureSets[i];
+            if (!val.IsObject())
+            {
+                Napi::Error err = Napi::Error::New(env, "SignatureSet must be an object");
+                err.ThrowAsJavaScriptException();
+                return;
+            }
             Napi::Object set = val.ToObject();
-            
-            Napi::Uint8Array msgArray = set.Get("msg").As<Napi::Buffer<uint8_t>>();
-            size_t msgLength = msgArray.ByteLength();
-            blst::byte msg[msgLength];
-            memcpy(msg, msgArray, msgLength);
+
+            if (set.Has("msg"))
+            {
+                Napi::Error err = Napi::Error::New(env, "SignatureSet must have a 'msg' property");
+                err.ThrowAsJavaScriptException();
+                return;
+            }
+
+            // Napi::Value msgValue = set.Get('msg');
+            // if (!msgValue.IsNumber())
+            // {
+            //     Napi::Error err = Napi::Error::New(env, "SignatureSet.msg must be a Buffer");
+            //     err.ThrowAsJavaScriptException();
+            //     return;
+            // }
+
+            // Napi::Uint8Array msgArray = set.Get("msg").As<Napi::Buffer<uint8_t>>();
+            // size_t msgLength = msgArray.ByteLength();
+            // blst::byte msg[msgLength];
+            // memcpy(msg, msgArray, msgLength);
             //  = msgArray.Data();
             // size_t msgLength = msgArray.ByteLength();
             // if (!set.Has("msg") || !set.Get("msg").IsString())
