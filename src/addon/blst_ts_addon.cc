@@ -1,5 +1,6 @@
 #include <napi.h>
 #include <sodium.h>
+#include "blst_ts_utils.h"
 #include "vmas_worker.h"
 
 Napi::Value verifyMultipleAggregateSignatures(const Napi::CallbackInfo &info)

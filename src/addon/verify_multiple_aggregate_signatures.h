@@ -16,4 +16,4 @@ typedef struct
 
 blst::BLST_ERROR verify_multiple_aggregate_signatures(std::vector<SignatureSet> &sets, bool &result);
 
-#endif
+#endif /* __BLST_TS_VERIFY_MULTIPLE_AGGREGATE_SIGNATURES_H__ */

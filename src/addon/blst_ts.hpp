@@ -25,7 +25,7 @@ namespace blst
 #pragma GCC diagnostic ignored "-Wextern-c-compat"
 #endif
 
-#include "blst.h"
+#include "../../blst/bindings/blst.h"
 
     static const char *BLST_ERROR_STRINGS[] = {
         "BLST_SUCCESS",

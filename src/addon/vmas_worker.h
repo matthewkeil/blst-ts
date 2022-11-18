@@ -3,8 +3,6 @@
 
 #include <vector>
 #include <napi.h>
-#include <sodium.h>
-#include "blst_ts.hpp"
 #include "verify_multiple_aggregate_signatures.h"
 
 class VerifyMultipleAggregateSignaturesWorker : public Napi::AsyncWorker
@@ -22,4 +20,4 @@ public:
     Napi::Promise GetPromise();
 };
 
-#endif
+#endif /* __BLST_TS_VMAS_WORKER_H__ */

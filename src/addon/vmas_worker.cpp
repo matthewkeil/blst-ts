@@ -78,6 +78,7 @@ VerifyMultipleAggregateSignaturesWorker::VerifyMultipleAggregateSignaturesWorker
 
 void VerifyMultipleAggregateSignaturesWorker::Execute()
 {
+
     blst::BLST_ERROR err = verify_multiple_aggregate_signatures(this->sets, this->result);
     if (err > 0)
     {

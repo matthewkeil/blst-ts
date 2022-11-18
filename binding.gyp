@@ -3,9 +3,10 @@
     {
       'target_name': 'blst-ts-addon-native',
       'sources': [
+        "blst/bindings/blst.h",
         'src/addon/blst_ts.hpp',
         'src/addon/blst_ts_addon.cc',
-        'src/addon/blst_ts_utils.hpp',
+        'src/addon/blst_ts_utils.h',
         'src/addon/vmas_worker.cpp',
         'src/addon/verify_multiple_aggregate_signatures.cpp',
       ],
@@ -14,7 +15,6 @@
         "-Wl,-rpath,blst/libblst.a",
       ],
       'include_dirs': [
-        "blst/bindings",
         "<!@(node -p \"require('node-addon-api').include\")"
       ],
       'dependencies': [
@@ -31,7 +31,7 @@
       'xcode_settings': {
         'GCC_ENABLE_CPP_EXCEPTIONS': 'YES',
         'CLANG_CXX_LIBRARY': 'libc++',
-        'MACOSX_DEPLOYMENT_TARGET': '10.7'
+        'MACOSX_DEPLOYMENT_TARGET': '12'
       },
       'msvs_settings': {
         'VCCLCompilerTool': { 'ExceptionHandling': 1 },
