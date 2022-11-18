@@ -1,8 +1,9 @@
-#ifndef BLST_TS_UTILS_H
-#define BLST_TS_UTILS_H
+#pragma once
+// #ifndef __BLST_TS_UTILS_H__
+// #define __BLST_TS_UTILS_H__
 
 #include <sodium.h>
-#include "blst.hpp"
+#include "blst_ts.hpp"
 
 void randomBytesNonZero(blst::byte *out, const size_t length)
 {
@@ -18,4 +19,4 @@ void randomBytesNonZero(blst::byte *out, const size_t length)
     // }
 };
 
-#endif
+// #endif /* __BLST_TS_UTILS_H__ */

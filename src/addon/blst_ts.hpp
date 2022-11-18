@@ -38,12 +38,6 @@ namespace blst
         "BLST_BAD_SCALAR",
     };
 
-    inline static const char *
-    get_blst_error_string(BLST_ERROR err)
-    {
-
-        return BLST_ERROR_STRINGS[err];
-    };
 
 #ifdef __clang__
 #pragma GCC diagnostic pop

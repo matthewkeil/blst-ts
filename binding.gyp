@@ -3,11 +3,11 @@
     {
       'target_name': 'blst-ts-addon-native',
       'sources': [
-        'src/addon/utils.h',
-        'src/addon/blst.hpp',
+        'src/addon/blst_ts.hpp',
         'src/addon/blst_ts_addon.cc',
-        'src/addon/blst_ts_addon.h',
-        'src/addon/VerifyMultipleAggregateSignaturesWorker.hpp',
+        'src/addon/blst_ts_utils.hpp',
+        'src/addon/vmas_worker.cpp',
+        'src/addon/verify_multiple_aggregate_signatures.cpp',
       ],
       'libraries': [
         "-lsodium",
