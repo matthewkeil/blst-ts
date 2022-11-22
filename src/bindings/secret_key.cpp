@@ -12,7 +12,7 @@ Napi::Object SecretKey::Init(Napi::Env env, Napi::Object exports)
     Napi::Function secretKeyConstructor = DefineClass(env, "SecretKey",
                                                       {
                                                             StaticMethod("keygen", &SecretKey::Keygen, static_cast<napi_property_attributes>(napi_static | napi_enumerable)),
-                                                          //   StaticMethod("fromBytes", &SecretKey::FromBytes, static_cast<napi_property_attributes>(napi_static | napi_enumerable)),
+                                                            StaticMethod("fromBytes", &SecretKey::FromBytes, static_cast<napi_property_attributes>(napi_static | napi_enumerable)),
                                                           //   InstanceMethod("toPublicKey", &SecretKey::ToPublicKey, static_cast<napi_property_attributes>(napi_enumerable)),
                                                           //   InstanceMethod("sign", &SecretKey::Sign, static_cast<napi_property_attributes>(napi_enumerable)),
                                                           //   InstanceMethod("toBytes", &SecretKey::ToBytes, static_cast<napi_property_attributes>(napi_enumerable)),
@@ -72,30 +72,28 @@ Napi::Value SecretKey::Keygen(const Napi::CallbackInfo &info)
     return constructor->New({wrapped});
 }
 
-// Napi::Value SecretKey::FromBytes(const Napi::CallbackInfo &info)
-// {
-//     Napi::Env env = info.Env();
-//     Napi::Value skBytes = info[0].As<Napi::Value>();
-//     if (!skBytes.IsTypedArray())
-//     {
-//         Napi::TypeError::New(env, "skBytes must be a Uint8Array").ThrowAsJavaScriptException();
-//     }
-//     auto skBytesArray = skBytes.As<Napi::TypedArrayOf<u_int8_t>>();
-//     auto skBytesData = skBytesArray.Data();
-//     auto skBytesLength = skBytesArray.ByteLength();
-//     if (skBytesLength != (size_t)SECRET_KEY_LENGTH)
-//     {
-//         Napi::Error::New(env, "skBytes must be 32 bytes long").ThrowAsJavaScriptException();
-//     }
-//     if (is_zero_bytes(skBytesData, skBytesLength))
-//     {
-//         Napi::Error::New(env, "skBytes must no be all 0's").ThrowAsJavaScriptException();
-//     }
-//     blst::SecretKey *key = new blst::SecretKey;
-//     key->from_bendian(skBytesData);
-//     auto wrapped = Napi::External<blst::SecretKey>::New(env, key);
-//     return constructor->New({wrapped});
-// }
+Napi::Value SecretKey::FromBytes(const Napi::CallbackInfo &info)
+{
+
+    blst::SecretKey *key = new blst::SecretKey;
+    Napi::Env env = info.Env();
+    Napi::Value skBytes = info[0].As<Napi::Value>();
+    if (!skBytes.IsTypedArray())
+    {
+        Napi::TypeError::New(env, "skBytes must be a Uint8Array").ThrowAsJavaScriptException();
+    }
+    auto skBytesArray = skBytes.As<Napi::TypedArrayOf<u_int8_t>>();
+    auto skBytesData = skBytesArray.Data();
+    auto skBytesLength = skBytesArray.ByteLength();
+    if (skBytesLength != (size_t)SECRET_KEY_LENGTH)
+    {
+        Napi::Error::New(env, "skBytes must be 32 bytes long").ThrowAsJavaScriptException();
+    }
+    no_zero_bytes(skBytesData, skBytesLength);
+    key->from_bendian(skBytesData);
+    auto wrapped = Napi::External<blst::SecretKey>::New(env, key);
+    return constructor->New({wrapped});
+}
 
 // Napi::Value SecretKey::ToPublicKey(const Napi::CallbackInfo &info)
 // {

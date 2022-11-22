@@ -27,16 +27,15 @@ inline void random_bytes_non_zero(blst::byte *out, const size_t length)
     }
 };
 
-inline bool is_zero_bytes(uint8_t *in, const size_t length)
+inline void no_zero_bytes(uint8_t *in, const size_t length)
 {
     for (size_t i = 0; i < length; i++)
     {
-        if (in[i] != 0)
+        if (in[i] == 0)
         {
-            return true;
+            in[i] = 1;
         }
     }
-    return false;
 };
 
 inline const char *get_blst_error_string(blst::BLST_ERROR err)

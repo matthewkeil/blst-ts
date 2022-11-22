@@ -7,6 +7,7 @@ declare class SecretKey {
 interface SecretKeyConstructor {
   new (): SecretKey;
   keygen(ikm?: Uint8Array): SecretKey;
+  fromBytes(skBytes: Uint8Array): SecretKey;
 }
 
 interface Bindings {
@@ -18,5 +19,5 @@ interface Bindings {
 const bindings: Bindings = require(findBindingByName("blst-ts.node"));
 
 console.log(Object.keys(bindings));
-
 console.log(bindings.SecretKey.keygen());
+console.log(bindings.SecretKey.fromBytes(Uint8Array.from(Buffer.alloc(32, 2, "utf8"))));
