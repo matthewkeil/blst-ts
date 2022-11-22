@@ -1,0 +1,15 @@
+{
+    "files.associations": {
+        "*.json.liquid": "json",
+        "*.yaml.liquid": "yaml",
+        "*.md.liquid": "markdown",
+        "*.js.liquid": "liquid-javascript",
+        "*.css.liquid": "liquid-css",
+        "*.scss.liquid": "liquid-scss",
+        "initializer_list": "cpp",
+        "functional": "cpp",
+        "__functional_03": "cpp",
+        "stdio.h": "c",
+        "cstdio": "c"
+    }
+}
