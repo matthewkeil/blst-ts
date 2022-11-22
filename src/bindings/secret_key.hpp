@@ -14,7 +14,7 @@ public:
 
     // Napi::Value ToPublicKey(const Napi::CallbackInfo &info);
     // Napi::Value Sign(const Napi::CallbackInfo &info);
-    // Napi::Value ToBytes(const Napi::CallbackInfo &info);
+    Napi::Value ToBytes(const Napi::CallbackInfo &info);
 
 private:
     static Napi::FunctionReference *constructor;

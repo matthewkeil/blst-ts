@@ -11,11 +11,11 @@ Napi::Object SecretKey::Init(Napi::Env env, Napi::Object exports)
     // lifetime of the addon module
     Napi::Function secretKeyConstructor = DefineClass(env, "SecretKey",
                                                       {
-                                                            StaticMethod("keygen", &SecretKey::Keygen, static_cast<napi_property_attributes>(napi_static | napi_enumerable)),
-                                                            StaticMethod("fromBytes", &SecretKey::FromBytes, static_cast<napi_property_attributes>(napi_static | napi_enumerable)),
+                                                          StaticMethod("keygen", &SecretKey::Keygen, static_cast<napi_property_attributes>(napi_static | napi_enumerable)),
+                                                          StaticMethod("fromBytes", &SecretKey::FromBytes, static_cast<napi_property_attributes>(napi_static | napi_enumerable)),
                                                           //   InstanceMethod("toPublicKey", &SecretKey::ToPublicKey, static_cast<napi_property_attributes>(napi_enumerable)),
                                                           //   InstanceMethod("sign", &SecretKey::Sign, static_cast<napi_property_attributes>(napi_enumerable)),
-                                                          //   InstanceMethod("toBytes", &SecretKey::ToBytes, static_cast<napi_property_attributes>(napi_enumerable)),
+                                                          InstanceMethod("toBytes", &SecretKey::ToBytes, static_cast<napi_property_attributes>(napi_enumerable)),
                                                       });
     constructor = new Napi::FunctionReference();
     *constructor = Napi::Persistent(secretKeyConstructor);
@@ -105,7 +105,15 @@ Napi::Value SecretKey::FromBytes(const Napi::CallbackInfo &info)
 //     return info.Env().Undefined();
 // }
 
-// Napi::Value ToBytes(const Napi::CallbackInfo &info)
-// {
-//     return info.Env().Undefined();
-// }
+Napi::Value SecretKey::ToBytes(const Napi::CallbackInfo &info)
+{
+    auto env = info.Env();
+    blst::byte bytesOut[SECRET_KEY_LENGTH] = {};
+    key.to_bendian(bytesOut);
+    Napi::TypedArrayOf<uint8_t> serialized = Napi::TypedArrayOf<uint8_t>::New(env, 32);
+    for (int i = 0; i < SECRET_KEY_LENGTH; i++)
+    {
+        serialized[i] = bytesOut[i];
+    }
+    return serialized;
+}

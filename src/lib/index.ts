@@ -2,6 +2,7 @@ import {findBindingByName} from "../scripts/paths";
 
 declare class SecretKey {
   static keygen(ikm?: Uint8Array): SecretKey;
+  toBytes(): Uint8Array;
 }
 
 interface SecretKeyConstructor {
@@ -19,5 +20,11 @@ interface Bindings {
 const bindings: Bindings = require(findBindingByName("blst-ts.node"));
 
 console.log(Object.keys(bindings));
-console.log(bindings.SecretKey.keygen());
-console.log(bindings.SecretKey.fromBytes(Uint8Array.from(Buffer.alloc(32, 2, "utf8"))));
+const sk1 = bindings.SecretKey.keygen();
+
+const rebuilt = bindings.SecretKey.fromBytes(sk1.toBytes());
+
+console.log({
+  key1: Buffer.from(sk1.toBytes()).toString("hex"),
+  key2: Buffer.from(rebuilt.toBytes()).toString("hex"),
+});
