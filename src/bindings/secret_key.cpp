@@ -11,7 +11,7 @@ Napi::Object SecretKey::Init(Napi::Env env, Napi::Object exports)
     // lifetime of the addon module
     Napi::Function secretKeyConstructor = DefineClass(env, "SecretKey",
                                                       {
-                                                          //   StaticMethod("keygen", &SecretKey::Keygen, static_cast<napi_property_attributes>(napi_static | napi_enumerable)),
+                                                            StaticMethod("keygen", &SecretKey::Keygen, static_cast<napi_property_attributes>(napi_static | napi_enumerable)),
                                                           //   StaticMethod("fromBytes", &SecretKey::FromBytes, static_cast<napi_property_attributes>(napi_static | napi_enumerable)),
                                                           //   InstanceMethod("toPublicKey", &SecretKey::ToPublicKey, static_cast<napi_property_attributes>(napi_enumerable)),
                                                           //   InstanceMethod("sign", &SecretKey::Sign, static_cast<napi_property_attributes>(napi_enumerable)),
@@ -36,45 +36,41 @@ SecretKey::SecretKey(const Napi::CallbackInfo &info) : Napi::ObjectWrap<SecretKe
         Napi::Error::New(env, "No arguments are allowed in SecretKey constructor").ThrowAsJavaScriptException();
         return;
     }
-    blst::byte random[32] = {};
-    random_bytes_non_zero(random, 32);
-    printf("random, sizeof(random) %p: %lu\n", random, sizeof(random));
-    key.keygen(random, 32);
+    blst::byte random[SECRET_KEY_LENGTH] = {};
+    random_bytes_non_zero(random, SECRET_KEY_LENGTH);
+    key.keygen(random, SECRET_KEY_LENGTH);
 }
 
+Napi::Value SecretKey::Keygen(const Napi::CallbackInfo &info)
+{
+    blst::SecretKey *key = new blst::SecretKey;
+    Napi::Env env = info.Env();
+    Napi::Value entropyVal = info[0].As<Napi::Value>();
+    blst::byte ikm[SECRET_KEY_LENGTH] = {};
 
-// Napi::Value SecretKey::Keygen(const Napi::CallbackInfo &info)
-// {
-//     Napi::Env env = info.Env();
-//     Napi::Value entropyVal = info[0].As<Napi::Value>();
-//     if (entropyVal.IsUndefined())
-//     {
-//         blst::SecretKey *key = new blst::SecretKey;
-//         blst::byte random[(size_t)SECRET_KEY_LENGTH] = {};
-//         random_bytes_non_zero(random, (size_t)SECRET_KEY_LENGTH);
-//         key->keygen(random, (size_t)SECRET_KEY_LENGTH);
-//         auto wrapped = Napi::External<blst::SecretKey>::New(env, key);
-//         return constructor->New({wrapped});
-//     }
-
-//     if (!entropyVal.IsTypedArray())
-//     {
-//         Napi::Error err = Napi::Error::New(env, "Entropy for new SecretKey(entropy) must be a Uint8Array");
-//         err.ThrowAsJavaScriptException();
-//     }
-//     auto entropyArray = entropyVal.As<Napi::TypedArrayOf<u_int8_t>>();
-//     auto entropyData = entropyArray.Data();
-//     auto entropyLength = entropyArray.ByteLength();
-//     if (entropyLength < (size_t)SECRET_KEY_LENGTH)
-//     {
-//         Napi::Error err = Napi::Error::New(env, get_blst_error_string(blst::BLST_ERROR::BLST_BAD_ENCODING));
-//         err.ThrowAsJavaScriptException();
-//     }
-//     blst::SecretKey *key = new blst::SecretKey;
-//     key->keygen(entropyData, entropyLength);
-//     auto wrapped = Napi::External<blst::SecretKey>::New(env, key);
-//     return constructor->New({wrapped});
-// }
+    if (entropyVal.IsUndefined())
+    {
+        random_bytes_non_zero(ikm, SECRET_KEY_LENGTH);
+    }
+    else if (!entropyVal.IsNull())
+    {
+        if (!entropyVal.IsTypedArray())
+        {
+            Napi::Error err = Napi::Error::New(env, "IKM for new SecretKey(ikm) must be a Uint8Array");
+            err.ThrowAsJavaScriptException();
+        }
+        auto entropyArray = entropyVal.As<Napi::TypedArrayOf<u_int8_t>>();
+        if (entropyArray.ByteLength() != SECRET_KEY_LENGTH)
+        {
+            Napi::Error err = Napi::Error::New(env, "ikm must be 32 bytes long");
+            err.ThrowAsJavaScriptException();
+        }
+        memcpy(ikm, entropyArray.Data(), SECRET_KEY_LENGTH);
+    }
+    key->keygen(ikm, SECRET_KEY_LENGTH);
+    auto wrapped = Napi::External<blst::SecretKey>::New(env, key);
+    return constructor->New({wrapped});
+}
 
 // Napi::Value SecretKey::FromBytes(const Napi::CallbackInfo &info)
 // {
