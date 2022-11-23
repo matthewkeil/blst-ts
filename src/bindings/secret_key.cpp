@@ -1,9 +1,5 @@
 #include "secret_key.hpp"
 
-#ifndef SECRET_KEY_LENGTH
-#define SECRET_KEY_LENGTH 32
-#endif
-
 Napi::FunctionReference *SecretKey::constructor;
 Napi::Object SecretKey::Init(Napi::Env env, Napi::Object exports)
 {
@@ -13,8 +9,8 @@ Napi::Object SecretKey::Init(Napi::Env env, Napi::Object exports)
                                                       {
                                                           StaticMethod("keygen", &SecretKey::Keygen, static_cast<napi_property_attributes>(napi_static | napi_enumerable)),
                                                           StaticMethod("fromBytes", &SecretKey::FromBytes, static_cast<napi_property_attributes>(napi_static | napi_enumerable)),
-                                                          //   InstanceMethod("toPublicKey", &SecretKey::ToPublicKey, static_cast<napi_property_attributes>(napi_enumerable)),
-                                                          //   InstanceMethod("sign", &SecretKey::Sign, static_cast<napi_property_attributes>(napi_enumerable)),
+                                                          InstanceMethod("getPublicKey", &SecretKey::GetPublicKey, static_cast<napi_property_attributes>(napi_enumerable)),
+                                                          InstanceMethod("sign", &SecretKey::Sign, static_cast<napi_property_attributes>(napi_enumerable)),
                                                           InstanceMethod("toBytes", &SecretKey::ToBytes, static_cast<napi_property_attributes>(napi_enumerable)),
                                                       });
     constructor = new Napi::FunctionReference();
@@ -23,7 +19,8 @@ Napi::Object SecretKey::Init(Napi::Env env, Napi::Object exports)
     return exports;
 }
 
-SecretKey::SecretKey(const Napi::CallbackInfo &info) : Napi::ObjectWrap<SecretKey>(info), key{}, env{info.Env()}
+SecretKey::SecretKey(const Napi::CallbackInfo &info)
+    : Napi::ObjectWrap<SecretKey>(info), env{info.Env()}, key{}
 {
     if (info[0].IsExternal())
     {
@@ -95,15 +92,15 @@ Napi::Value SecretKey::FromBytes(const Napi::CallbackInfo &info)
     return constructor->New({wrapped});
 }
 
-// Napi::Value SecretKey::ToPublicKey(const Napi::CallbackInfo &info)
-// {
-//     return info.Env().Undefined();
-// }
+Napi::Value SecretKey::GetPublicKey(const Napi::CallbackInfo &info)
+{
+    return info.Env().Undefined();
+}
 
-// Napi::Value SecretKey::Sign(const Napi::CallbackInfo &info)
-// {
-//     return info.Env().Undefined();
-// }
+Napi::Value SecretKey::Sign(const Napi::CallbackInfo &info)
+{
+    return info.Env().Undefined();
+}
 
 Napi::Value SecretKey::ToBytes(const Napi::CallbackInfo &info)
 {

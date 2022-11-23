@@ -6,8 +6,10 @@
         "blst/src/server.c",
         "blst/build/assembly.S",
         'src/bindings/blst_ts_addon.cpp',
+        'src/bindings/blst_ts_utils.cpp',
         'src/bindings/secret_key.cpp',
-        'src/bindings/blst_ts_utils.hpp',
+        'src/bindings/public_key.cpp',
+        'src/bindings/signature.cpp',
       ],
       'libraries': [
         "-lsodium",

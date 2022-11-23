@@ -28,6 +28,9 @@ export function fromHex(hexString: string): Uint8Array {
   return Buffer.from(hexString, "hex");
 }
 
+export function getFilledUint8(length: number, fillWith: string | number | Uint8Array = "*"): Uint8Array {
+  return Uint8Array.from(Buffer.from([], undefined, length).fill(fillWith));
+}
 /**
  * Enforce tests for all instance methods
  */

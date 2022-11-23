@@ -20,6 +20,7 @@
     "test": "yarn test:unit && yarn test:spec",
     "test:unit": "mocha test/unit/**/*.test.ts",
     "test:spec": "mocha 'test/spec/**/*.test.ts'",
+    "test:bindings": "mocha test/unit/newBindings/*.test.ts", 
     "download-spec-tests": "node -r ts-node/register test/spec/downloadTests.ts"
   },
   "repository": {

@@ -1,13 +1,9 @@
 #include <napi.h>
 #include <sodium.h>
+#include "blst_ts_utils.hpp"
 #include "secret_key.hpp"
-
-Napi::Value test(const Napi::CallbackInfo &info)
-{
-    Napi::Env env = info.Env();
-    Napi::TypeError::New(env, "error yo!").ThrowAsJavaScriptException();
-    return Napi::String::New(env, "hello world");
-}
+#include "public_key.hpp"
+#include "signature.hpp"
 
 Napi::Object Init(Napi::Env env, Napi::Object exports)
 {
@@ -18,8 +14,20 @@ Napi::Object Init(Napi::Env env, Napi::Object exports)
     }
 
     SecretKey::Init(env, exports);
-    exports.Set(Napi::String::New(env, "test"),
-                Napi::Function::New(env, test));
+    PublicKey::Init(env, exports);
+    Signature::Init(env, exports);
+    exports.Set(Napi::String::New(env, "SECRET_KEY_LENGTH"),
+                Napi::Number::New(env, SECRET_KEY_LENGTH));
+    exports.Set(Napi::String::New(env, "PUBLIC_KEY_LENGTH_UNCOMPRESSED"),
+                Napi::Number::New(env, PUBLIC_KEY_LENGTH_UNCOMPRESSED));
+    exports.Set(Napi::String::New(env, "PUBLIC_KEY_LENGTH_COMPRESSED"),
+                Napi::Number::New(env, PUBLIC_KEY_LENGTH_COMPRESSED));
+    exports.Set(Napi::String::New(env, "SIGNATURE_LENGTH_UNCOMPRESSED"),
+                Napi::Number::New(env, SIGNATURE_LENGTH_UNCOMPRESSED));
+    exports.Set(Napi::String::New(env, "SIGNATURE_LENGTH_COMPRESSED"),
+                Napi::Number::New(env, SIGNATURE_LENGTH_COMPRESSED));
+    exports.Set(Napi::String::New(env, "DST"),
+                Napi::String::New(env, DST));
 
     return exports;
 }
