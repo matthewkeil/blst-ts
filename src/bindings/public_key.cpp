@@ -25,9 +25,11 @@ PublicKey::PublicKey(const Napi::CallbackInfo &info)
     if (info[0].IsExternal() && info[1].IsExternal())
     {
         auto wrappedAffine = info[0].As<Napi::External<blst::P1_Affine>>();
-        affine = wrappedAffine.Data();
+        affine.release();
+        affine.reset(wrappedAffine.Data());
         auto wrappedPoint = info[1].As<Napi::External<blst::P1>>();
-        point = wrappedPoint.Data();
+        point.release();
+        point.reset(wrappedPoint.Data());
         if (point != nullptr)
         {
             is_affine = false;
@@ -35,10 +37,10 @@ PublicKey::PublicKey(const Napi::CallbackInfo &info)
     }
     else if (info[0].IsObject())
     {
-        // assume its a wrapped SecretKey
+        // assume its a wrapped SecretKey from a static constructor
         auto secretKey = SecretKey::Unwrap(info[0].As<Napi::Object>());
-        blst::P1 point{secretKey->key};
-        blst::P1_Affine affine{point};
+        point.reset(new blst::P1{*(secretKey->key)});
+        affine.reset(new blst::P1_Affine{*point});
         is_affine = false;
     }
     else
@@ -48,13 +50,13 @@ PublicKey::PublicKey(const Napi::CallbackInfo &info)
     }
 }
 
-PublicKey::~PublicKey()
+Napi::Value PublicKey::Create(Napi::Env env, blst::SecretKey *secretKey)
 {
-    delete affine;
-    if (!is_affine)
-    {
-        delete point;
-    }
+    // These two objects must flow into the unique_ptr in the constructor or they 
+    // will leak.  Stay vigilant!!
+    auto point = new blst::P1{*secretKey};
+    auto affine = new blst::P1_Affine{*point};
+    return Create(env, point, affine);
 }
 
 Napi::Value PublicKey::Create(Napi::Env env, blst::P1 *point, blst::P1_Affine *affine)
@@ -92,7 +94,7 @@ Napi::Value PublicKey::FromBytes(const Napi::CallbackInfo &info)
         Napi::RangeError::New(env, "type must CoordType.Jacobian || CoordType.Affine").ThrowAsJavaScriptException();
     }
     blst::P1 *point = nullptr;
-    blst::P1_Affine *affine = nullptr;
+    blst::P1_Affine *affine;
     if (type == CoordType::Jacobian)
     {
         point = new blst::P1{pkBytesData, pkBytesLength};

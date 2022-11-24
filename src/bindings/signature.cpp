@@ -28,7 +28,7 @@ Signature::Signature(const Napi::CallbackInfo &info) : Napi::ObjectWrap<Signatur
     }
     else if (info.Length() > 0)
     {
-        Napi::Error::New(env, "No arguments are allowed in SecretKey constructor").ThrowAsJavaScriptException();
+        Napi::Error::New(env, "No arguments are allowed in Signature constructor").ThrowAsJavaScriptException();
         return;
     }
 }

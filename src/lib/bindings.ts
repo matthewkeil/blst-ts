@@ -17,4 +17,3 @@ interface Bindings {
 const bindings: Bindings = require(findBindingByName("blst-ts.node"));
 
 export = bindings;
-

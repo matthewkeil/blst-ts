@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <napi.h>
 #include "blst.hpp"
 #include "blst_ts_utils.hpp"
@@ -22,5 +23,5 @@ private:
     static Napi::FunctionReference *constructor;
     friend class PublicKey;
     Napi::Env env;
-    blst::SecretKey key;
+    std::unique_ptr<blst::SecretKey> key;
 };
