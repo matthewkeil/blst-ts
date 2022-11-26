@@ -5,6 +5,7 @@
 #include "blst.hpp"
 #include "blst_ts_utils.hpp"
 #include "public_key.hpp"
+#include "signature.hpp"
 
 class SecretKey : public Napi::ObjectWrap<SecretKey>
 {
@@ -20,8 +21,7 @@ public:
     Napi::Value ToBytes(const Napi::CallbackInfo &info);
 
 private:
-    static Napi::FunctionReference *constructor;
+    static Napi::FunctionReference constructor;
     friend class PublicKey;
-    Napi::Env env;
     std::unique_ptr<blst::SecretKey> key;
 };

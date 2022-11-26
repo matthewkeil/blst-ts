@@ -1,6 +1,7 @@
 #include "secret_key.hpp"
 
-Napi::FunctionReference *SecretKey::constructor;
+Napi::FunctionReference SecretKey::constructor;
+
 Napi::Object SecretKey::Init(Napi::Env env, Napi::Object exports)
 {
     // make a pointer to the constructor function so it can be bound to the
@@ -12,16 +13,18 @@ Napi::Object SecretKey::Init(Napi::Env env, Napi::Object exports)
                                                           InstanceMethod("getPublicKey", &SecretKey::GetPublicKey, static_cast<napi_property_attributes>(napi_enumerable)),
                                                           InstanceMethod("sign", &SecretKey::Sign, static_cast<napi_property_attributes>(napi_enumerable)),
                                                           InstanceMethod("toBytes", &SecretKey::ToBytes, static_cast<napi_property_attributes>(napi_enumerable)),
+                                                          InstanceValue("__type", Napi::String::New(env, SECRET_KEY_TYPE), static_cast<napi_property_attributes>(napi_default)),
                                                       });
-    constructor = new Napi::FunctionReference();
-    *constructor = Napi::Persistent(secretKeyConstructor);
+    constructor = Napi::Persistent(secretKeyConstructor);
+    constructor.SuppressDestruct();
     exports.Set(Napi::String::New(env, "SecretKey"), secretKeyConstructor);
     return exports;
 }
 
 SecretKey::SecretKey(const Napi::CallbackInfo &info)
-    : Napi::ObjectWrap<SecretKey>(info), env{info.Env()}, key{nullptr}
+    : Napi::ObjectWrap<SecretKey>(info), key{nullptr}
 {
+    Napi::Env env = info.Env();
     if (info[0].IsExternal())
     {
         auto passedKey = info[0].As<Napi::External<blst::SecretKey>>();
@@ -79,13 +82,11 @@ Napi::Value SecretKey::Keygen(const Napi::CallbackInfo &info)
     blst::SecretKey *key = new blst::SecretKey;
     key->keygen(ikm.get(), SECRET_KEY_LENGTH);
     auto wrapped = Napi::External<blst::SecretKey>::New(env, key);
-    return constructor->New({wrapped});
+    return constructor.New({wrapped});
 }
 
 Napi::Value SecretKey::FromBytes(const Napi::CallbackInfo &info)
 {
-
-    blst::SecretKey *key = new blst::SecretKey;
     Napi::Env env = info.Env();
     Napi::Value skBytes = info[0].As<Napi::Value>();
     if (!skBytes.IsTypedArray())
@@ -100,9 +101,13 @@ Napi::Value SecretKey::FromBytes(const Napi::CallbackInfo &info)
         Napi::Error::New(env, "skBytes must be 32 bytes long").ThrowAsJavaScriptException();
     }
     no_zero_bytes(skBytesData, skBytesLength);
+    // This pointer will be passed into a unique_ptr in constructor.
+    // unique_ptr will manage the lifetime of this object and delete
+    // in the destructor.
+    blst::SecretKey *key = new blst::SecretKey;
     key->from_bendian(skBytesData);
     auto wrapped = Napi::External<blst::SecretKey>::New(env, key);
-    return constructor->New({wrapped});
+    return constructor.New({wrapped});
 }
 
 Napi::Value SecretKey::GetPublicKey(const Napi::CallbackInfo &info)
@@ -113,7 +118,7 @@ Napi::Value SecretKey::GetPublicKey(const Napi::CallbackInfo &info)
 
 Napi::Value SecretKey::Sign(const Napi::CallbackInfo &info)
 {
-    return info.Env().Undefined();
+    return Signature::Create(info, key.get());
 }
 
 Napi::Value SecretKey::ToBytes(const Napi::CallbackInfo &info)

@@ -1,10 +1,10 @@
 import {findBindingByName} from "../scripts/paths";
-import {PublicKeyConstructor, SecretKeyConstructor, SignatureConstructor} from "./bindings.types";
+import * as types from "./bindings.types";
 
 interface Bindings {
-  SecretKey: SecretKeyConstructor;
-  PublicKey: PublicKeyConstructor;
-  Signature: SignatureConstructor;
+  SecretKey: types.SecretKeyConstructor;
+  PublicKey: types.PublicKeyConstructor;
+  Signature: types.SignatureConstructor;
   DST: string;
   SECRET_KEY_LENGTH: number;
   PUBLIC_KEY_LENGTH_UNCOMPRESSED: number;
@@ -15,5 +15,5 @@ interface Bindings {
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
 const bindings: Bindings = require(findBindingByName("blst-ts.node"));
-
+types.PublicKey;
 export = bindings;

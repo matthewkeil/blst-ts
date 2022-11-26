@@ -1,6 +1,7 @@
 #ifndef __BLST_TS_UTILS_HH__
 #define __BLST_TS_UTILS_HH__
 
+#include <typeinfo>
 #include <sodium.h>
 #include "blst.hpp"
 
@@ -8,27 +9,33 @@
 #define SECRET_KEY_LENGTH 32
 #endif
 
-#ifndef PUBLIC_KEY_LENGTH_UNCOMPRESSED
-#define PUBLIC_KEY_LENGTH_UNCOMPRESSED 48
-#endif
-
 #ifndef PUBLIC_KEY_LENGTH_COMPRESSED
-#define PUBLIC_KEY_LENGTH_COMPRESSED 96
+#define PUBLIC_KEY_LENGTH_COMPRESSED 48
 #endif
 
-#ifndef SIGNATURE_LENGTH_UNCOMPRESSED
-#define SIGNATURE_LENGTH_UNCOMPRESSED 48
+#ifndef PUBLIC_KEY_LENGTH_UNCOMPRESSED
+#define PUBLIC_KEY_LENGTH_UNCOMPRESSED 96
 #endif
+
 
 #ifndef SIGNATURE_LENGTH_COMPRESSED
 #define SIGNATURE_LENGTH_COMPRESSED 96
 #endif
+
+#ifndef SIGNATURE_LENGTH_UNCOMPRESSED
+#define SIGNATURE_LENGTH_UNCOMPRESSED 192
+#endif
+
 
 typedef enum
 {
     Affine,
     Jacobian
 } CoordType;
+
+extern const std::string SECRET_KEY_TYPE;
+extern const std::string PUBLIC_KEY_TYPE;
+extern const std::string SIGNATURE_TYPE;
 
 extern const char *DST;
 extern const char *BLST_ERROR_STRINGS[];

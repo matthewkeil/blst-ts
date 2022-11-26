@@ -1,10 +1,7 @@
 import {expect} from "chai";
-import {PublicKey, SecretKey} from "../../../src/lib/bindings";
+import {PublicKey, SecretKey, Signature} from "../../../src/lib/bindings";
 import type {SecretKey as SkType} from "../../../src/lib/bindings.types";
-import {getFilledUint8} from "../../utils";
-
-const ikm = getFilledUint8(32);
-const skBytes = Uint8Array.from(Buffer.from("5620799c63c92bb7912122070f7ebb6ddd53bdf9aa63e7a7bffc177f03d14f68", "hex"));
+import {KEY_MATERIAL, SECRET_KEY_BYTES} from "./__fixtures__";
 
 describe("SecretKey", () => {
   it("should exist", () => {
@@ -35,12 +32,17 @@ describe("SecretKey", () => {
         expect(() => SecretKey.keygen([] as any)).to.throw("IKM for new SecretKey(ikm) must be a Uint8Array");
       });
       it("should take UintArray8 for ikm", () => {
-        expect(SecretKey.keygen(ikm)).to.be.instanceOf(SecretKey);
+        expect(SecretKey.keygen(KEY_MATERIAL)).to.be.instanceOf(SecretKey);
+      });
+      it("should create the same key from the same ikm", () => {
+        expect(SecretKey.keygen(KEY_MATERIAL).toBytes().toString()).to.equal(
+          SecretKey.keygen(KEY_MATERIAL).toBytes().toString()
+        );
       });
     });
     describe("SecretKey.fromBytes", () => {
       it("should create an instance", () => {
-        expect(SecretKey.fromBytes(skBytes)).to.be.instanceOf(SecretKey);
+        expect(SecretKey.fromBytes(SECRET_KEY_BYTES)).to.be.instanceOf(SecretKey);
       });
     });
   });
@@ -49,8 +51,6 @@ describe("SecretKey", () => {
     beforeEach(() => {
       key = SecretKey.keygen();
     });
-    // describe("getPublicKey", () => {});
-    // describe("sign", () => {});
     describe("toBytes", () => {
       it("should serialize the key to Uint8Array", () => {
         expect(key.toBytes()).to.be.instanceof(Uint8Array);
@@ -63,9 +63,16 @@ describe("SecretKey", () => {
         expect(SecretKey.fromBytes(serialized).toBytes().toString()).to.equal(serialized.toString());
       });
     });
-    describe("toPublicKey", () => {
+    describe("getPublicKey", () => {
       it("should create a PublicKey", () => {
         expect(new SecretKey().getPublicKey()).to.be.instanceOf(PublicKey);
+      });
+    });
+    describe("sign", () => {
+      it("should create a Signature", () => {
+        const sig = new SecretKey().sign("some fancy message");
+        expect(sig).to.be.instanceOf(Signature);
+        expect(sig.sigValidate()).to.be.undefined;
       });
     });
   });

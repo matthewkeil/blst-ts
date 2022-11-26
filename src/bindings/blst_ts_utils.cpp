@@ -1,5 +1,9 @@
 #include "blst_ts_utils.hpp"
 
+const std::string SECRET_KEY_TYPE = "SecretKey";
+const std::string PUBLIC_KEY_TYPE = "PublicKey";
+const std::string SIGNATURE_TYPE = "Signature";
+
 const char *DST{"BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_"};
 
 const char *BLST_ERROR_STRINGS[] = {

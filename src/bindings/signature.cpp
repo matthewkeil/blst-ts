@@ -1,70 +1,167 @@
 #include "signature.hpp"
 
-Napi::FunctionReference *Signature::constructor;
+Napi::FunctionReference Signature::constructor;
+
 Napi::Object Signature::Init(Napi::Env env, Napi::Object exports)
 {
     // make a pointer to the constructor function so it can be bound to the
     // lifetime of the addon module
     Napi::Function signatureConstructor = DefineClass(env, "Signature",
-                                                      {
-                                                          StaticMethod("fromBytes", &Signature::FromBytes, static_cast<napi_property_attributes>(napi_static | napi_enumerable)),
-                                                          //   InstanceMethod("toPublicKey", &Signature::ToPublicKey, static_cast<napi_property_attributes>(napi_enumerable)),
-                                                          //   InstanceMethod("sign", &Signature::Sign, static_cast<napi_property_attributes>(napi_enumerable)),
-                                                          //   InstanceMethod("toBytes", &Signature::ToBytes, static_cast<napi_property_attributes>(napi_enumerable)),
-                                                      });
-    constructor = new Napi::FunctionReference();
-    *constructor = Napi::Persistent(signatureConstructor);
+                                                      {StaticMethod("fromBytes", &Signature::FromBytes, static_cast<napi_property_attributes>(napi_static | napi_enumerable)),
+                                                       InstanceMethod("sigValidate", &Signature::SigValidate, static_cast<napi_property_attributes>(napi_enumerable)),
+                                                       InstanceMethod("serialize", &Signature::Serialize, static_cast<napi_property_attributes>(napi_enumerable)),
+                                                       InstanceMethod("compress", &Signature::Compress, static_cast<napi_property_attributes>(napi_enumerable)),
+                                                       InstanceMethod("toBytes", &Signature::ToBytes, static_cast<napi_property_attributes>(napi_enumerable)),
+                                                       InstanceValue("__type", Napi::String::New(env, SIGNATURE_TYPE), static_cast<napi_property_attributes>(napi_default))});
+    constructor = Napi::Persistent(signatureConstructor);
+    constructor.SuppressDestruct();
     exports.Set(Napi::String::New(env, "Signature"), signatureConstructor);
     return exports;
 }
 
-Signature::Signature(const Napi::CallbackInfo &info) : Napi::ObjectWrap<Signature>(info), env{info.Env()}, affine{}, point{}
+Signature::Signature(const Napi::CallbackInfo &info) : Napi::ObjectWrap<Signature>(info), affine{}, point{}
 {
-    if (info[0].IsExternal())
+    Napi::Env env = info.Env();
+    if (info[0].IsExternal() && info[1].IsExternal())
     {
-        // auto passedKey = info[0].As<Napi::External<blst::SecretKey>>();
-        // key = *passedKey.Data();
-        return;
+        auto wrappedAffine = info[0].As<Napi::External<blst::P2_Affine>>();
+        affine.release();
+        affine.reset(wrappedAffine.Data());
+        auto wrappedPoint = info[1].As<Napi::External<blst::P2>>();
+        point.release();
+        point.reset(wrappedPoint.Data());
+        if (point != nullptr)
+        {
+            is_affine = false;
+        }
     }
-    else if (info.Length() > 0)
+    else
     {
-        Napi::Error::New(env, "No arguments are allowed in Signature constructor").ThrowAsJavaScriptException();
+        Napi::Error::New(env, "new Signature() is a private constructor. Use static Signature.fromBytes()").ThrowAsJavaScriptException();
         return;
     }
 }
 
 Napi::Value Signature::FromBytes(const Napi::CallbackInfo &info)
 {
-
-    blst::SecretKey *key = new blst::SecretKey;
     Napi::Env env = info.Env();
-    Napi::Value skBytes = info[0].As<Napi::Value>();
-    if (!skBytes.IsTypedArray())
+
+    Napi::Value sigBytes = info[0].As<Napi::Value>();
+    if (!sigBytes.IsTypedArray())
     {
-        Napi::TypeError::New(env, "skBytes must be a Uint8Array").ThrowAsJavaScriptException();
+        Napi::TypeError::New(env, "sigBytes must be a Uint8Array or Buffer").ThrowAsJavaScriptException();
     }
-    auto skBytesArray = skBytes.As<Napi::TypedArrayOf<u_int8_t>>();
-    auto skBytesData = skBytesArray.Data();
-    auto skBytesLength = skBytesArray.ByteLength();
-    if (skBytesLength != (size_t)SECRET_KEY_LENGTH)
+    auto sigBytesArray = sigBytes.As<Napi::TypedArrayOf<u_int8_t>>();
+    auto sigBytesData = sigBytesArray.Data();
+    auto sigBytesLength = sigBytesArray.ByteLength();
+    if (!(sigBytesLength == SIGNATURE_LENGTH_COMPRESSED || sigBytesLength == SIGNATURE_LENGTH_UNCOMPRESSED))
     {
-        Napi::Error::New(env, "skBytes must be 32 bytes long").ThrowAsJavaScriptException();
+        Napi::RangeError::New(env, "sigBytes must be 96 or 192 bytes long").ThrowAsJavaScriptException();
     }
-    no_zero_bytes(skBytesData, skBytesLength);
-    key->from_bendian(skBytesData);
-    auto wrapped = Napi::External<blst::SecretKey>::New(env, key);
-    return constructor->New({wrapped});
+
+    auto type = CoordType::Jacobian;
+    if (!info[1].IsUndefined())
+    {
+        Napi::Value typeValue = info[1].As<Napi::Value>();
+        if (!typeValue.IsNumber())
+        {
+            Napi::TypeError::New(env, "type must be of enum CoordType").ThrowAsJavaScriptException();
+        }
+        CoordType type = typeValue.As<Napi::Number>().Uint32Value() == (uint32_t)1 ? CoordType::Affine : CoordType::Jacobian;
+        if ((type != CoordType::Jacobian) && (type != CoordType::Affine))
+        {
+            Napi::RangeError::New(env, "type must CoordType.Jacobian || CoordType.Affine").ThrowAsJavaScriptException();
+        }
+    }
+
+    blst::P2 *point = nullptr;
+    blst::P2_Affine *affine;
+    try
+    {
+
+        if (type == CoordType::Jacobian)
+        {
+            point = new blst::P2{sigBytesData, sigBytesLength};
+            affine = new blst::P2_Affine{*point};
+        }
+        else
+        {
+            affine = new blst::P2_Affine{sigBytesData, sigBytesLength};
+        }
+    }
+    catch (blst::BLST_ERROR err)
+    {
+        Napi::RangeError::New(env, get_blst_error_string(err)).ThrowAsJavaScriptException();
+        return env.Undefined();
+    }
+
+    return Create(env, point, affine);
 }
 
-// Napi::Value Signature::ToBytes(const Napi::CallbackInfo &info)
-// {
-//     auto env = info.Env();
-//     blst::byte bytesOut[SECRET_KEY_LENGTH] = {};
-//     key.to_bendian(bytesOut);
-//     Napi::TypedArrayOf<uint8_t> serialized = Napi::TypedArrayOf<uint8_t>::New(env, 32);
-//     for (int i = 0; i < SECRET_KEY_LENGTH; i++)
-//     {
-//         serialized[i] = bytesOut[i];
-//     }
-//     return serialized;
-// }
+Napi::Value Signature::Create(Napi::Env env, blst::P2 *point, blst::P2_Affine *affine)
+{
+    auto wrappedAffine = Napi::External<blst::P2_Affine>::New(env, affine);
+    auto wrappedPoint = Napi::External<blst::P2>::New(env, point);
+    return constructor.New({wrappedAffine, wrappedPoint});
+}
+
+Napi::Value Signature::Create(const Napi::CallbackInfo &info, const blst::SecretKey *key)
+{
+    auto env = info.Env();
+    auto msg = info[0].As<Napi::String>();
+    auto msg_c_string = msg.Utf8Value();
+    auto msg_length = msg_c_string.length();
+    auto dst = info[0].As<Napi::String>();
+    auto dst_c_string = dst.Utf8Value();
+
+    blst::P2 *point = new blst::P2;
+    point->hash_to((blst::byte *)msg_c_string.c_str(), msg_length, dst_c_string);
+    point->sign_with(*key);
+    blst::P2_Affine *affine = new blst::P2_Affine{*point};
+    return Signature::Create(env, point, affine);
+}
+
+Napi::Value Signature::SigValidate(const Napi::CallbackInfo &info)
+{
+    Napi::Env env = info.Env();
+    if (!affine->in_group())
+    {
+        Napi::Error::New(env, "blst::BLST_POINT_NOT_IN_GROUP").ThrowAsJavaScriptException();
+    }
+    return info.Env().Undefined();
+}
+
+Napi::Value Signature::Serialize(const Napi::CallbackInfo &info, int length)
+{
+    Napi::Env env = info.Env();
+    blst::byte out[length];
+    if (length == SIGNATURE_LENGTH_COMPRESSED)
+    {
+        affine->compress(out);
+    }
+    else
+    {
+        affine->serialize(out);
+    }
+    Napi::TypedArrayOf<uint8_t> serialized = Napi::TypedArrayOf<uint8_t>::New(env, length);
+    for (int i = 0; i < length; i++)
+    {
+        serialized[i] = out[i];
+    }
+    return serialized;
+}
+
+Napi::Value Signature::Serialize(const Napi::CallbackInfo &info)
+{
+    return Serialize(info, SIGNATURE_LENGTH_UNCOMPRESSED);
+}
+
+Napi::Value Signature::Compress(const Napi::CallbackInfo &info)
+{
+    return Serialize(info, SIGNATURE_LENGTH_COMPRESSED);
+}
+
+Napi::Value Signature::ToBytes(const Napi::CallbackInfo &info)
+{
+    return Serialize(info, SIGNATURE_LENGTH_COMPRESSED);
+}

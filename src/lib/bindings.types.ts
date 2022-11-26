@@ -7,7 +7,21 @@ export const PUBLIC_KEY_LENGTH_UNCOMPRESSED = 48 * 2;
 export const SIGNATURE_LENGTH_COMPRESSED = 96;
 export const SIGNATURE_LENGTH_UNCOMPRESSED = 96 * 2;
 
-type NapiBuffer = Uint8Array | Buffer;
+/**
+ * Points are represented in two ways in BLST:
+ * - affine coordinates (x,y)
+ * - jacobian coordinates (x,y,z)
+ *
+ * The jacobian coordinates allow to aggregate points more efficiently,
+ * so if P1 points are aggregated often (Eth2.0) you want to keep the point
+ * cached in jacobian coordinates.
+ */
+export enum CoordType {
+  affine,
+  jacobian,
+}
+
+export type NapiBuffer = Uint8Array | Buffer;
 /*
  * Private constructor will randomly generate ikm when new'ing a key.
  * Use static methods SecretKey.fromBytes and SecretKey.keygen to
@@ -26,13 +40,13 @@ type NapiBuffer = Uint8Array | Buffer;
  */
 export declare class SecretKey {
   constructor();
-  static fromBytes(skBytes: NapiBuffer): SecretKey;
-  // static fromBytesAsync(skBytes: Uint8Array| Buffer): Promise<SecretKey>;
   static keygen(ikm?: NapiBuffer): SecretKey;
   // static keygenAsync(ikm?: Uint8Array| Buffer): Promise<SecretKey>;
+  static fromBytes(skBytes: NapiBuffer): SecretKey;
+  // static fromBytesAsync(skBytes: Uint8Array| Buffer): Promise<SecretKey>;
   getPublicKey(): PublicKey;
   // toPublicKeyAsync(): Promise<PublicKey>;
-  sign(msg: NapiBuffer): Signature;
+  sign(msg: string): Signature;
   // signAsync(msg: Uint8Array| Buffer): Promise<Signature>;
   toBytes(): NapiBuffer;
   // toBytesAsync(): Promise<Uint8Array>;
@@ -45,15 +59,12 @@ export interface SecretKeyConstructor {
   // fromBytesAsync(skBytes: Uint8Array| Buffer): Promise<SecretKey>;
 }
 
-export type BlstP1 = InstanceType<typeof blst.P1>;
-export type BlstP1Affine = InstanceType<typeof blst.P1_Affine>;
+// export type BlstP1 = InstanceType<typeof blst.P1>;
+// export type BlstP1Affine = InstanceType<typeof blst.P1_Affine>;
 export declare class PublicKey {
   constructor(sk?: SecretKey);
-  static fromBytes(bytes: NapiBuffer): PublicKey;
-  static fromBytesAsync(bytes: NapiBuffer): Promise<PublicKey>;
-  // static fromBytesAsyn(bytes: Uint8Array| Buffer): PublicKey;
-  // get jacobian(): BlstP1;
-  // get affine(): BlstP1Affine;
+  static fromBytes(bytes: NapiBuffer, coordType?: CoordType): PublicKey;
+  // static fromBytesAsync(bytes: NapiBuffer, coordType?: CoordType): Promise<PublicKey>;
   toBytes(): Uint8Array;
   compress(): Uint8Array;
   serialize(): Uint8Array;
@@ -62,7 +73,7 @@ export declare class PublicKey {
 }
 export interface PublicKeyConstructor {
   new (sk?: SecretKey): PublicKey;
-  fromBytes(): PublicKey;
+  fromBytes(bytes: NapiBuffer, coordType?: CoordType): PublicKey;
   // fromBytesAsync(): Promise<PublicKey>;
 }
 
@@ -70,7 +81,7 @@ type BlstSignature = InstanceType<typeof blst.P2>;
 type BlstSignatureAffine = InstanceType<typeof blst.P2_Affine>;
 export declare class Signature {
   private constructor();
-  static fromBytes(): Signature;
+  static fromBytes(bytes: NapiBuffer): Signature;
   // static fromBytesAsync(): Promise<Signature>;
   get jacobian(): BlstSignature;
   get affine(): BlstSignatureAffine;
@@ -82,7 +93,7 @@ export declare class Signature {
 }
 export interface SignatureConstructor {
   // new (): Signature;
-  fromBytes(): Signature;
+  fromBytes(bytes: NapiBuffer): Signature;
   // fromBytesAsync(): Promise<Signature>;
 }
 
