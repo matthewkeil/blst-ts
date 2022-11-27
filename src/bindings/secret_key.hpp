@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __BLST_TS_SECRET_KEY_HPP__
+#define __BLST_TS_SECRET_KEY_HPP__
 
 #include <memory>
 #include <napi.h>
@@ -25,3 +26,5 @@ private:
     friend class PublicKey;
     std::unique_ptr<blst::SecretKey> key;
 };
+
+#endif /* __BLST_TS_SECRET_KEY_HPP__ */

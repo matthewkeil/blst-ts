@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __BLST_TS_PUBLIC_KEY_HPP__
+#define __BLST_TS_PUBLIC_KEY_HPP__
 
 #include <memory>
 #include <typeinfo>
@@ -29,3 +30,5 @@ private:
     std::unique_ptr<blst::P1_Affine> affine;
     bool is_point;
 };
+
+#endif /* __BLST_TS_PUBLIC_KEY_HPP__ */

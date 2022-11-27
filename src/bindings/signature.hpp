@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __BLST_TS_SIGNATURE_HPP__
+#define __BLST_TS_SIGNATURE_HPP__
 
 #include <napi.h>
 #include "blst.hpp"
@@ -26,3 +27,5 @@ private:
     std::unique_ptr<blst::P2> point;
     bool is_point;
 };
+
+#endif /* __BLST_TS_SIGNATURE_HPP__ */
