@@ -12,7 +12,7 @@ class PublicKey : public Napi::ObjectWrap<PublicKey>
 {
 public:
     static Napi::Object Init(Napi::Env env, Napi::Object exports);
-    static Napi::Value Create(Napi::Env env, blst::SecretKey const *secretKey);
+    static Napi::Value Create(Napi::Env env, const blst::SecretKey *secretKey);
     static Napi::Value Create(Napi::Env env, blst::P1 *point, blst::P1_Affine *affine);
     static Napi::Value FromBytes(const Napi::CallbackInfo &info);
     PublicKey(const Napi::CallbackInfo &info);
@@ -25,7 +25,7 @@ public:
 
 private:
     static Napi::FunctionReference constructor;
-    std::unique_ptr<blst::P1_Affine> affine;
     std::unique_ptr<blst::P1> point;
-    bool is_affine;
+    std::unique_ptr<blst::P1_Affine> affine;
+    bool is_point;
 };

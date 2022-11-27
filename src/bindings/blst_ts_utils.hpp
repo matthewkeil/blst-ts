@@ -37,7 +37,7 @@ extern const std::string SECRET_KEY_TYPE;
 extern const std::string PUBLIC_KEY_TYPE;
 extern const std::string SIGNATURE_TYPE;
 
-extern const char *DST;
+extern const std::string DST;
 extern const char *BLST_ERROR_STRINGS[];
 
 void random_bytes_non_zero(blst::byte *out, const size_t length);

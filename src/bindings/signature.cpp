@@ -19,27 +19,45 @@ Napi::Object Signature::Init(Napi::Env env, Napi::Object exports)
     return exports;
 }
 
-Signature::Signature(const Napi::CallbackInfo &info) : Napi::ObjectWrap<Signature>(info), affine{}, point{}
+Signature::Signature(const Napi::CallbackInfo &info) : Napi::ObjectWrap<Signature>(info), affine{nullptr}, point{nullptr}, is_point{false}
 {
     Napi::Env env = info.Env();
     if (info[0].IsExternal() && info[1].IsExternal())
     {
-        auto wrappedAffine = info[0].As<Napi::External<blst::P2_Affine>>();
-        affine.release();
-        affine.reset(wrappedAffine.Data());
-        auto wrappedPoint = info[1].As<Napi::External<blst::P2>>();
-        point.release();
-        point.reset(wrappedPoint.Data());
-        if (point != nullptr)
+        auto wrappedAffine = info[0].As<Napi::External<blst::P2_Affine>>().Data();
+        auto wrappedPoint = info[1].As<Napi::External<blst::P2>>().Data();
+        if (wrappedAffine != nullptr)
         {
-            is_affine = false;
+            affine.reset(wrappedAffine);
         }
-    }
-    else
-    {
-        Napi::Error::New(env, "new Signature() is a private constructor. Use static Signature.fromBytes()").ThrowAsJavaScriptException();
+        if (wrappedPoint != nullptr)
+        {
+            is_point = true;
+            point.reset(wrappedPoint);
+        }
+        if (wrappedAffine == nullptr && wrappedPoint == nullptr)
+        {
+            Napi::TypeError::New(env, "Invalid internal creation. No point passed").ThrowAsJavaScriptException();
+        }
         return;
     }
+
+    Napi::Error::New(env, "new Signature() is a private constructor. Use static Signature.fromBytes()").ThrowAsJavaScriptException();
+}
+
+Napi::Value Signature::Create(Napi::Env env, blst::P2 *point, blst::P2_Affine *affine)
+{
+    auto wrappedAffine = Napi::External<blst::P2_Affine>::New(env, affine);
+    auto wrappedPoint = Napi::External<blst::P2>::New(env, point);
+    return constructor.New({wrappedAffine, wrappedPoint});
+}
+
+Napi::Value Signature::FromMessage(const Napi::Env &env, const blst::byte *msg, size_t msg_length, const blst::SecretKey &key)
+{
+    blst::P2 *point = new blst::P2;
+    point->hash_to(msg, msg_length, DST);
+    point->sign_with(key);
+    return Signature::Create(env, point, nullptr);
 }
 
 Napi::Value Signature::FromBytes(const Napi::CallbackInfo &info)
@@ -67,22 +85,21 @@ Napi::Value Signature::FromBytes(const Napi::CallbackInfo &info)
         {
             Napi::TypeError::New(env, "type must be of enum CoordType").ThrowAsJavaScriptException();
         }
-        CoordType type = typeValue.As<Napi::Number>().Uint32Value() == (uint32_t)1 ? CoordType::Affine : CoordType::Jacobian;
-        if ((type != CoordType::Jacobian) && (type != CoordType::Affine))
+        if (typeValue.As<Napi::Number>().Uint32Value() == (uint32_t)0)
         {
-            Napi::RangeError::New(env, "type must CoordType.Jacobian || CoordType.Affine").ThrowAsJavaScriptException();
+            type = CoordType::Affine;
         }
     }
 
+    // TODO: this may be a memory leak on BLST_ERROR. refactor or
+    //       verify this is sound.
     blst::P2 *point = nullptr;
-    blst::P2_Affine *affine;
+    blst::P2_Affine *affine = nullptr;
     try
     {
-
         if (type == CoordType::Jacobian)
         {
             point = new blst::P2{sigBytesData, sigBytesLength};
-            affine = new blst::P2_Affine{*point};
         }
         else
         {
@@ -98,33 +115,15 @@ Napi::Value Signature::FromBytes(const Napi::CallbackInfo &info)
     return Create(env, point, affine);
 }
 
-Napi::Value Signature::Create(Napi::Env env, blst::P2 *point, blst::P2_Affine *affine)
-{
-    auto wrappedAffine = Napi::External<blst::P2_Affine>::New(env, affine);
-    auto wrappedPoint = Napi::External<blst::P2>::New(env, point);
-    return constructor.New({wrappedAffine, wrappedPoint});
-}
-
-Napi::Value Signature::Create(const Napi::CallbackInfo &info, const blst::SecretKey *key)
-{
-    auto env = info.Env();
-    auto msg = info[0].As<Napi::String>();
-    auto msg_c_string = msg.Utf8Value();
-    auto msg_length = msg_c_string.length();
-    auto dst = info[0].As<Napi::String>();
-    auto dst_c_string = dst.Utf8Value();
-
-    blst::P2 *point = new blst::P2;
-    point->hash_to((blst::byte *)msg_c_string.c_str(), msg_length, dst_c_string);
-    point->sign_with(*key);
-    blst::P2_Affine *affine = new blst::P2_Affine{*point};
-    return Signature::Create(env, point, affine);
-}
-
 Napi::Value Signature::SigValidate(const Napi::CallbackInfo &info)
 {
     Napi::Env env = info.Env();
-    if (!affine->in_group())
+
+    if (point != nullptr && !point->in_group())
+    {
+        Napi::Error::New(env, "blst::BLST_POINT_NOT_IN_GROUP").ThrowAsJavaScriptException();
+    }
+    else if (affine != nullptr && !affine->in_group())
     {
         Napi::Error::New(env, "blst::BLST_POINT_NOT_IN_GROUP").ThrowAsJavaScriptException();
     }
@@ -135,14 +134,21 @@ Napi::Value Signature::Serialize(const Napi::CallbackInfo &info, int length)
 {
     Napi::Env env = info.Env();
     blst::byte out[length];
-    if (length == SIGNATURE_LENGTH_COMPRESSED)
+    if (is_point)
     {
-        affine->compress(out);
+        if (length == SIGNATURE_LENGTH_COMPRESSED)
+            point->compress(out);
+        else
+            point->serialize(out);
     }
     else
     {
-        affine->serialize(out);
+        if (length == SIGNATURE_LENGTH_COMPRESSED)
+            affine->compress(out);
+        else
+            affine->serialize(out);
     }
+
     Napi::TypedArrayOf<uint8_t> serialized = Napi::TypedArrayOf<uint8_t>::New(env, length);
     for (int i = 0; i < length; i++)
     {

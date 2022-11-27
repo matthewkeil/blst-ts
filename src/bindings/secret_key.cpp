@@ -118,7 +118,17 @@ Napi::Value SecretKey::GetPublicKey(const Napi::CallbackInfo &info)
 
 Napi::Value SecretKey::Sign(const Napi::CallbackInfo &info)
 {
-    return Signature::Create(info, key.get());
+    auto env = info.Env();
+    Napi::Value msgValue = info[0];
+    if (!msgValue.IsTypedArray())
+    {
+        Napi::TypeError::New(env, "msg to sign must be a Uint8Array or Buffer").ThrowAsJavaScriptException();
+        return env.Undefined();
+    }
+    auto msgArray = msgValue.As<Napi::TypedArrayOf<uint8_t>>();
+    blst::byte *msg = msgArray.Data();
+    size_t msgLength = msgArray.ByteLength();
+    return Signature::FromMessage(env, msg, msgLength, *key);
 }
 
 Napi::Value SecretKey::ToBytes(const Napi::CallbackInfo &info)

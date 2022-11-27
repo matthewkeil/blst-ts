@@ -22,20 +22,25 @@ Napi::Object PublicKey::Init(Napi::Env env, Napi::Object exports)
 }
 
 PublicKey::PublicKey(const Napi::CallbackInfo &info)
-    : Napi::ObjectWrap<PublicKey>(info), affine{nullptr}, point{nullptr}, is_affine{true}
+    : Napi::ObjectWrap<PublicKey>(info), point{nullptr}, affine{nullptr}, is_point{false}
 {
     Napi::Env env = info.Env();
     if (info[0].IsExternal() && info[1].IsExternal())
     {
-        auto wrappedAffine = info[0].As<Napi::External<blst::P1_Affine>>();
-        affine.release();
-        affine.reset(wrappedAffine.Data());
-        auto wrappedPoint = info[1].As<Napi::External<blst::P1>>();
-        point.release();
-        point.reset(wrappedPoint.Data());
-        if (point != nullptr)
+        auto wrappedAffine = info[0].As<Napi::External<blst::P1_Affine>>().Data();
+        auto wrappedPoint = info[1].As<Napi::External<blst::P1>>().Data();
+        if (wrappedAffine != nullptr)
         {
-            is_affine = false;
+            affine.reset(wrappedAffine);
+        }
+        if (wrappedPoint != nullptr)
+        {
+            is_point = true;
+            point.reset(wrappedPoint);
+        }
+        if (wrappedAffine == nullptr && wrappedPoint == nullptr)
+        {
+            Napi::TypeError::New(env, "Invalid internal creation. No point passed").ThrowAsJavaScriptException();
         }
         return;
     }
@@ -50,20 +55,17 @@ PublicKey::PublicKey(const Napi::CallbackInfo &info)
         Napi::TypeError::New(env, "Must pass a SecretKey to new PublicKey()").ThrowAsJavaScriptException();
         return;
     }
-    // assume its a wrapped SecretKey from a static constructor
     auto secretKey = SecretKey::Unwrap(obj);
     point.reset(new blst::P1{*(secretKey->key)});
-    affine.reset(new blst::P1_Affine{*point});
-    is_affine = false;
+    is_point = true;
 }
 
 Napi::Value PublicKey::Create(Napi::Env env, const blst::SecretKey *secretKey)
 {
-    // These two objects must flow into the unique_ptr in the constructor or they
+    // This object must flow into the unique_ptr in the constructor or it
     // will leak.  Stay vigilant!!
-    auto point = new blst::P1{*secretKey};
-    auto affine = new blst::P1_Affine{*point};
-    return Create(env, point, affine);
+    blst::P1 *point{new blst::P1{*secretKey}};
+    return Create(env, point, nullptr);
 }
 
 Napi::Value PublicKey::Create(Napi::Env env, blst::P1 *point, blst::P1_Affine *affine)
@@ -109,11 +111,9 @@ Napi::Value PublicKey::FromBytes(const Napi::CallbackInfo &info)
     blst::P1_Affine *affine = nullptr;
     try
     {
-
         if (type == CoordType::Jacobian)
         {
             point = new blst::P1{bytesData, bytesLength};
-            // affine = new blst::P1_Affine{*point};
         }
         else
         {
@@ -132,13 +132,27 @@ Napi::Value PublicKey::FromBytes(const Napi::CallbackInfo &info)
 Napi::Value PublicKey::KeyValidate(const Napi::CallbackInfo &info)
 {
     Napi::Env env = info.Env();
-    if (affine->is_inf())
+    if (is_point)
     {
-        Napi::Error::New(env, "blst::BLST_PK_IS_INFINITY").ThrowAsJavaScriptException();
+        if (point->is_inf())
+        {
+            Napi::Error::New(env, "blst::BLST_PK_IS_INFINITY").ThrowAsJavaScriptException();
+        }
+        if (!point->in_group())
+        {
+            Napi::Error::New(env, "blst::BLST_POINT_NOT_IN_GROUP").ThrowAsJavaScriptException();
+        }
     }
-    if (!affine->in_group())
+    else
     {
-        Napi::Error::New(env, "blst::BLST_POINT_NOT_IN_GROUP").ThrowAsJavaScriptException();
+        if (affine->is_inf())
+        {
+            Napi::Error::New(env, "blst::BLST_PK_IS_INFINITY").ThrowAsJavaScriptException();
+        }
+        if (!affine->in_group())
+        {
+            Napi::Error::New(env, "blst::BLST_POINT_NOT_IN_GROUP").ThrowAsJavaScriptException();
+        }
     }
     return info.Env().Undefined();
 }
@@ -147,22 +161,19 @@ Napi::Value PublicKey::Serialize(const Napi::CallbackInfo &info, int length)
 {
     Napi::Env env = info.Env();
     blst::byte out[length];
-    if (is_affine)
-    {
-        if (length == PUBLIC_KEY_LENGTH_COMPRESSED)
-        {
-            printf("length %lu", sizeof(out));
-            affine->compress(out);
-        }
-        else
-            affine->serialize(out);
-    }
-    else
+    if (is_point)
     {
         if (length == PUBLIC_KEY_LENGTH_COMPRESSED)
             point->compress(out);
         else
             point->serialize(out);
+    }
+    else
+    {
+        if (length == PUBLIC_KEY_LENGTH_COMPRESSED)
+            affine->compress(out);
+        else
+            affine->serialize(out);
     }
 
     Napi::TypedArrayOf<uint8_t> serialized = Napi::TypedArrayOf<uint8_t>::New(env, length);

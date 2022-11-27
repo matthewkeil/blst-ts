@@ -70,7 +70,7 @@ describe("SecretKey", () => {
     });
     describe("sign", () => {
       it("should create a Signature", () => {
-        const sig = new SecretKey().sign("some fancy message");
+        const sig = new SecretKey().sign(Buffer.from("some fancy message"));
         expect(sig).to.be.instanceOf(Signature);
         expect(sig.sigValidate()).to.be.undefined;
       });

@@ -10,7 +10,7 @@ public:
     static Napi::Object Init(Napi::Env env, Napi::Object exports);
     static Napi::Value FromBytes(const Napi::CallbackInfo &info);
     static Napi::Value Create(Napi::Env env, blst::P2 *point, blst::P2_Affine *affine);
-    static Napi::Value Create(const Napi::CallbackInfo &info, const blst::SecretKey *key);
+    static Napi::Value FromMessage(const Napi::Env &env, const blst::byte *msg, size_t msg_length, const blst::SecretKey &key);
 
     Signature(const Napi::CallbackInfo &info);
 
@@ -24,5 +24,5 @@ private:
     static Napi::FunctionReference constructor;
     std::unique_ptr<blst::P2_Affine> affine;
     std::unique_ptr<blst::P2> point;
-    bool is_affine;
+    bool is_point;
 };
