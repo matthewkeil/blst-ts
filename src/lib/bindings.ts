@@ -5,6 +5,7 @@ interface Bindings {
   SecretKey: types.SecretKeyConstructor;
   PublicKey: types.PublicKeyConstructor;
   Signature: types.SignatureConstructor;
+  aggregatePublicKeys: (pks: (string | Uint8Array)[]) => Promise<types.PublicKey>;
   DST: string;
   SECRET_KEY_LENGTH: number;
   PUBLIC_KEY_LENGTH_UNCOMPRESSED: number;

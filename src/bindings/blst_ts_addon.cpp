@@ -4,6 +4,7 @@
 #include "secret_key.hpp"
 #include "public_key.hpp"
 #include "signature.hpp"
+#include "functions/aggregate_public_keys.hpp"
 
 Napi::Object Init(Napi::Env env, Napi::Object exports)
 {
@@ -16,6 +17,8 @@ Napi::Object Init(Napi::Env env, Napi::Object exports)
     SecretKey::Init(env, exports);
     PublicKey::Init(env, exports);
     Signature::Init(env, exports);
+    exports.Set(Napi::String::New(env, "aggregatePublicKeys"),
+                Napi::Function::New(env, aggregatePublicKeys));
     exports.Set(Napi::String::New(env, "SECRET_KEY_LENGTH"),
                 Napi::Number::New(env, SECRET_KEY_LENGTH));
     exports.Set(Napi::String::New(env, "PUBLIC_KEY_LENGTH_UNCOMPRESSED"),

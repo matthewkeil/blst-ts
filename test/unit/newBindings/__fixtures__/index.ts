@@ -1,9 +1,12 @@
+import {SecretKey} from "../../../../src/lib/bindings";
 import {fromHex, getFilledUint8} from "../../../utils";
 
 export const KEY_MATERIAL = getFilledUint8(32);
 export const SECRET_KEY_BYTES = Uint8Array.from(
   Buffer.from("5620799c63c92bb7912122070f7ebb6ddd53bdf9aa63e7a7bffc177f03d14f68", "hex")
 );
+export const sk = SecretKey.fromBytes(SECRET_KEY_BYTES);
+
 // export const PUBLIC_KEY_BYTES = Uint8Array.from(
 //   Buffer.from("5620799c63c92bb7912122070f7ebb6ddd53bdf9aa63e7a7bffc177f03d14f68", "hex")
 // );
