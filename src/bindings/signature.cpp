@@ -14,7 +14,7 @@ Napi::Object Signature::Init(Napi::Env env, Napi::Object exports)
                                                        InstanceMethod("toBytes", &Signature::ToBytes, static_cast<napi_property_attributes>(napi_enumerable)),
                                                        InstanceValue("__type", Napi::String::New(env, SIGNATURE_TYPE), static_cast<napi_property_attributes>(napi_default))});
     constructor = Napi::Persistent(signatureConstructor);
-    constructor.SuppressDestruct();
+    // constructor.SuppressDestruct();
     exports.Set(Napi::String::New(env, "Signature"), signatureConstructor);
     return exports;
 }

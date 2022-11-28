@@ -16,7 +16,7 @@ Napi::Object SecretKey::Init(Napi::Env env, Napi::Object exports)
                                                           InstanceValue("__type", Napi::String::New(env, SECRET_KEY_TYPE), static_cast<napi_property_attributes>(napi_default)),
                                                       });
     constructor = Napi::Persistent(secretKeyConstructor);
-    constructor.SuppressDestruct();
+    // constructor.SuppressDestruct();
     exports.Set(Napi::String::New(env, "SecretKey"), secretKeyConstructor);
     return exports;
 }

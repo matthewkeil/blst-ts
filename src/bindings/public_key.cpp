@@ -15,8 +15,8 @@ Napi::Object PublicKey::Init(Napi::Env env, Napi::Object exports)
                                                           InstanceMethod("toBytes", &PublicKey::ToBytes, static_cast<napi_property_attributes>(napi_enumerable)),
                                                           InstanceValue("__type", Napi::String::New(env, PUBLIC_KEY_TYPE), static_cast<napi_property_attributes>(napi_default)),
                                                       });
-    constructor = Napi::Persistent(publicKeyConstructor);
-    constructor.SuppressDestruct();
+    PublicKey::constructor = Napi::Persistent(publicKeyConstructor);
+    // constructor.SuppressDestruct();
     exports.Set(Napi::String::New(env, "PublicKey"), publicKeyConstructor);
     return exports;
 }
