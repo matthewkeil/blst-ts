@@ -17,9 +17,8 @@ const char *BLST_ERROR_STRINGS[] = {
     "BLST_BAD_SCALAR",
 };
 
-void random_bytes_non_zero(blst::byte *out, const size_t length)
+void no_zero_bytes(blst::byte *out, const size_t length)
 {
-    randombytes_buf(out, length);
     for (size_t i = 0; i < length; i++)
     {
         if (out[i] == 0)
@@ -29,15 +28,10 @@ void random_bytes_non_zero(blst::byte *out, const size_t length)
     }
 };
 
-void no_zero_bytes(uint8_t *in, const size_t length)
+void random_bytes_non_zero(blst::byte *out, const size_t length)
 {
-    for (size_t i = 0; i < length; i++)
-    {
-        if (in[i] == 0)
-        {
-            in[i] = 1;
-        }
-    }
+    randombytes_buf(out, length);
+    no_zero_bytes(out, length);
 };
 
 const char *get_blst_error_string(blst::BLST_ERROR err)
@@ -45,21 +39,7 @@ const char *get_blst_error_string(blst::BLST_ERROR err)
     return BLST_ERROR_STRINGS[err];
 };
 
-void bytes_to_hex_string(std::string &out, blst::byte *in, size_t in_size)
-{
-    if (out.length() != in_size * 2)
-    {
-        throw std::invalid_argument("out string and in bytes are different lengths");
-    }
-    const char *hex = "0123456789ABCDEF";
-    for (size_t i = 0; i < in_size; i++)
-    {
-        out[2 * i] = hex[(*(in + i) >> 4) & 0xF];
-        out[2 * i + 1] = hex[*(in + i) & 0xF];
-    }
-}
-
-uint8_t char_to_uint8(char &input)
+uint8_t ByteArray::CharToUint8(const char &input)
 {
     if (input >= '0' && input <= '9')
         return input - '0';
@@ -67,47 +47,110 @@ uint8_t char_to_uint8(char &input)
         return input - 'A' + 10;
     if (input >= 'a' && input <= 'f')
         return input - 'a' + 10;
+    printf("bad input: %c\n", input);
     throw std::invalid_argument("Invalid input string");
 }
 
-blst::byte join_hex_string_bytes(char &char1, char &char2)
+blst::byte ByteArray::JoinHexStringBytes(const char &char1, const char &char2)
 {
-    return (char_to_uint8(char1) << 4) | char_to_uint8(char2);
+    return (CharToUint8(char1) << 4) | CharToUint8(char2);
 }
 
-void hex_string_to_bytes(blst::byte *out, size_t out_len, const char *in, size_t in_len)
+ByteArray::ByteArray(const blst::byte *in, size_t in_len, bool copy = false)
+    : data{const_cast<blst::byte *>(in)}, byte_length{in_len}
 {
+    if (copy)
+    {
+        data = (blst::byte *)calloc(byte_length, sizeof(blst::byte));
+        memcpy(data, in, byte_length);
+    }
+    else
+    {
+        should_delete = false;
+    }
+}
+ByteArray::ByteArray(const char *in, size_t in_len)
+    : data{nullptr}, byte_length{0}
+{
+    ByteArray::HexStringToBytes(data, &byte_length, in, in_len);
+}
+
+/**
+ *
+ * This function will calloc the array. The out_len is variable depending on how the
+ * string is built.
+ *
+ * You MUST manually delete the blst::byte[] that is allocated or it will leak
+ *
+ */
+void ByteArray::HexStringToBytes(blst::byte *out, size_t *out_len, const char *in, size_t in_len)
+{
+    // in_index is the byte to start reading from
     size_t in_index = 0;
-    char firstTwo[2] = {in[0], in[1]};
-    bool prefixed = strcmp("0x", firstTwo);
-    if (prefixed)
+    // if byte string is prefixed with the string value '0x' start reading from 3rd byte
+    // and truncate in_length by length of truncated prefix
+    if (*(in) == '0' && *(in + 1) == 'x')
     {
         in_len -= 2;
         in_index += 2;
     }
+    // set first two characters depending on whether padding is needed
+    // add padding '0' to front of odd length byte strings
     bool odd_number = in_len % 2 != 0;
-    char char1 = odd_number ? '0' : in[in_index];
-    char char2 = odd_number ? in[in_index] : in[in_index + 1];
+    char char1 = odd_number ? '0' : *(in + in_index);
+    char char2 = odd_number ? *(in + in_index) : *(in + in_index + 1);
     in_index += odd_number ? 1 : 2;
-    if ((odd_number ? in_len + 1 : in_len) / 2 != out_len)
+
+    // determine and return out_len to calling function
+    *out_len = (odd_number ? in_len + 1 : in_len) / 2;
+    // DELETE this memory after using byte string
+    out = (blst::byte *)calloc(*out_len, sizeof(blst::byte));
+
+    *out = JoinHexStringBytes(char1, char2);
+    size_t out_index = 1; // manually increment output iterator
+    // loop through the rest of the tuples and convert to byte array
+    for (; (in_index + 1) < in_len; out_index++, in_index += 2)
     {
-        throw std::invalid_argument("hex_string_to_bytes: out_len and in_len dont match");
-    }
-    blst::byte *out_index = out;
-    while (in_index + 2 <= in_len)
-    {
-        *out_index = join_hex_string_bytes(char1, char2);
-        out_index++;
-        in_index += 2;
-        if (in_index != in_len)
+        char1 = *(in + in_index);
+        char2 = *(in + in_index + 1);
+        if (out_index < *out_len)
         {
-            char1 = in[in_index];
-            char2 = in[in_index + 1];
+            *(out + out_index) = JoinHexStringBytes(char1, char2);
         }
     }
 }
 
-void hex_string_to_bytes(blst::byte *out, size_t out_len, std::string &in)
+void ByteArray::Clear()
 {
-    return hex_string_to_bytes(out, out_len, in.c_str(), in.size());
+    if (should_delete && (data != nullptr))
+    {
+        delete data;
+    }
+    data = nullptr;
+    byte_length = 0;
+}
+
+size_t ByteArray::ByteLength()
+{
+    return byte_length;
+};
+
+blst::byte *ByteArray::Data()
+{
+    return data;
+}
+
+void ByteArray::ToString(std::string &out)
+{
+    static const char *hex = {"0123456789ABCDEF"};
+    out.resize(2 * byte_length + 2);
+    out.clear();
+    out[0] = '0';
+    out[1] = 'x';
+    size_t out_it = 2;
+    for (size_t i = 0; i < byte_length; i++, out_it += 2)
+    {
+        out[out_it] = hex[(*(data + i) >> 4) & 0xF];
+        out[out_it + 1] = hex[(*(data + i)) & 0xF];
+    }
 }
