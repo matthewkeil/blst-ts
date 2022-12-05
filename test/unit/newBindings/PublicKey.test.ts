@@ -3,8 +3,6 @@ import {PublicKey, SecretKey} from "../../../src/lib/bindings";
 import {expectHex} from "../../utils";
 import {publicKeyExample, SECRET_KEY_BYTES} from "./__fixtures__";
 
-const sk = SecretKey.fromBytes(SECRET_KEY_BYTES);
-
 describe("PublicKey", () => {
   it("should exist", () => {
     expect(PublicKey).to.exist;
@@ -23,6 +21,7 @@ describe("PublicKey", () => {
         expect(() => new PublicKey({__type: "SecretKey"} as any)).to.throw("Invalid argument");
       });
       it("should return the same PublicKey from the same SecretKey", () => {
+        const sk = SecretKey.fromBytes(SECRET_KEY_BYTES);
         const pk1 = new PublicKey(sk);
         const pk2 = new PublicKey(sk);
         expect(pk1.serialize().toString()).to.equal(pk2.serialize().toString());
@@ -52,6 +51,7 @@ describe("PublicKey", () => {
   describe("methods", () => {
     describe("keyValidate()", () => {
       it("should not throw on valid public key", () => {
+        const sk = SecretKey.fromBytes(SECRET_KEY_BYTES);
         const pk = new PublicKey(sk);
         expect(pk.keyValidate()).to.be.undefined;
       });

@@ -1,11 +1,14 @@
-import {SecretKey} from "../../../../src/lib/bindings";
+import * as swigBindings from "../../../../src/old/lib";
+import napiBindings from "../../../../src/lib/bindings";
+import {SecretKey, PublicKey, Signature} from "../../../../src/lib/bindings.types";
+
 import {fromHex, getFilledUint8} from "../../../utils";
 
 export const KEY_MATERIAL = getFilledUint8(32);
 export const SECRET_KEY_BYTES = Uint8Array.from(
   Buffer.from("5620799c63c92bb7912122070f7ebb6ddd53bdf9aa63e7a7bffc177f03d14f68", "hex")
 );
-export const sk = SecretKey.fromBytes(SECRET_KEY_BYTES);
+export const sk = napiBindings.SecretKey.fromBytes(SECRET_KEY_BYTES);
 
 // export const PUBLIC_KEY_BYTES = Uint8Array.from(
 //   Buffer.from("5620799c63c92bb7912122070f7ebb6ddd53bdf9aa63e7a7bffc177f03d14f68", "hex")
@@ -31,3 +34,56 @@ export const signatureExample = {
     "a57565542eaa01ef2b910bf0eaba4d98a1e5b8b79cc425db08f8780732d0ea9bc85fc6175f272b2344bb27bc572ebf14022e52689dcedfccf44a00e5bd1aa59db44517217d6b0f21b372169ee761938c28914ddcb9663de54db288e760a8e14f"
   ),
 };
+
+export interface SwigBindingTestSet {
+  skBytes: Uint8Array;
+  secretKey: swigBindings.SecretKey;
+  publicKey: swigBindings.PublicKey;
+  msg: Uint8Array;
+  signature: swigBindings.Signature;
+}
+export function getSwigBindingTestSets(numSets: number): SwigBindingTestSet[] {
+  const sets: SwigBindingTestSet[] = [];
+  for (let i = 0; i < numSets; i++) {
+    const set = {
+      skBytes: Uint8Array.from(swigBindings.randomBytesNonZero(32)),
+    } as SwigBindingTestSet;
+    set.secretKey = swigBindings.SecretKey.fromKeygen(set.skBytes);
+    set.publicKey = set.secretKey.toPublicKey();
+    set.msg = Uint8Array.from(Buffer.from(`test-message-${i}`));
+    set.signature = set.secretKey.sign(set.msg);
+    sets.push(set);
+  }
+  return sets;
+}
+
+export interface BindingTestSet {
+  msg: SwigBindingTestSet["msg"];
+  skBytes: SwigBindingTestSet["skBytes"];
+  swig: Omit<SwigBindingTestSet, "msg" | "skBytes">;
+  napi: {
+    secretKey: SecretKey;
+    publicKey: PublicKey;
+    signature: Signature;
+  };
+}
+
+export function getBindingTestSets(numSets: number): BindingTestSet[] {
+  return getSwigBindingTestSets(numSets).map(({skBytes, msg, secretKey, publicKey, signature}) => {
+    const set = {
+      msg,
+      skBytes,
+      swig: {
+        secretKey,
+        publicKey,
+        signature,
+      },
+      napi: {
+        secretKey: napiBindings.SecretKey.keygen(skBytes),
+      },
+    } as BindingTestSet;
+    set.napi.publicKey = set.napi.secretKey.getPublicKey();
+    set.napi.signature = set.napi.secretKey.sign(set.msg);
+    return set;
+  });
+}
