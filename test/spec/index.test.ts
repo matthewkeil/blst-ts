@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 import jsYaml from "js-yaml";
 import {SPEC_TEST_LOCATION} from "./specTestVersioning";
-import * as blst from "../../src/lib";
+import * as blst from "../../src/swig/lib";
 import {fromHex, toHex} from "../utils";
 
 // Example full path

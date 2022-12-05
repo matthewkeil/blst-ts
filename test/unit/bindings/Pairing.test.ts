@@ -1,4 +1,4 @@
-import {blst, Pairing} from "../../../src/bindings";
+import {blst, Pairing} from "../../../src/swig/bindings";
 import {fromHex, runInstanceTestCases} from "../../utils";
 
 describe("Pairing", () => {

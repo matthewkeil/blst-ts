@@ -1,4 +1,4 @@
-import {blst, SecretKey} from "../../../src/bindings";
+import {blst, SecretKey} from "../../../src/swig/bindings";
 import {fromHex, runInstanceTestCases} from "../../utils";
 
 describe("SecretKey", () => {

@@ -1,4 +1,4 @@
-import * as swigBindings from "../../../../src/old/lib";
+import * as swigBindings from "../../../../src/swig/lib";
 import napiBindings from "../../../../src/lib/bindings";
 import {SecretKey, PublicKey, Signature} from "../../../../src/lib/bindings.types";
 

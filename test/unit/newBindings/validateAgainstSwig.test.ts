@@ -1,6 +1,6 @@
 import {expect} from "chai";
 import {CoordType} from "../../../src/lib/bindings.types";
-import * as swigBindings from "../../../src/old/lib";
+import * as swigBindings from "../../../src/swig/lib";
 import napiBindings from "../../../src/lib/bindings";
 import {expectHex} from "../../utils";
 import {getBindingTestSets, BindingTestSet} from "./__fixtures__";
