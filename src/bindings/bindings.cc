@@ -4,7 +4,7 @@
 #include "secret_key.hpp"
 #include "public_key.hpp"
 #include "signature.hpp"
-// #include "functions/functions.hpp"
+#include "functions/functions.hpp"
 
 Napi::Object InitFunctions(Napi::Env env, Napi::Object exports);
 
@@ -16,7 +16,7 @@ Napi::Object Init(Napi::Env env, Napi::Object exports)
         err.ThrowAsJavaScriptException();
     }
 
-    // InitFunctions(env, exports);
+    InitFunctions(env, exports);
     SecretKey::Init(env, exports);
     PublicKey::Init(env, exports);
     Signature::Init(env, exports);
