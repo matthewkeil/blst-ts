@@ -12,7 +12,8 @@ Napi::Object SecretKey::Init(Napi::Env env, Napi::Object exports)
                                                           StaticMethod("fromBytes", &SecretKey::FromBytes, static_cast<napi_property_attributes>(napi_static | napi_enumerable)),
                                                           InstanceMethod("getPublicKey", &SecretKey::GetPublicKey, static_cast<napi_property_attributes>(napi_enumerable)),
                                                           InstanceMethod("sign", &SecretKey::Sign, static_cast<napi_property_attributes>(napi_enumerable)),
-                                                          InstanceMethod("toBytes", &SecretKey::ToBytes, static_cast<napi_property_attributes>(napi_enumerable)),
+                                                          InstanceMethod("toBytes", &SecretKey::Serialize, static_cast<napi_property_attributes>(napi_enumerable)),
+                                                          InstanceMethod("serialize", &SecretKey::Serialize, static_cast<napi_property_attributes>(napi_enumerable)),
                                                           InstanceValue("__type", Napi::String::New(env, SECRET_KEY_TYPE), static_cast<napi_property_attributes>(napi_default)),
                                                       });
     constructor = Napi::Persistent(secretKeyConstructor);
@@ -131,7 +132,7 @@ Napi::Value SecretKey::Sign(const Napi::CallbackInfo &info)
     return Signature::FromMessage(env, msg, msgLength, *key);
 }
 
-Napi::Value SecretKey::ToBytes(const Napi::CallbackInfo &info)
+Napi::Value SecretKey::Serialize(const Napi::CallbackInfo &info)
 {
     auto env = info.Env();
     blst::byte bytesOut[SECRET_KEY_LENGTH] = {};

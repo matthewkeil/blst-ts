@@ -20,6 +20,7 @@ public:
     Napi::Value GetPublicKey(const Napi::CallbackInfo &info);
     Napi::Value Sign(const Napi::CallbackInfo &info);
     Napi::Value ToBytes(const Napi::CallbackInfo &info);
+    Napi::Value Serialize(const Napi::CallbackInfo &info);
 
 private:
     static Napi::FunctionReference constructor;

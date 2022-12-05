@@ -5,12 +5,13 @@
       'sources': [
         "blst/src/server.c",
         "blst/build/assembly.S",
-        'src/bindings/blst_ts_addon.cpp',
+        'src/bindings/bindings.cc',
         'src/bindings/blst_ts_utils.cpp',
         'src/bindings/secret_key.cpp',
         'src/bindings/public_key.cpp',
         'src/bindings/signature.cpp',
-        'src/bindings/functions/aggregate_public_keys.cpp',
+        # 'src/bindings/functions/tests/byte_array.cpp',
+        # 'src/bindings/functions/aggregate_public_keys.cpp', 
       ],
       'libraries': [
         "-lsodium",

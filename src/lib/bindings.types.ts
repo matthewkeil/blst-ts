@@ -22,6 +22,7 @@ export enum CoordType {
 }
 
 export type NapiBuffer = Uint8Array | Buffer;
+export type ByteArray = NapiBuffer | string;
 /*
  * Private constructor will randomly generate ikm when new'ing a key.
  * Use static methods SecretKey.fromBytes and SecretKey.keygen to
@@ -50,6 +51,8 @@ export declare class SecretKey {
   // signAsync(msg: Uint8Array| Buffer): Promise<Signature>;
   toBytes(): NapiBuffer;
   // toBytesAsync(): Promise<Uint8Array>;
+  serialize(): NapiBuffer;
+  // serializeAsync(): Promise<Uint8Array>;
 }
 export interface SecretKeyConstructor {
   new (): SecretKey;
@@ -101,4 +104,17 @@ export interface SignatureSet {
   msg: Uint8Array;
   publicKey: Uint8Array;
   signature: Uint8Array;
+}
+
+export interface TestFunctions {
+  testBufferAsBuffer(buff: Buffer): Buffer;
+  testBufferAsString(buff: Buffer): string;
+  testStringAsBuffer(str: string): Buffer;
+  testTypedArrayAsTypedArray(buff: Uint8Array): Uint8Array;
+  testTypedArrayAsString(buff: Uint8Array): string;
+}
+
+export interface BlstTsFunctions {
+  tests: TestFunctions;
+  aggregatePublicKeys(keys: ByteArray[]): Promise<PublicKey>;
 }

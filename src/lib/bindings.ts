@@ -12,9 +12,9 @@ interface Bindings {
   PUBLIC_KEY_LENGTH_COMPRESSED: number;
   SIGNATURE_LENGTH_UNCOMPRESSED: number;
   SIGNATURE_LENGTH_COMPRESSED: number;
+  functions: types.BlstTsFunctions;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
 const bindings: Bindings = require(findBindingByName("blst-ts.node"));
-types.PublicKey;
 export = bindings;
