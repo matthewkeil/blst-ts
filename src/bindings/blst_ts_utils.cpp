@@ -63,7 +63,17 @@ const blst::byte *ByteArray::GetPointer()
                                       : reinterpret_cast<const blst::byte *>(reinterpret_cast<const unsigned char *>(originalChar));
 }
 
-ByteArray::ByteArray(const char *in, size_t in_len)
+ByteArray::ByteArray(ByteArray &&source)
+    : originalChar{source.originalChar},
+      originalBytes{source.originalBytes},
+      data{std::move(source.data)},
+      byte_length{source.byte_length},
+      has_data_copy{source.has_data_copy}
+{
+}
+
+ByteArray::ByteArray(const char *in,
+                     size_t in_len)
     : originalChar{in}, originalBytes{nullptr}, data{NULL}, byte_length{0}, has_data_copy{true}
 {
     // in_index is the byte to start reading from

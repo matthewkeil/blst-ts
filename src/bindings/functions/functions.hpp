@@ -6,13 +6,13 @@ Napi::Value TestBufferAsString(const Napi::CallbackInfo &info);
 Napi::Value TestStringAsBuffer(const Napi::CallbackInfo &info);
 Napi::Value TestTypedArrayAsTypedArray(const Napi::CallbackInfo &info);
 Napi::Value TestTypedArrayAsString(const Napi::CallbackInfo &info);
-// Napi::Value AggregatePublicKeys(const Napi::CallbackInfo &info);
+Napi::Value AggregatePublicKeys(const Napi::CallbackInfo &info);
 
 Napi::Object InitFunctions(Napi::Env env, Napi::Object exports)
 {
     Napi::Object functions = Napi::Object::New(env);
-    // functions.Set(Napi::String::New(env, "aggregatePublicKeys"),
-                //   Napi::Function::New(env, AggregatePublicKeys));
+    functions.Set(Napi::String::New(env, "aggregatePublicKeys"),
+                  Napi::Function::New(env, AggregatePublicKeys));
 
     Napi::Object tests = Napi::Object::New(env);
     tests.Set(Napi::String::New(env, "testBufferAsBuffer"),

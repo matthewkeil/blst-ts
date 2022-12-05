@@ -62,7 +62,6 @@ public:
     ByteArray(const uint8_t &in, size_t in_len, bool save_copy);
     ByteArray(const char *in, size_t in_len);
     ByteArray(const std::string &in) : ByteArray(in.c_str(), in.length()) {}
-    // ByteArray() : ByteArray{nullptr, 0} {}
     ByteArray(ByteArray &&source);
     ~ByteArray() { Clear(); }
     void Clear();

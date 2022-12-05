@@ -11,7 +11,7 @@
         'src/bindings/public_key.cpp',
         'src/bindings/signature.cpp',
         'src/bindings/functions/tests/byte_array.cpp',
-        # 'src/bindings/functions/aggregate_public_keys.cpp', 
+        'src/bindings/functions/aggregate_public_keys.cpp', 
       ],
       'libraries': [
         "-lsodium",

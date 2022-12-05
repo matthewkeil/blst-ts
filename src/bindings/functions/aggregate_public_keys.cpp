@@ -1,41 +1,69 @@
-#include "aggregate_public_keys.hpp"
+#include <vector>
+#include <memory.h>
+#include "napi.h"
+#include "blst.hpp"
+#include "../public_key.hpp"
+#include "../blst_ts_utils.hpp"
+
+class AggPubKeysWorker : public Napi::AsyncWorker
+{
+private:
+    Napi::Promise::Deferred deferred;
+    Napi::Reference<Napi::Array> arrayReference;
+    size_t keys_length;
+    std::vector<ByteArray> keys;
+    std::vector<blst::P1> points;
+    blst::P1 point;
+
+public:
+    AggPubKeysWorker(Napi::Env env, Napi::Array &publicKeys);
+    ~AggPubKeysWorker();
+    void Execute() override;
+    void OnOK() override;
+    void OnError(Napi::Error const &err) override;
+    Napi::Promise GetPromise();
+};
+
+Napi::Value AggregatePublicKeys(const Napi::CallbackInfo &info)
+{
+    auto env = info.Env();
+    auto val0 = info[0];
+    if (!val0.IsArray())
+    {
+        Napi::TypeError::New(env, "aggregatePublicKeys() takes and array").ThrowAsJavaScriptException();
+        return env.Undefined();
+    }
+    auto keysArray = info[0].As<Napi::Array>();
+    AggPubKeysWorker *worker = new AggPubKeysWorker{env, keysArray};
+    worker->Queue();
+    return worker->GetPromise();
+}
 
 AggPubKeysWorker::AggPubKeysWorker(Napi::Env env, Napi::Array &publicKeys)
     : Napi::AsyncWorker{env},
       deferred{env},
       arrayReference{Napi::Reference<Napi::Array>::New(publicKeys, 1)},
       keys_length{publicKeys.Length()},
-      keys{keys_length},
-      points{keys_length},
+      keys{},
+      points{},
       point{}
 {
-    for (uint32_t i = 0; i < keys_length; i++)
+    keys.reserve(keys_length);
+    points.reserve(keys_length);
+    for (size_t i = 0; i < keys_length; i++)
     {
-        Napi::Value key = publicKeys[i];
-        if (key.IsString())
-        {
-            auto str = key.As<Napi::String>().Utf8Value();
-            keys[i].type = KeyType::string;
-            keys[i].ptr = (char *)str.c_str();
-            keys[i].len = str.size();
-        }
-        else if (key.IsTypedArray())
-        {
-            auto buf = key.As<Napi::TypedArrayOf<uint8_t>>();
-            keys[i].type = KeyType::bytes;
-            keys[i].ptr = buf.Data();
-            keys[i].len = buf.ByteLength();
-        }
-        else
-        {
-            Napi::TypeError::New(env, "aggregatePublicKeys(keys) keys must be an array of hex string or a Uint8Array").ThrowAsJavaScriptException();
-        }
+        keys.push_back(ByteArray{env, publicKeys[i], true});
     }
 }
 
 AggPubKeysWorker::~AggPubKeysWorker()
 {
-    arrayReference.Unref();
+    auto res = arrayReference.Unref();
+    if (res > 0)
+    {
+        printf("AggPubKeysWorker::arrayReference.Unref() returned non-zero ref count");
+        // Napi::TypeError::New(Env(), "arrayReference.Unref() returned no zero refs").ThrowAsJavaScriptException();
+    }
 }
 
 void AggPubKeysWorker::Execute()
@@ -44,17 +72,7 @@ void AggPubKeysWorker::Execute()
     {
         try
         {
-            if (keys[i].type == KeyType::string)
-            {
-                size_t key_len = keys[i].len;
-                blst::byte key_buff[key_len / 2];
-                hex_string_to_bytes(key_buff, key_len, (char *)keys[i].ptr, key_len);
-                points[i] = blst::P1{key_buff, key_len};
-            }
-            else
-            {
-                points[i] = blst::P1{(uint8_t *)keys[i].ptr, keys[i].len};
-            }
+            // points[i] = blst::P1_Affine{keys[i].Data(), keys[i].ByteLength()};
         }
         catch (blst::BLST_ERROR err)
         {
@@ -65,7 +83,7 @@ void AggPubKeysWorker::Execute()
         }
         try
         {
-            point.add(points[i]);
+            // point.add(points[i]);
         }
         catch (blst::BLST_ERROR err)
         {
@@ -90,19 +108,4 @@ void AggPubKeysWorker::OnError(Napi::Error const &err)
 Napi::Promise AggPubKeysWorker::GetPromise()
 {
     return deferred.Promise();
-}
-
-Napi::Value aggregatePublicKeys(const Napi::CallbackInfo &info)
-{
-    auto env = info.Env();
-    auto val0 = info[0];
-    if (!val0.IsArray())
-    {
-        Napi::TypeError::New(env, "aggregatePublicKeys() takes and array").ThrowAsJavaScriptException();
-        return env.Undefined();
-    }
-    auto keysArray = info[0].As<Napi::Array>();
-    AggPubKeysWorker *worker = new AggPubKeysWorker{env, keysArray};
-    worker->Queue();
-    return worker->GetPromise();
 }
