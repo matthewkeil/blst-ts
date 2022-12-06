@@ -3,8 +3,8 @@
     {
       'target_name': 'blst-ts',
       'sources': [
-        "blst/src/server.c",
-        "blst/build/assembly.S",
+        'blst/src/server.c',
+        'blst/build/assembly.S',
         'src/bindings/bindings.cc',
         'src/bindings/blst_ts_utils.cpp',
         'src/bindings/secret_key.cpp',
@@ -13,31 +13,37 @@
         'src/bindings/functions/tests/byte_array.cpp',
         'src/bindings/functions/aggregate_public_keys.cpp', 
       ],
-      'libraries': [
-        "-lsodium",
-      ],
+      'libraries': [ '-lsodium' ],
+      'dependencies': [ "<!(node -p \"require('node-addon-api').gyp\")" ],
       'include_dirs': [
-        "blst/bindings",
+        'blst/bindings',
         "<!@(node -p \"require('node-addon-api').include\")",
       ],
-      'dependencies': [
-        "<!(node -p \"require('node-addon-api').gyp\")"
-      ],
+      'defines': [ 'NAPI_CPP_EXCEPTIONS' ],
       'cflags!': [
-         '-fno-exceptions',
-         '-Wextern-c-compat'
+          '-fno-builtin-memcpy',
+          '-fexceptions',
+          '-Wextern-c-compat'
       ],
       'cflags_cc!': [
-         '-fexceptions',
+          '-fexceptions',
       ],
       'xcode_settings': {
         'GCC_ENABLE_CPP_EXCEPTIONS': 'YES',
         'CLANG_CXX_LIBRARY': 'libc++',
         'MACOSX_DEPLOYMENT_TARGET': '12'
       },
-      'msvs_settings': {
-        'VCCLCompilerTool': { 'ExceptionHandling': 1 },
-      }
+      'msvs_settings': { 'VCCLCompilerTool': { 'ExceptionHandling': 1 } },
+      'conditions': [
+        [ 'OS=="win"', {
+            'sources': [ 'blst/build/win64/*-x86_64.asm' ],
+          }
+        ],
+        [ 'OS=="linux"', {
+            'ldflags': [ '-Wl,-Bsymbolic' ],
+          }
+        ],
+      ],
     }
   ]
 }
