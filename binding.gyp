@@ -17,16 +17,16 @@
       'dependencies': [ "<!(node -p \"require('node-addon-api').gyp\")" ],
       'include_dirs': [
         'blst/bindings',
-        "<!@(node -p \"require('node-addon-api').include\")",
+        "<!@(node -p \"require('node-addon-api').include_dir\")",
       ],
       'defines': [ 'NAPI_CPP_EXCEPTIONS' ],
       'cflags!': [
+          '-fno-exceptions',
           '-fno-builtin-memcpy',
-          '-fexceptions',
           '-Wextern-c-compat'
       ],
       'cflags_cc!': [
-          '-fexceptions',
+          '-fno-exceptions'
       ],
       'xcode_settings': {
         'GCC_ENABLE_CPP_EXCEPTIONS': 'YES',
