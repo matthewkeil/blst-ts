@@ -9,7 +9,7 @@ Napi::Value TestBufferAsBuffer(const Napi::CallbackInfo &info)
         Napi::TypeError::New(env, "TestBufferAsBuffer takes a buffer argument").ThrowAsJavaScriptException();
     }
     Napi::Buffer<uint8_t> testBuff = info[0].As<Napi::Buffer<uint8_t>>();
-    ByteArray testArray{*testBuff.Data(), testBuff.ByteLength(), true};
+    ByteArray testArray{testBuff.Data(), testBuff.ByteLength(), true};
     return testArray.AsNapiBuffer(env);
 }
 
@@ -21,7 +21,7 @@ Napi::Value TestBufferAsString(const Napi::CallbackInfo &info)
         Napi::TypeError::New(env, "TestBufferAsString takes a buffer argument").ThrowAsJavaScriptException();
     }
     Napi::Buffer<uint8_t> testBuff = info[0].As<Napi::Buffer<uint8_t>>();
-    ByteArray testArray{*testBuff.Data(), testBuff.ByteLength(), true};
+    ByteArray testArray{testBuff.Data(), testBuff.ByteLength(), true};
     return testArray.AsNapiString(env);
 }
 
@@ -33,7 +33,7 @@ Napi::Value TestTypedArrayAsTypedArray(const Napi::CallbackInfo &info)
         Napi::TypeError::New(env, "TestTypedArrayAsTypedArray takes a Uint8Array argument").ThrowAsJavaScriptException();
     }
     Napi::TypedArrayOf<uint8_t> testBuff = info[0].As<Napi::TypedArrayOf<uint8_t>>();
-    ByteArray testArray{*testBuff.Data(), testBuff.ByteLength(), true};
+    ByteArray testArray{testBuff.Data(), testBuff.ByteLength(), true};
     return testArray.AsNapiBuffer(env);
 }
 
@@ -45,7 +45,7 @@ Napi::Value TestTypedArrayAsString(const Napi::CallbackInfo &info)
         Napi::TypeError::New(env, "TestTypedArrayAsString takes a buffer argument").ThrowAsJavaScriptException();
     }
     Napi::TypedArrayOf<uint8_t> testBuff = info[0].As<Napi::TypedArrayOf<uint8_t>>();
-    ByteArray testArray{*testBuff.Data(), testBuff.ByteLength(), true};
+    ByteArray testArray{testBuff.Data(), testBuff.ByteLength(), true};
     return testArray.AsNapiString(env);
 }
 

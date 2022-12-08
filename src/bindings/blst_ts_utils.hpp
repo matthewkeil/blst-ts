@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <memory>
 #include <vector>
+#include <iostream>
 #include <math.h>
 #include <sodium.h>
 #include "napi.h"
@@ -58,26 +59,29 @@ std::shared_ptr<T> make_shared_array(size_t size)
 class ByteArray
 {
 public:
-    ByteArray(const Napi::Env env, const Napi::Value &val, bool save_copy);
-    ByteArray(const uint8_t &in, size_t in_len, bool save_copy);
-    ByteArray(const char *in, size_t in_len);
+    ByteArray() : byte_length{0}, has_data_copy{false}, data{nullptr} {}
     ByteArray(const std::string &in) : ByteArray(in.c_str(), in.length()) {}
-    ByteArray(ByteArray &&source);
+    ByteArray(const char *const in, const size_t in_len);
+    ByteArray(const uint8_t *const in, const size_t in_len, bool save_copy = true);
+    ByteArray(const Napi::TypedArrayOf<uint8_t> &in, bool save_copy = true);
     ~ByteArray() { Clear(); }
+    ByteArray(ByteArray &&source);
+    ByteArray(const ByteArray &source) = default;
+    ByteArray &operator=(ByteArray &&source) = delete;
+    ByteArray &operator=(const ByteArray &source) = delete;
+
     void Clear();
     size_t ByteLength();
-    uint8_t *Data();
+    const blst::byte *Data();
     void ToString(std::string &out, bool should_prefix);
     Napi::String AsNapiString(Napi::Env &env);
     Napi::Buffer<uint8_t> AsNapiBuffer(Napi::Env &env);
     Napi::TypedArrayOf<uint8_t> AsNapiUint8Array(Napi::Env &env);
 
 private:
-    const char *originalChar;
-    const uint8_t *originalBytes;
-    std::shared_ptr<blst::byte> data;
     size_t byte_length;
     bool has_data_copy = false;
+    std::shared_ptr<blst::byte> data;
 
     const blst::byte *GetPointer();
 

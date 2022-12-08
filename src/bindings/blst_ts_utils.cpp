@@ -55,26 +55,87 @@ uint8_t ByteArray::HexCharTupleToUint8(const char &char1, const char &char2)
     return (CharToUnit8(char1) << 4) | CharToUnit8(char2);
 }
 
-const blst::byte *ByteArray::GetPointer()
-{
-    return has_data_copy
-               ? data.get()
-           : originalBytes != nullptr ? originalBytes
-                                      : reinterpret_cast<const blst::byte *>(reinterpret_cast<const unsigned char *>(originalChar));
-}
+/**
+ *
+ * Copy Constructor
+ *
+ */
+// ByteArray::ByteArray(const ByteArray &source)
+//     // : byte_length{source.byte_length},
+//     //   has_data_copy{source.has_data_copy}
+// {
+//     std::cout << "copy constructor: " << source.byte_length << std::endl;
+//     data = source.data;
+// }
 
+/**
+ *
+ * Copy Assignment
+ *
+ */
+// ByteArray &ByteArray::operator=(const ByteArray &rhs)
+// {
+//     std::cout << "copy assignment" << std::endl;
+//     if (this != &rhs)
+//     {
+//         data.reset();
+//         data = std::move(rhs.data);
+//         byte_length = rhs.byte_length;
+//         has_data_copy = rhs.has_data_copy;
+//     }
+//     return *this;
+// }
+
+/**
+ *
+ * Move Constructor
+ *
+ */
 ByteArray::ByteArray(ByteArray &&source)
-    : originalChar{source.originalChar},
-      originalBytes{source.originalBytes},
-      data{std::move(source.data)},
-      byte_length{source.byte_length},
+    : byte_length{source.byte_length},
       has_data_copy{source.has_data_copy}
 {
+    if (data != nullptr && byte_length > 0)
+    {
+        data.reset();
+    }
+    data = std::move(source.data);
+    source.data = nullptr;
+    source.has_data_copy = false;
+    source.byte_length = 0;
 }
+
+/**
+ *
+ * Move Assignment
+ *
+ */
+// ByteArray &ByteArray::operator=(ByteArray &&source)
+// {
+//     if (this != &source)
+//     {
+//         std::cout << "move assignment" << std::endl;
+//         if (data != nullptr && byte_length > 0)
+//         {
+//             data.reset();
+//         }
+//         std::cout << "attempting" << std::endl;
+//         data = std::move(source.data);
+//         std::cout << "after" << std::endl;
+//         source.data = nullptr;
+//         byte_length = source.byte_length;
+//         source.byte_length = 0;
+//         has_data_copy = source.has_data_copy;
+//         source.has_data_copy = false;
+//         std::cout << "move assignment complete" << std::endl;
+//     }
+//     return *this;
+// }
 
 ByteArray::ByteArray(const char *in,
                      size_t in_len)
-    : originalChar{in}, originalBytes{nullptr}, data{NULL}, byte_length{0}, has_data_copy{true}
+    : byte_length{0},
+      has_data_copy{true}
 {
     // in_index is the byte to start reading from
     size_t in_index = 0;
@@ -111,36 +172,31 @@ ByteArray::ByteArray(const char *in,
     }
 }
 
-ByteArray::ByteArray(const uint8_t &in, size_t in_len, bool save_copy = true)
-    : originalChar{nullptr}, originalBytes{&in}, data{nullptr}, byte_length{in_len}, has_data_copy{save_copy}
+ByteArray::ByteArray(const uint8_t *const in, size_t in_len, bool save_copy)
+    : byte_length{in_len},
+      has_data_copy{save_copy}
 {
     if (save_copy)
     {
         data = make_shared_array<blst::byte>(byte_length);
-        memcpy(data.get(), &in, byte_length);
+        for (size_t i = 0; i < byte_length; i++)
+        {
+            *(data.get() + i) = *(in + i);
+        }
     }
 }
 
-ByteArray::ByteArray(const Napi::Env env, const Napi::Value &val, bool save_copy = true)
+ByteArray::ByteArray(const Napi::TypedArrayOf<uint8_t> &in, bool save_copy)
+    : byte_length{in.ByteLength()},
+      has_data_copy{save_copy}
 {
-    if (val.IsString())
+    if (save_copy)
     {
-        std::string str = val.As<Napi::String>().Utf8Value();
-        ByteArray{str};
-    }
-    else if (val.IsBuffer())
-    {
-        auto buf = val.As<Napi::Buffer<uint8_t>>();
-        ByteArray{*buf.Data(), buf.ByteLength(), save_copy};
-    }
-    else if (val.IsTypedArray())
-    {
-        auto buf = val.As<Napi::TypedArrayOf<uint8_t>>();
-        ByteArray{*buf.Data(), buf.ByteLength(), save_copy};
-    }
-    else
-    {
-        Napi::TypeError::New(env, "ByteArray::FromValue supports utf-8 string | Buffer | Uint8Array").ThrowAsJavaScriptException();
+        data = make_shared_array<blst::byte>(byte_length);
+        for (size_t i = 0; i < byte_length; i++)
+        {
+            *(data.get() + i) = in[i];
+        }
     }
 }
 
@@ -152,8 +208,6 @@ void ByteArray::Clear()
         has_data_copy = false;
     }
     byte_length = 0;
-    originalChar = nullptr;
-    originalBytes = nullptr;
 }
 
 size_t ByteArray::ByteLength()
@@ -161,7 +215,7 @@ size_t ByteArray::ByteLength()
     return byte_length;
 };
 
-blst::byte *ByteArray::Data()
+const blst::byte *ByteArray::Data()
 {
     return data.get();
 }
@@ -188,7 +242,7 @@ void ByteArray::ToString(std::string &out, bool should_prefix = false)
 
 Napi::Buffer<uint8_t> ByteArray::AsNapiBuffer(Napi::Env &env)
 {
-    return Napi::Buffer<uint8_t>::Copy(env, GetPointer(), byte_length);
+    return Napi::Buffer<uint8_t>::Copy(env, data.get(), byte_length);
 };
 
 Napi::String ByteArray::AsNapiString(Napi::Env &env)
@@ -203,7 +257,7 @@ Napi::TypedArrayOf<uint8_t> ByteArray::AsNapiUint8Array(Napi::Env &env)
     auto arr = Napi::TypedArrayOf<uint8_t>::New(env, byte_length, napi_uint8_array);
     for (size_t i = 0; i < byte_length; i++)
     {
-        arr[i] = *(GetPointer() + i);
+        arr[i] = *(data.get() + i);
     }
     return arr;
 };
