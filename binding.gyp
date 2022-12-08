@@ -23,26 +23,46 @@
       'cflags!': [
           '-fno-exceptions',
           '-fno-builtin-memcpy',
-          '-Wextern-c-compat'
+          '-Wextern-c-compat',
+          '-Werror',
+          '-Wall',
+          '-Wextra',
+          '-Wpedantic',
+          '-Wunused-parameter',
       ],
       'cflags_cc!': [
-          '-fno-exceptions'
+          '-fno-exceptions',
+          '-Werror',
+          '-Wall',
+          '-Wextra',
+          '-Wpedantic',
+          '-Wunused-parameter',
       ],
-      'xcode_settings': {
-        'GCC_ENABLE_CPP_EXCEPTIONS': 'YES',
-        'CLANG_CXX_LIBRARY': 'libc++',
-        'MACOSX_DEPLOYMENT_TARGET': '12'
-      },
-      'msvs_settings': { 'VCCLCompilerTool': { 'ExceptionHandling': 1 } },
       'conditions': [
         [ 'OS=="win"', {
             'sources': [ 'blst/build/win64/*-x86_64.asm' ],
+            'defines': [ '_HAS_EXCEPTIONS=1' ],
+            'msvs_settings': {
+              'VCCLCompilerTool': {
+                'ExceptionHandling': 1,
+                'EnablePREfast': 'true',
+              },
+            },
           }
         ],
         [ 'OS=="linux"', {
             'ldflags': [ '-Wl,-Bsymbolic' ],
           }
         ],
+        ['OS=="mac"', {
+          'cflags+': ['-fvisibility=hidden'],
+          'xcode_settings': {
+            'OTHER_CFLAGS': ['-fvisibility=hidden'],
+            'GCC_ENABLE_CPP_EXCEPTIONS': 'YES',
+            'CLANG_CXX_LIBRARY': 'libc++',
+            'MACOSX_DEPLOYMENT_TARGET': '12',
+          }
+        }]
       ],
     }
   ]
