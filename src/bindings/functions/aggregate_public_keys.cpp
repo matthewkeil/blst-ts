@@ -8,19 +8,19 @@
 
 class AggPubKeysWorker : public Napi::AsyncWorker
 {
-private:
-    Napi::Promise::Deferred deferred;
-    size_t keys_length;
-    std::vector<ByteArray> keys;
-    std::vector<blst::P1> points;
-    blst::P1 point;
-
 public:
     AggPubKeysWorker(Napi::Env env, Napi::Array &publicKeys);
     void Execute() override;
     void OnOK() override;
     void OnError(Napi::Error const &err) override;
     Napi::Promise GetPromise();
+
+private:
+    Napi::Promise::Deferred deferred;
+    size_t keys_length;
+    std::vector<ByteArray> keys;
+    blst::P1 point;
+    blst::P1 temp;
 };
 
 Napi::Value AggregatePublicKeys(const Napi::CallbackInfo &info)
@@ -43,8 +43,8 @@ AggPubKeysWorker::AggPubKeysWorker(Napi::Env env, Napi::Array &publicKeys)
       deferred{env},
       keys_length{publicKeys.Length()},
       keys{},
-      points{},
-      point{}
+      point{},
+      temp{}
 {
     keys.reserve(keys_length);
     for (size_t i = 0; i < keys_length; i++)
@@ -67,12 +67,15 @@ AggPubKeysWorker::AggPubKeysWorker(Napi::Env env, Napi::Array &publicKeys)
 
 void AggPubKeysWorker::Execute()
 {
-    points.reserve(keys_length);
     for (size_t i = 0; i < keys_length; i++)
     {
         try
         {
-            points[i] = blst::P1{keys[i].Data(), keys[i].ByteLength()};
+            /**
+             * TODO: replace this call with:
+             * KeyCache.get(keys[i].Data(), keys[i].ByteLength())
+             */
+            temp = blst::P1{keys[i].Data(), keys[i].ByteLength()};
         }
         catch (blst::BLST_ERROR err)
         {
@@ -83,7 +86,7 @@ void AggPubKeysWorker::Execute()
         }
         try
         {
-            point.add(points[i]);
+            point.add(temp);
         }
         catch (blst::BLST_ERROR err)
         {
@@ -94,7 +97,6 @@ void AggPubKeysWorker::Execute()
         }
     }
     keys.clear();
-    points.clear();
 }
 
 void AggPubKeysWorker::OnOK()
