@@ -1,3 +1,4 @@
+#include <sstream>
 #include <vector>
 #include <memory.h>
 #include "napi.h"
@@ -9,7 +10,6 @@ class AggPubKeysWorker : public Napi::AsyncWorker
 {
 private:
     Napi::Promise::Deferred deferred;
-    Napi::Reference<Napi::Array> arrayReference;
     size_t keys_length;
     std::vector<ByteArray> keys;
     std::vector<blst::P1> points;
@@ -17,7 +17,6 @@ private:
 
 public:
     AggPubKeysWorker(Napi::Env env, Napi::Array &publicKeys);
-    ~AggPubKeysWorker();
     void Execute() override;
     void OnOK() override;
     void OnError(Napi::Error const &err) override;
@@ -42,57 +41,60 @@ Napi::Value AggregatePublicKeys(const Napi::CallbackInfo &info)
 AggPubKeysWorker::AggPubKeysWorker(Napi::Env env, Napi::Array &publicKeys)
     : Napi::AsyncWorker{env},
       deferred{env},
-      arrayReference{Napi::Reference<Napi::Array>::New(publicKeys, 1)},
       keys_length{publicKeys.Length()},
       keys{},
       points{},
       point{}
 {
     keys.reserve(keys_length);
-    points.reserve(keys_length);
     for (size_t i = 0; i < keys_length; i++)
     {
-        keys.push_back(ByteArray{env, publicKeys[i], true});
-    }
-}
-
-AggPubKeysWorker::~AggPubKeysWorker()
-{
-    auto res = arrayReference.Unref();
-    if (res > 0)
-    {
-        printf("AggPubKeysWorker::arrayReference.Unref() returned non-zero ref count");
-        // Napi::TypeError::New(Env(), "arrayReference.Unref() returned no zero refs").ThrowAsJavaScriptException();
+        Napi::Value val = publicKeys[i];
+        if (val.IsString())
+        {
+            keys.push_back(ByteArray{val.As<Napi::String>().Utf8Value()});
+        }
+        else if (val.IsTypedArray() || val.IsBuffer())
+        {
+            keys.push_back(ByteArray{val.As<Napi::TypedArrayOf<uint8_t>>()});
+        }
+        else
+        {
+            Napi::TypeError::New(env, "ByteArray::FromValue supports utf-8 string | Buffer | Uint8Array").ThrowAsJavaScriptException();
+        }
     }
 }
 
 void AggPubKeysWorker::Execute()
 {
+    points.reserve(keys_length);
     for (size_t i = 0; i < keys_length; i++)
     {
         try
         {
-            // points[i] = blst::P1_Affine{keys[i].Data(), keys[i].ByteLength()};
+            points[i] = blst::P1{keys[i].Data(), keys[i].ByteLength()};
         }
         catch (blst::BLST_ERROR err)
         {
-            std::string msg{"Invalid key at index :"};
-            msg.append(std::to_string(i));
-            this->SetError(msg);
+            std::ostringstream msg;
+            msg << "Invalid key at index: " << i << "\n threw Error: " << get_blst_error_string(err);
+            this->SetError(msg.str());
             return;
         }
         try
         {
-            // point.add(points[i]);
+            point.add(points[i]);
         }
         catch (blst::BLST_ERROR err)
         {
-            std::string msg{"Invalid point addition at index :"};
-            msg.append(std::to_string(i));
-            this->SetError(msg);
+            std::ostringstream msg;
+            msg << "Invalid key aggregation at index: " << i << "\n threw Error: " << get_blst_error_string(err);
+            this->SetError(msg.str());
             return;
         }
     }
+    keys.clear();
+    points.clear();
 }
 
 void AggPubKeysWorker::OnOK()

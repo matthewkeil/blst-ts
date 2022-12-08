@@ -1,7 +1,7 @@
 import {expect} from "chai";
-import {CoordType} from "../../../src/lib/bindings.types";
 import * as swigBindings from "../../../src/swig/lib";
 import napiBindings from "../../../src/lib/bindings";
+import {CoordType} from "../../../src/lib/bindings.types";
 import {expectHex} from "../../utils";
 import {getBindingTestSets, BindingTestSet} from "./__fixtures__";
 
@@ -74,6 +74,15 @@ describe("validation against SWIG bindings", () => {
 
         expectHex(swigSig.serialize(), napiSig.serialize());
       }
+    });
+  });
+  describe("aggregatePublicKeys()", () => {
+    const sets = getBindingTestSets(10);
+    const napiKeys = sets.map((set) => set.napi.publicKey.serialize());
+    it("should SWIG keyValidate after napi aggregation", async () => {
+      const napi = await napiBindings.functions.aggregatePublicKeys(napiKeys);
+      const swig = swigBindings.PublicKey.fromBytes(napi.serialize());
+      expect(swig.keyValidate()).to.be.undefined;
     });
   });
 });
