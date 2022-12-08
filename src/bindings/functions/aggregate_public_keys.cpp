@@ -77,7 +77,7 @@ void AggPubKeysWorker::Execute()
         catch (blst::BLST_ERROR err)
         {
             std::ostringstream msg;
-            msg << "Invalid key at index: " << i << "\n threw Error: " << get_blst_error_string(err);
+            msg << "Error " << get_blst_error_string(err) << ": Invalid key at index " << i;
             this->SetError(msg.str());
             return;
         }
@@ -88,7 +88,7 @@ void AggPubKeysWorker::Execute()
         catch (blst::BLST_ERROR err)
         {
             std::ostringstream msg;
-            msg << "Invalid key aggregation at index: " << i << "\n threw Error: " << get_blst_error_string(err);
+            msg << "Error " << get_blst_error_string(err) << ": Invalid key aggregation at index " << i;
             this->SetError(msg.str());
             return;
         }
