@@ -102,7 +102,6 @@ ByteArray::ByteArray(ByteArray &&source)
     data = std::move(source.data);
     source.data = nullptr;
     source.has_data_copy = false;
-    source.byte_length = 0;
 }
 
 /**
@@ -202,11 +201,11 @@ ByteArray::ByteArray(const Napi::TypedArrayOf<uint8_t> &in, bool save_copy)
 
 void ByteArray::Clear()
 {
-    if (has_data_copy)
+    if (data != nullptr)
     {
         data.reset();
-        has_data_copy = false;
     }
+    has_data_copy = false;
     byte_length = 0;
 }
 
