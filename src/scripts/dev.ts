@@ -7,7 +7,7 @@ const ROOT_FOLDER = resolve(__dirname, "..", "..");
 const SRC_FOLDER = resolve(ROOT_FOLDER, "src");
 const BINDINGS_FOLDER = resolve(SRC_FOLDER, "bindings");
 
-// const BUILD_FOLDER = resolve(ROOT_FOLDER, "build", "Release");
+const TESTS_FOLDER = resolve(ROOT_FOLDER, "test", "unit", "newBindings");
 
 const DEBOUNCE_TIME = 200;
 
@@ -26,11 +26,11 @@ void watchWithCallback({
       .catch(console.error),
 });
 
-// void watchWithCallback({
-//   path: BUILD_FOLDER,
-//   debounceTime: DEBOUNCE_TIME,
-//   cb: () =>
-//     cmdStringExec("npm run test:bindings", false)
-//       .then(console.log)
-//       .catch(() => void 0),
-// });
+void watchWithCallback({
+  path: TESTS_FOLDER,
+  debounceTime: DEBOUNCE_TIME,
+  cb: () =>
+    cmdStringExec("npm run test:bindings", false)
+      .then(console.log)
+      .catch(() => void 0),
+});
