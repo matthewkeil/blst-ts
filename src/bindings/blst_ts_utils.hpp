@@ -45,17 +45,6 @@ extern const std::string DST;
 extern const char *BLST_ERROR_STRINGS[];
 const char *get_blst_error_string(blst::BLST_ERROR err);
 
-// void random_bytes_non_zero(blst::byte *out, const size_t length);
-void no_zero_bytes(uint8_t *in, const size_t length);
-
-// void bytes_to_hex_string(std::string &out, blst::byte *in, size_t in_size);
-
-template <typename T>
-std::shared_ptr<T> make_shared_array(size_t size)
-{
-    return std::shared_ptr<T>(new T[size], std::default_delete<T[]>());
-}
-
 class ByteArray
 {
 public:

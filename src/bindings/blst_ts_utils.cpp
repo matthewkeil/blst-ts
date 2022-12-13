@@ -4,7 +4,7 @@ const std::string SECRET_KEY_TYPE = "SecretKey";
 const std::string PUBLIC_KEY_TYPE = "PublicKey";
 const std::string SIGNATURE_TYPE = "Signature";
 
-const std::string DST{"BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_"};
+const std::string DST = "BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_";
 
 const char *BLST_ERROR_STRINGS[] = {
     "BLST_SUCCESS",
@@ -21,22 +21,6 @@ const char *get_blst_error_string(blst::BLST_ERROR err)
     return BLST_ERROR_STRINGS[err];
 };
 
-void no_zero_bytes(blst::byte *out, const size_t length)
-{
-    for (size_t i = 0; i < length; i++)
-    {
-        if (out[i] == 0)
-        {
-            out[i] = 1;
-        }
-    }
-};
-
-void random_bytes_non_zero(blst::byte *out, const size_t length)
-{
-    randombytes_buf(out, length);
-    no_zero_bytes(out, length);
-};
 
 ByteArray ByteArray::RandomBytes(size_t length, bool non_zero)
 {
@@ -44,7 +28,13 @@ ByteArray ByteArray::RandomBytes(size_t length, bool non_zero)
     randombytes_buf(bytes, length);
     if (non_zero)
     {
-        no_zero_bytes(bytes, length);
+        for (size_t i = 0; i < length; i++)
+        {
+            if (bytes[i] == 0)
+            {
+                bytes[i] = 1;
+            }
+        }
     }
     return ByteArray{bytes, length};
 };
@@ -103,7 +93,6 @@ ByteArray::ByteArray(const uint8_t *const in, size_t in_len)
 {
     data.resize(in_len);
     memcpy(&(data[0]), in, in_len);
-    
 }
 
 ByteArray::ByteArray(const Napi::TypedArrayOf<uint8_t> &in)
@@ -178,79 +167,3 @@ Napi::TypedArrayOf<uint8_t> ByteArray::AsNapiUint8Array(Napi::Env &env)
         data[i] = arr[i];
     return arr;
 };
-
-/**
- *
- * Copy Constructor
- *
- */
-// ByteArray::ByteArray(const ByteArray &source)
-//     // : byte_length{source.byte_length},
-//     //   has_data_copy{source.has_data_copy}
-// {
-//     std::cout << "copy constructor: " << source.byte_length << std::endl;
-//     data = source.data;
-// }
-
-/**
- *
- * Copy Assignment
- *
- */
-// ByteArray &ByteArray::operator=(const ByteArray &rhs)
-// {
-//     std::cout << "copy assignment" << std::endl;
-//     if (this != &rhs)
-//     {
-//         data.reset();
-//         data = std::move(rhs.data);
-//         byte_length = rhs.byte_length;
-//         has_data_copy = rhs.has_data_copy;
-//     }
-//     return *this;
-// }
-
-/**
- *
- * Move Constructor
- *
- */
-// ByteArray::ByteArray(ByteArray &&source)
-//     : byte_length{source.byte_length},
-//       has_data_copy{source.has_data_copy}
-// {
-//     if (data != nullptr && byte_length > 0)
-//     {
-//         data.reset();
-//     }
-//     data = std::move(source.data);
-//     source.data = nullptr;
-//     source.has_data_copy = false;
-// }
-
-/**
- *
- * Move Assignment
- *
- */
-// ByteArray &ByteArray::operator=(ByteArray &&source)
-// {
-//     if (this != &source)
-//     {
-//         std::cout << "move assignment" << std::endl;
-//         if (data != nullptr && byte_length > 0)
-//         {
-//             data.reset();
-//         }
-//         std::cout << "attempting" << std::endl;
-//         data = std::move(source.data);
-//         std::cout << "after" << std::endl;
-//         source.data = nullptr;
-//         byte_length = source.byte_length;
-//         source.byte_length = 0;
-//         has_data_copy = source.has_data_copy;
-//         source.has_data_copy = false;
-//         std::cout << "move assignment complete" << std::endl;
-//     }
-//     return *this;
-// }

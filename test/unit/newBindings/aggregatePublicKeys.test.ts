@@ -1,6 +1,6 @@
 import {expect} from "chai";
 import {functions, PublicKey} from "../../../src/lib/bindings";
-import {getBindingTestSets} from "./__fixtures__";
+import {getBindingTestSets} from "../../__fixtures__";
 
 describe("aggregatePublicKeys()", () => {
   const sets = getBindingTestSets(10);

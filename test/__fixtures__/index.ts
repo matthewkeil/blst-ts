@@ -1,8 +1,8 @@
-import * as swigBindings from "../../../../src/swig/lib";
-import napiBindings from "../../../../src/lib/bindings";
-import {SecretKey, PublicKey, Signature} from "../../../../src/lib/bindings.types";
+import * as swigBindings from "../../src/swig/lib";
+import napiBindings from "../../src/lib/bindings";
+import {SecretKey, PublicKey, Signature} from "../../src/lib/bindings.types";
 
-import {fromHex, getFilledUint8} from "../../../utils";
+import {fromHex, getFilledUint8} from "../utils";
 
 export const KEY_MATERIAL = getFilledUint8(32);
 export const SECRET_KEY_BYTES = Uint8Array.from(

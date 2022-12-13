@@ -1,7 +1,7 @@
 import {expect} from "chai";
 import {PublicKey, SecretKey, Signature} from "../../../src/lib/bindings";
 import {SecretKey as SkType} from "../../../src/lib/bindings.types";
-import {KEY_MATERIAL, SECRET_KEY_BYTES} from "./__fixtures__";
+import {KEY_MATERIAL, SECRET_KEY_BYTES} from "../../__fixtures__";
 
 describe("SecretKey", () => {
   it("should exist", () => {

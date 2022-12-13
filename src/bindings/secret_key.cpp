@@ -96,7 +96,6 @@ Napi::Value SecretKey::FromBytes(const Napi::CallbackInfo &info)
     {
         Napi::Error::New(env, "skBytes must be 32 bytes long").ThrowAsJavaScriptException();
     }
-    no_zero_bytes(skBytesData, skBytesLength);
     // This pointer will be passed into a unique_ptr in constructor.
     // unique_ptr will manage the lifetime of this object and delete
     // in the destructor.
