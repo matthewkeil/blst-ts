@@ -17,10 +17,14 @@ describe("aggregatePublicKeys()", () => {
     const agg = await functions.aggregatePublicKeys(keys);
     expect(agg.keyValidate()).to.be.undefined;
   });
+  it("should throw for non-array inputs", () => {
+    expect(() => functions.aggregatePublicKeys(keys[0] as any)).to.throw("aggregatePublicKeys() takes and array");
+  });
   it("should throw for invalid key", async () => {
     expect(badKey.length).to.equal(96);
     try {
       await functions.aggregatePublicKeys(keys.concat(badKey));
+      throw new Error("function should throw");
     } catch (err) {
       expect((err as Error).message).to.equal("Error BLST_BAD_ENCODING: Invalid key at index 10");
     }

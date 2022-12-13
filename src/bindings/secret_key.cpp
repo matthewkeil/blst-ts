@@ -43,20 +43,18 @@ SecretKey::SecretKey(const Napi::CallbackInfo &info)
     // then new up the SecretKey in in the context of the unique_ptr
     // so it is cleaned up in the destructor
     key.reset(new blst::SecretKey);
-    blst::byte random[SECRET_KEY_LENGTH] = {};
-    random_bytes_non_zero(random, SECRET_KEY_LENGTH);
-    key->keygen(random, SECRET_KEY_LENGTH);
+    key->keygen(ByteArray::RandomBytes(SECRET_KEY_LENGTH).Data(), SECRET_KEY_LENGTH);
 }
 
 Napi::Value SecretKey::Keygen(const Napi::CallbackInfo &info)
 {
     Napi::Env env = info.Env();
-    auto ikm = std::make_unique<blst::byte[]>(32);
+    ByteArray ikm;
     Napi::Value entropyVal = info[0].As<Napi::Value>();
 
     if (entropyVal.IsUndefined()) // no entropy passed
     {
-        random_bytes_non_zero(ikm.get(), SECRET_KEY_LENGTH);
+        ikm = ByteArray::RandomBytes(SECRET_KEY_LENGTH, true);
     }
     else if (!entropyVal.IsTypedArray())
     {
@@ -71,17 +69,14 @@ Napi::Value SecretKey::Keygen(const Napi::CallbackInfo &info)
             Napi::Error err = Napi::Error::New(env, "ikm must be 32 bytes long");
             err.ThrowAsJavaScriptException();
         }
-        for (int i = 0; i < SECRET_KEY_LENGTH; i++)
-        {
-            ikm.get()[i] = entropyArray[i];
-        }
+        ikm = ByteArray{entropyArray};
     }
 
     // This pointer will be passed into a unique_ptr in constructor.
     // unique_ptr will manage the lifetime of this object and delete
     // in the destructor.
     blst::SecretKey *key = new blst::SecretKey;
-    key->keygen(ikm.get(), SECRET_KEY_LENGTH);
+    key->keygen(ikm.Data(), ikm.ByteLength());
     auto wrapped = Napi::External<blst::SecretKey>::New(env, key);
     return constructor.New({wrapped});
 }
