@@ -131,7 +131,6 @@ void VerifyMultipleAggregateSignaturesWorker::Execute()
 
     ctx->commit();
     result = ctx->finalverify();
-    ctx.reset();
 }
 
 void VerifyMultipleAggregateSignaturesWorker::OnOK()

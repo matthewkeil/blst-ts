@@ -10,7 +10,7 @@ const {
   testTypedArrayAsTypedArray,
 } = bindings.functions.tests;
 
-describe("ByteArray", () => {
+describe.only("ByteArray", () => {
   it("should take buffer and return as buffer", () => {
     const bytes = Buffer.from(getFilledUint8(32));
     expect(bytes).to.be.instanceof(Buffer);
