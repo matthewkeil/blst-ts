@@ -17,7 +17,6 @@ Napi::Object SecretKey::Init(Napi::Env env, Napi::Object exports)
                                                           InstanceValue("__type", Napi::String::New(env, SECRET_KEY_TYPE), static_cast<napi_property_attributes>(napi_default)),
                                                       });
     constructor = Napi::Persistent(secretKeyConstructor);
-    // constructor.SuppressDestruct();
     exports.Set(Napi::String::New(env, "SecretKey"), secretKeyConstructor);
     return exports;
 }
@@ -28,10 +27,9 @@ SecretKey::SecretKey(const Napi::CallbackInfo &info)
     Napi::Env env = info.Env();
     if (info[0].IsExternal())
     {
-        auto passedKey = info[0].As<Napi::External<blst::SecretKey>>();
         // passed as a naked pointer so make sure this gets put in the
         // unique_ptr to manage the lifetime of the blst::SecretKey
-        key.reset(passedKey.Data());
+        key.reset(info[0].As<Napi::External<blst::SecretKey>>().Data());
         return;
     }
     else if (info.Length() > 0)

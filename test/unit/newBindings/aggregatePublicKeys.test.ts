@@ -1,10 +1,10 @@
 // import {expect} from "chai";
-// import {functions, PublicKey} from "../../../src/lib/bindings";
+// import {functions, SecretKey, PublicKey} from "../../../src/lib/bindings";
 // import {getBindingTestSets} from "../../__fixtures__";
 
 // describe("aggregatePublicKeys()", () => {
 //   const sets = getBindingTestSets(10);
-//   const keys = sets.map((set) => set.napi.publicKey.serialize());
+//   const keys = sets.map(({skBytes}) => SecretKey.keygen(skBytes).serialize());
 //   const badKey = Uint8Array.from(Buffer.from([...keys[0].slice(8), ...Buffer.from("0123456789abcdef", "hex")]));
 
 //   it("should return the promise of a PublicKey", async () => {

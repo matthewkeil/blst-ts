@@ -1,6 +1,8 @@
 #include <sstream>
+#include <future>
 #include "napi.h"
 #include "../blst_ts_utils.hpp"
+#include "../utils/thread_pool.hpp"
 
 #ifndef RANDOM_BYTES_LENGTH
 #define RANDOM_BYTES_LENGTH 8
@@ -11,11 +13,13 @@ class VerifyMultipleAggregateSignaturesWorker : public Napi::AsyncWorker
 private:
     Napi::Promise::Deferred deferred;
     std::unique_ptr<blst::Pairing> ctx;
-    size_t setLength;
+    std::mutex ctx_mutex;
+    size_t set_length;
     std::vector<ByteArray> msgs;
     std::vector<ByteArray> publicKeys;
     std::vector<ByteArray> signatures;
     bool result;
+    void Aggregate(size_t i);
 
 public:
     VerifyMultipleAggregateSignaturesWorker(Napi::Env env, Napi::Array &signatureSets);
@@ -44,16 +48,17 @@ VerifyMultipleAggregateSignaturesWorker::VerifyMultipleAggregateSignaturesWorker
     : Napi::AsyncWorker{env},
       deferred{env},
       ctx{new blst::Pairing(true, DST)},
-      setLength{signatureSets.Length()},
+      ctx_mutex{},
+      set_length{signatureSets.Length()},
       msgs{},
       publicKeys{},
       signatures{},
-      result{true}
+      result{false}
 {
-    msgs.resize(setLength);
-    publicKeys.resize(setLength);
-    signatures.resize(setLength);
-    for (size_t i = 0; i < setLength; i++)
+    msgs.resize(set_length);
+    publicKeys.resize(set_length);
+    signatures.resize(set_length);
+    for (size_t i = 0; i < set_length; i++)
     {
         Napi::Value val = signatureSets[i];
         if (!val.IsObject())
@@ -101,36 +106,64 @@ VerifyMultipleAggregateSignaturesWorker::VerifyMultipleAggregateSignaturesWorker
     }
 }
 
+void aggregate(
+    std::vector<ByteArray> &msgs,
+    std::vector<ByteArray> &publicKeys,
+    std::vector<ByteArray> &signatures,
+    size_t i,
+    std::mutex &ctx_mutex,
+    std::unique_ptr<blst::Pairing> &ctx)
+{
+    blst::Pairing *thread_ctx = new blst::Pairing(true, DST);
+    blst::P1_Affine pk{publicKeys[i].Data(), publicKeys[i].ByteLength()};
+    blst::P2_Affine sig{signatures[i].Data(), signatures[i].ByteLength()};
+    blst::BLST_ERROR err = thread_ctx->mul_n_aggregate(&pk,
+                                                       &sig,
+                                                       ByteArray::RandomBytes(RANDOM_BYTES_LENGTH).Data(),
+                                                       RANDOM_BYTES_LENGTH,
+                                                       msgs[i].Data(),
+                                                       msgs[i].ByteLength());
+    if (err != blst::BLST_ERROR::BLST_SUCCESS)
+    {
+        throw err;
+    }
+    thread_ctx->commit();
+    std::lock_guard<std::mutex> guard{ctx_mutex};
+    ctx->merge(thread_ctx);
+    delete thread_ctx;
+}
+
 void VerifyMultipleAggregateSignaturesWorker::Execute()
 {
-    for (size_t i = 0; i < setLength; i++)
+    try
     {
-        try
+        ThreadPool pool{10};
+        std::future<void> results[set_length];
+        for (size_t i = 0; i < set_length; i++)
         {
-            blst::P1_Affine pk{publicKeys[i].Data(), publicKeys[i].ByteLength()};
-            blst::P2_Affine sig{signatures[i].Data(), signatures[i].ByteLength()};
-            blst::BLST_ERROR err = ctx->mul_n_aggregate(&pk,
-                                                        &sig,
-                                                        ByteArray::RandomBytes(RANDOM_BYTES_LENGTH).Data(),
-                                                        RANDOM_BYTES_LENGTH,
-                                                        msgs[i].Data(),
-                                                        msgs[i].ByteLength());
-            if (err != blst::BLST_ERROR::BLST_SUCCESS)
-            {
-                throw err;
-            }
+            results[i] = pool.submit(std::bind(&aggregate,
+                                               std::ref(msgs),
+                                               std::ref(publicKeys),
+                                               std::ref(signatures),
+                                               i,
+                                               std::ref(ctx_mutex),
+                                               std::ref(ctx)));
         }
-        catch (blst::BLST_ERROR err)
-        {
-            std::ostringstream errorMsg;
-            errorMsg << "BLST_ERROR:: " << get_blst_error_string(err) << " in verifyMultipleAggregateSignatures on index: " << i;
-            SetError(errorMsg.str());
-            return;
-        }
-    }
 
-    ctx->commit();
-    result = ctx->finalverify();
+        for (size_t i = 0; i < set_length; i++)
+        {
+            results[i].get();
+        }
+
+        result = ctx->finalverify();
+    }
+    catch (blst::BLST_ERROR err)
+    {
+        std::ostringstream errorMsg;
+        errorMsg << "BLST_ERROR:: " << get_blst_error_string(err) << " in verifyMultipleAggregateSignatures";
+        SetError(errorMsg.str());
+        return;
+    }
 }
 
 void VerifyMultipleAggregateSignaturesWorker::OnOK()

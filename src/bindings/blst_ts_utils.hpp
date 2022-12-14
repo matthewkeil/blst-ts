@@ -1,5 +1,5 @@
-#ifndef __BLST_TS_UTILS_HH__
-#define __BLST_TS_UTILS_HH__
+#ifndef __BLST_TS_UTILS_HPP__
+#define __BLST_TS_UTILS_HPP__
 
 #include <iterator>
 #include <algorithm>
@@ -75,4 +75,4 @@ private:
     std::vector<blst::byte> data;
 };
 
-#endif /* __BLST_TS_UTILS_HH__ */
+#endif /* __BLST_TS_UTILS_HPP__ */
