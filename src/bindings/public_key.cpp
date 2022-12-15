@@ -16,7 +16,7 @@ Napi::Object PublicKey::Init(Napi::Env env, Napi::Object exports)
                                                           InstanceValue("__type", Napi::String::New(env, PUBLIC_KEY_TYPE), static_cast<napi_property_attributes>(napi_default)),
                                                       });
     PublicKey::constructor = Napi::Persistent(publicKeyConstructor);
-    // constructor.SuppressDestruct();
+    constructor.SuppressDestruct();
     exports.Set(Napi::String::New(env, "PublicKey"), publicKeyConstructor);
     return exports;
 }
