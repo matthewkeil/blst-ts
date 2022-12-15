@@ -89,7 +89,7 @@ void (async function () {
   const sets = makeSets(1000);
   const swigSingle = await swigSingleTest(sets);
   const napiSingle = await napiSingleTest(sets);
-  const loopCount = 10;
+  const loopCount = 1;
   const swigLoop = await swigLoopTest(sets, loopCount);
   const napiLoop = await napiLoopTest(sets, loopCount);
   console.log({
