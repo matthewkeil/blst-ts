@@ -22,6 +22,7 @@
       ],
       'defines': [ 'NAPI_CPP_EXCEPTIONS' ],
       'cflags!': [
+          '-fno-exceptions',
           '-fno-builtin-memcpy',
           '-Wextern-c-compat',
           '-Werror',
@@ -31,7 +32,7 @@
           '-Wunused-parameter',
       ],
       'cflags_cc!': [
-          '-fexceptions',
+          '-fno-exceptions',
           '-Werror',
           '-Wall',
           '-Wextra',
