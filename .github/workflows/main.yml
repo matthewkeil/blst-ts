@@ -86,7 +86,7 @@ jobs:
       - name: Install && Build TS + bindings
         run: |
           yarn config set ignore-engines true
-          yarn install
+          yarn install --ignore-scripts 
         
       - name: Test timing
         run: yarn test:bindings:timing
