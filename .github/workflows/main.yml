@@ -73,6 +73,17 @@ jobs:
       #     name: blst_wrap.cpp
       #     path: prebuild/
 
+      - name: Install libsodium
+        run: |
+          mkdir sodium
+          cd sodium
+          curl -o sodium.tar.gz "https://download.libsodium.org/libsodium/releases/libsodium-1.0.18.tar.gz"
+          tar -xvzf sodium.tar.gz
+          cd libsodium-1.0.18
+          ./configure
+          make && make check
+          sudo make install
+
       - name: Setup Node.js ${{matrix.node}}
         uses: actions/setup-node@v1
         with:
@@ -86,8 +97,14 @@ jobs:
       - name: Install && Build TS + bindings
         run: |
           yarn config set ignore-engines true
-          yarn install --ignore-scripts 
+          yarn install 
         
+      # - name: Node-Gyp Configure
+      #   run: node-gyp configure
+
+      # - name: Node-Gyp Build
+      #   run: node-gyp build
+
       - name: Test timing
         run: yarn test:bindings:timing
 
