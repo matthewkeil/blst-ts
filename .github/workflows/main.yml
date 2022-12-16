@@ -26,7 +26,7 @@ jobs:
           ./autogen.sh;
           ./configure --prefix=$HOME/swig;
           make;
-          sudo make install;
+          make install;
 
       - name: Install && Build TS + bindings
         run: |
