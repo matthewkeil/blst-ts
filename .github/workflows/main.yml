@@ -74,7 +74,7 @@ jobs:
       #     path: prebuild/
 
       - name: Install libsodium
-        if: ${{ matrix.os }} != windows-latest
+        if: matrix.os != 'windows-latest'
         run: |
           mkdir sodium
           cd sodium
@@ -86,7 +86,7 @@ jobs:
           sudo make install
 
       - name: Install libsodium
-        if: ${{ matrix.os }} == windows-latest
+        if: matrix.os == 'windows-latest'
         run: |
           git clone https://github.com/Microsoft/vcpkg.git
           cd vcpkg
