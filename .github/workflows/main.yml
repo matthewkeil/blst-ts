@@ -99,8 +99,8 @@ jobs:
       # - name: Build native code
       #   run: node-gyp build
 
-      - name: Test unit
-        run: yarn test:bindings
+      # - name: Test unit
+      #   run: yarn test:bindings
         
       - name: Test timing
         run: yarn test:bindings:timing
