@@ -8,7 +8,6 @@ on:
     tags:
       - "v*.*.*"
 
-jobs:
   # build-swig:
   #   runs-on: ubuntu-latest
   #   steps:
@@ -77,6 +76,17 @@ jobs:
 
       - name: Initialize submodules
         run: git submodule update --init --recursive
+
+      - name: Install Sodium
+        run: |
+          mkdir sodium
+          cd sodium
+          curl -o sodium.tar.gz https://download.libsodium.org/libsodium/releases/libsodium-1.0.18-stable.tar.gz
+          tar -xvzf sodium.tar.gz
+          cd libsodium-stable
+          ./configure
+          make && make check
+          make install
 
       - name: Install && Build TS + bindings
         run: |
