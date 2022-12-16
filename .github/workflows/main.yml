@@ -75,6 +75,9 @@ jobs:
         with:
           node-version: ${{matrix.node}}
 
+      - name: Initialize submodules
+        run: git submodule update --init --recursive
+
       - name: Install && Build TS + bindings
         run: |
           yarn config set ignore-engines true
@@ -92,11 +95,9 @@ jobs:
       #   run: yarn download-spec-tests
       #   if: matrix.os != 'windows-latest'
 
-      - name: Configure node-gyp
-        run: node-gyp configure
 
-      - name: Build native code
-        run: node-gyp build
+      # - name: Build native code
+      #   run: node-gyp build
 
       - name: Test unit
         run: yarn test:bindings

@@ -12,7 +12,6 @@
   "scripts": {
     "node": "node",
     "ts": "npm run node -- -r ts-node/register",
-    "install": "node dist/scripts/install.js",
     "lint": "eslint --color --ext .ts src/ test/",
     "build:addon": "node-gyp build",
     "dev": "ts-node src/scripts/dev",
