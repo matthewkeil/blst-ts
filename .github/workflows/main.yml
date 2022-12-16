@@ -9,46 +9,46 @@ on:
       - "v*.*.*"
 
 jobs:
-  build-swig:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: true
-      - name: Setup Node.js
-        uses: actions/setup-node@v1
-        with:
-          node-version: 16
-      - name: Setup SWIG
-        run: |
-          git clone -b v8-isolate-aware-init https://github.com/dot-asm/swig;
-          cd swig;
-          ./autogen.sh;
-          ./configure --prefix=$HOME/swig;
-          make;
-          make install;
+  # build-swig:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #       with:
+  #         submodules: true
+  #     - name: Setup Node.js
+  #       uses: actions/setup-node@v1
+  #       with:
+  #         node-version: 16
+  #     - name: Setup SWIG
+  #       run: |
+  #         git clone -b v8-isolate-aware-init https://github.com/dot-asm/swig;
+  #         cd swig;
+  #         ./autogen.sh;
+  #         ./configure --prefix=$HOME/swig;
+  #         make;
+  #         make install;
 
-      - name: Install && Build TS + bindings
-        run: |
-          export PATH=~/swig/bin:$PATH SWIG_LIB=~/swig/share/swig/4.1.0
-          yarn bootstrap
-          ls -ltrh .
-        working-directory: blst/bindings/node.js
-        env:
-          BLST_WRAP_CPP_FORCE_BUILD: true
+  #     - name: Install && Build TS + bindings
+  #       run: |
+  #         export PATH=~/swig/bin:$PATH SWIG_LIB=~/swig/share/swig/4.1.0
+  #         yarn bootstrap
+  #         ls -ltrh .
+  #       working-directory: blst/bindings/node.js
+  #       env:
+  #         BLST_WRAP_CPP_FORCE_BUILD: true
 
-      - name: Upload binding.node
-        uses: actions/upload-artifact@v2
-        with:
-          name: blst_wrap.cpp
-          path: prebuild/blst_wrap.cpp
-          if-no-files-found: error
+  #     - name: Upload binding.node
+  #       uses: actions/upload-artifact@v2
+  #       with:
+  #         name: blst_wrap.cpp
+  #         path: prebuild/blst_wrap.cpp
+  #         if-no-files-found: error
 
-      - name: Lint
-        run: yarn lint
+  #     - name: Lint
+  #       run: yarn lint
 
   build:
-    needs: ["build-swig"]
+    # needs: ["build-swig"]
     runs-on: ${{matrix.os}}
     strategy:
       fail-fast: false
@@ -67,11 +67,11 @@ jobs:
         with:
           submodules: true
 
-      - name: Get SWIG pre-built
-        uses: actions/download-artifact@v2
-        with:
-          name: blst_wrap.cpp
-          path: prebuild/
+      # - name: Get SWIG pre-built
+      #   uses: actions/download-artifact@v2
+      #   with:
+      #     name: blst_wrap.cpp
+      #     path: prebuild/
 
       - name: Setup Node.js ${{matrix.node}}
         uses: actions/setup-node@v1
