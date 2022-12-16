@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 
-const ROOT_DIR = path.join(__dirname, "../..");
+const ROOT_DIR = path.join(__dirname, "..", "..");
 const BLST_NODE = "blst.node";
 export const PREBUILD_DIR = path.join(ROOT_DIR, "prebuild");
 export const PACKAGE_JSON_PATH = path.join(ROOT_DIR, "package.json");
@@ -11,6 +11,7 @@ export const BINDINGS_DIR = path.join(ROOT_DIR, "blst/bindings/node.js");
 // Resolve path to absolute since it will be used from a different working dir
 // when running blst_wrap.py
 export const BLST_WRAP_CPP_PREBUILD = path.resolve(ROOT_DIR, "..", "prebuild", "blst_wrap.cpp");
+console.log({BLST_WRAP_CPP_PREBUILD});
 
 /**
  * Get binary name.
