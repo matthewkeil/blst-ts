@@ -14,7 +14,7 @@
         'src/bindings/functions/aggregate_public_keys.cpp', 
         'src/bindings/functions/verify_multiple_aggregate_signatures.cpp', 
       ],
-      'libraries': [ '-lsodium' ],
+      # 'libraries': [ '-lsodium' ],
       'dependencies': [ "<!(node -p \"require('node-addon-api').gyp\")" ],
       'include_dirs': [
         'blst/bindings',

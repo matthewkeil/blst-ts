@@ -25,7 +25,7 @@ const char *get_blst_error_string(blst::BLST_ERROR err)
 ByteArray ByteArray::RandomBytes(size_t length, bool non_zero)
 {
     blst::byte bytes[length];
-    randombytes_buf(bytes, length);
+    // randombytes_buf(bytes, length);
     if (non_zero)
     {
         for (size_t i = 0; i < length; i++)
