@@ -9,46 +9,46 @@ on:
       - "v*.*.*"
 
 jobs:
-  # build-swig:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #       with:
-  #         submodules: true
-  #     - name: Setup Node.js
-  #       uses: actions/setup-node@v1
-  #       with:
-  #         node-version: 16
-  #     - name: Setup SWIG
-  #       run: |
-  #         git clone -b v8-isolate-aware-init https://github.com/dot-asm/swig;
-  #         cd swig;
-  #         ./autogen.sh;
-  #         ./configure --prefix=$HOME/swig;
-  #         make;
-  #         sudo make install;
+  build-swig:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Setup Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: 16
+      - name: Setup SWIG
+        run: |
+          git clone -b v8-isolate-aware-init https://github.com/dot-asm/swig;
+          cd swig;
+          ./autogen.sh;
+          ./configure --prefix=$HOME/swig;
+          make;
+          sudo make install;
 
-  #     - name: Install && Build TS + bindings
-  #       run: |
-  #         export PATH=~/swig/bin:$PATH SWIG_LIB=~/swig/share/swig/4.1.0
-  #         yarn bootstrap
-  #         ls -ltrh .
-  #       working-directory: blst/bindings/node.js
-  #       env:
-  #         BLST_WRAP_CPP_FORCE_BUILD: true
+      - name: Install && Build TS + bindings
+        run: |
+          export PATH=~/swig/bin:$PATH SWIG_LIB=~/swig/share/swig/4.1.0
+          yarn bootstrap
+          ls -ltrh .
+        working-directory: blst/bindings/node.js
+        env:
+          BLST_WRAP_CPP_FORCE_BUILD: true
 
-  #     - name: Upload binding.node
-  #       uses: actions/upload-artifact@v2
-  #       with:
-  #         name: blst_wrap.cpp
-  #         path: prebuild/blst_wrap.cpp
-  #         if-no-files-found: error
+      - name: Upload binding.node
+        uses: actions/upload-artifact@v2
+        with:
+          name: blst_wrap.cpp
+          path: prebuild/blst_wrap.cpp
+          if-no-files-found: error
 
-  #     - name: Lint
-  #       run: yarn lint
+      - name: Lint
+        run: yarn lint
 
   build:
-    # needs: ["build-swig"]
+    needs: ["build-swig"]
     runs-on: ${{matrix.os}}
     strategy:
       fail-fast: false
@@ -56,7 +56,7 @@ jobs:
         os: 
           - ubuntu-latest
           - macos-latest
-          - windows-latest
+          # - windows-latest
         node: [16]
         # node: [10, 11, 12, 13, 14, 15, 16, 17, 18]
     defaults:
@@ -67,11 +67,11 @@ jobs:
         with:
           submodules: true
 
-      # - name: Get SWIG pre-built
-      #   uses: actions/download-artifact@v2
-      #   with:
-      #     name: blst_wrap.cpp
-      #     path: prebuild/
+      - name: Get SWIG pre-built
+        uses: actions/download-artifact@v2
+        with:
+          name: blst_wrap.cpp
+          path: prebuild/
 
       - name: Setup Node.js ${{matrix.node}}
         uses: actions/setup-node@v1
@@ -81,16 +81,7 @@ jobs:
       - name: Initialize submodules
         run: git submodule update --init --recursive
 
-      - name: Install Sodium
-        run: |
-          mkdir sodium
-          cd sodium
-          curl -o sodium.tar.gz https://download.libsodium.org/libsodium/releases/libsodium-1.0.18-stable.tar.gz
-          tar -xvzf sodium.tar.gz
-          cd libsodium-stable
-          ./configure
-          make && make check
-          sudo make install
+
 
       - name: Install && Build TS + bindings
         run: |
