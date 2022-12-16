@@ -7,7 +7,7 @@
 #include <vector>
 #include <iostream>
 #include <math.h>
-// #include <sodium.h>
+#include <sodium.h>
 #include "napi.h"
 #include "blst.hpp"
 
