@@ -2,7 +2,7 @@
 #include <future>
 #include "napi.h"
 #include "../blst_ts_utils.hpp"
-#include "../utils/thread_pool.hpp"
+#include "../utils/thread_pool.h"
 
 #ifndef RANDOM_BYTES_LENGTH
 #define RANDOM_BYTES_LENGTH 8

@@ -6,7 +6,6 @@
         'blst/src/server.c',
         'blst/build/assembly.S',
         'src/bindings/bindings.cc',
-        'src/bindings/utils/common/utils.cpp',
         'src/bindings/blst_ts_utils.cpp',
         'src/bindings/secret_key.cpp',
         'src/bindings/public_key.cpp',
