@@ -1,16 +1,6 @@
 #ifndef BLST_TS_FUNCTIONS_VER_MULT_AGG_SIGS_H_
 #define BLST_TS_FUNCTIONS_VER_MULT_AGG_SIGS_H_
 
-#include <sstream>
-#include <future>
-#include <map>
-#include <optional>
-#include <string>
-#include "napi.h"
-#include "../blst_ts_utils.hpp"
-#include "../public_key.hpp"
-#include "../signature.hpp"
-#include "../utils/thread_pool.h"
 
 /**
  *

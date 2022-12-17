@@ -1,6 +1,7 @@
 #ifndef __BLST_TS_UTILS_HPP__
 #define __BLST_TS_UTILS_HPP__
 
+#include <sstream>
 #include <iterator>
 #include <algorithm>
 #include <memory>
@@ -44,6 +45,7 @@ extern const std::string SIGNATURE_TYPE;
 extern const std::string DST;
 extern const char *BLST_ERROR_STRINGS[];
 const char *get_blst_error_string(blst::BLST_ERROR err);
+std::string stringify_error_ptr(std::exception_ptr p_error);
 
 class ByteArray
 {
@@ -74,5 +76,28 @@ private:
 
     std::vector<blst::byte> data;
 };
+
+Napi::Object ArrayIndexToObject(const Napi::Env &env,
+                                const Napi::Array &arr,
+                                const size_t index,
+                                const std::string &obj_name);
+Napi::String ArrayIndexToString(const Napi::Env &env,
+                                const Napi::Array &arr,
+                                const size_t index,
+                                const std::string &obj_name);
+Napi::Array InfoIndexToArray(const Napi::Env &env,
+                             const Napi::CallbackInfo &info,
+                             const size_t index,
+                             const std::string &obj_name);
+Napi::Value GetNapiValueAtKey(
+    const Napi::Env &env,
+    const Napi::Object &obj,
+    const std::string &obj_name,
+    const std::string &key_name);
+ByteArray TryAsStringOrUint8Array(
+    const Napi::Env &env,
+    const Napi::Value &value,
+    const std::string &obj_name,
+    const bool should_throw = false);
 
 #endif /* __BLST_TS_UTILS_HPP__ */

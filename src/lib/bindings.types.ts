@@ -100,10 +100,12 @@ export interface SignatureConstructor {
   // fromBytesAsync(): Promise<Signature>;
 }
 
+export type PublicKeyArg = ByteArray | PublicKey;
+export type SignatureArg = ByteArray | Signature;
 export interface SignatureSet {
   msg: ByteArray;
-  publicKey: ByteArray | PublicKey;
-  signature: ByteArray | Signature;
+  publicKey: PublicKeyArg;
+  signature: SignatureArg;
 }
 
 export interface TestFunctions {
@@ -117,6 +119,8 @@ export interface TestFunctions {
 export interface BlstTsFunctions {
   tests: TestFunctions;
   aggregatePublicKeys(keys: ByteArray[]): Promise<PublicKey>;
+  aggregateVerify(msgs: ByteArray[], publicKeys: PublicKeyArg[], signature: SignatureArg): boolean;
+  aggregateVerifyAsync(msgs: ByteArray[], publicKeys: PublicKeyArg[], signature: SignatureArg): Promise<boolean>;
   verifyMultipleAggregateSignatures(sets: SignatureSet[]): boolean;
   verifyMultipleAggregateSignaturesAsync(sets: SignatureSet[]): Promise<boolean>;
 }

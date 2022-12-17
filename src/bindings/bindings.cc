@@ -4,7 +4,7 @@
 #include "secret_key.hpp"
 #include "public_key.hpp"
 #include "signature.hpp"
-#include "functions/functions.hpp"
+#include "functions/functions.h"
 
 Napi::Object InitFunctions(Napi::Env env, Napi::Object exports);
 
