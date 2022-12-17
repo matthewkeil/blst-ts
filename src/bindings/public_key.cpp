@@ -1,5 +1,6 @@
 #include "public_key.hpp"
 
+const std::string PublicKey::kType_{"PublicKey"};
 Napi::FunctionReference PublicKey::constructor;
 
 Napi::Object PublicKey::Init(Napi::Env env, Napi::Object exports)
@@ -127,6 +128,15 @@ Napi::Value PublicKey::FromBytes(const Napi::CallbackInfo &info)
     }
 
     return PublicKey::Create(env, point, affine);
+}
+
+blst::P1_Affine PublicKey::AsAffine()
+{
+    if (is_point)
+    {
+        affine.reset(new blst::P1_Affine{point->to_affine()});
+    }
+    return blst::P1_Affine{*affine};
 }
 
 Napi::Value PublicKey::KeyValidate(const Napi::CallbackInfo &info)

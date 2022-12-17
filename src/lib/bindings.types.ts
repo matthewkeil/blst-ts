@@ -101,9 +101,9 @@ export interface SignatureConstructor {
 }
 
 export interface SignatureSet {
-  msg: Uint8Array;
-  publicKey: Uint8Array;
-  signature: Uint8Array;
+  msg: ByteArray;
+  publicKey: ByteArray | PublicKey;
+  signature: ByteArray | Signature;
 }
 
 export interface TestFunctions {
@@ -117,5 +117,6 @@ export interface TestFunctions {
 export interface BlstTsFunctions {
   tests: TestFunctions;
   aggregatePublicKeys(keys: ByteArray[]): Promise<PublicKey>;
-  verifyMultipleAggregateSignatures(sets: SignatureSet[]): Promise<boolean>;
+  verifyMultipleAggregateSignatures(sets: SignatureSet[]): boolean;
+  verifyMultipleAggregateSignaturesAsync(sets: SignatureSet[]): Promise<boolean>;
 }

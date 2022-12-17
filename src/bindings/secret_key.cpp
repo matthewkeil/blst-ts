@@ -1,6 +1,7 @@
 #include "secret_key.hpp"
 
 Napi::FunctionReference SecretKey::constructor;
+const std::string SecretKey::kType_{"SecretKey"};
 
 Napi::Object SecretKey::Init(Napi::Env env, Napi::Object exports)
 {

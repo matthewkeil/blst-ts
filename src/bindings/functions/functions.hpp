@@ -3,6 +3,7 @@
 
 Napi::Value AggregatePublicKeys(const Napi::CallbackInfo &info);
 Napi::Value VerifyMultipleAggregateSignatures(const Napi::CallbackInfo &info);
+Napi::Value VerifyMultipleAggregateSignaturesAsync(const Napi::CallbackInfo &info);
 
 Napi::Value TestBufferAsBuffer(const Napi::CallbackInfo &info);
 Napi::Value TestBufferAsString(const Napi::CallbackInfo &info);
@@ -17,6 +18,8 @@ Napi::Object InitFunctions(Napi::Env env, Napi::Object exports)
                   Napi::Function::New(env, AggregatePublicKeys));
     functions.Set(Napi::String::New(env, "verifyMultipleAggregateSignatures"),
                   Napi::Function::New(env, VerifyMultipleAggregateSignatures));
+    functions.Set(Napi::String::New(env, "verifyMultipleAggregateSignaturesAsync"),
+                  Napi::Function::New(env, VerifyMultipleAggregateSignaturesAsync));
 
     Napi::Object tests = Napi::Object::New(env);
     tests.Set(Napi::String::New(env, "testBufferAsBuffer"),

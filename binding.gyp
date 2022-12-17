@@ -12,7 +12,7 @@
         'src/bindings/signature.cpp',
         'src/bindings/functions/tests/byte_array.cpp',
         'src/bindings/functions/aggregate_public_keys.cpp', 
-        'src/bindings/functions/verify_multiple_aggregate_signatures.cpp', 
+        'src/bindings/functions/ver_mult_agg_sigs.cc', 
       ],
       'libraries': [ '-lsodium' ],
       'dependencies': [ "<!(node -p \"require('node-addon-api').gyp\")" ],

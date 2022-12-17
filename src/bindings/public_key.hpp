@@ -12,12 +12,15 @@
 class PublicKey : public Napi::ObjectWrap<PublicKey>
 {
 public:
+    static const std::string kType_;
+
     static Napi::Object Init(Napi::Env env, Napi::Object exports);
     static Napi::Value Create(Napi::Env env, const blst::SecretKey *secretKey);
     static Napi::Value Create(Napi::Env env, blst::P1 *point, blst::P1_Affine *affine);
     static Napi::Value FromBytes(const Napi::CallbackInfo &info);
     PublicKey(const Napi::CallbackInfo &info);
 
+    blst::P1_Affine AsAffine();
     Napi::Value KeyValidate(const Napi::CallbackInfo &info);
     Napi::Value Serialize(const Napi::CallbackInfo &info, int length);
     Napi::Value Serialize(const Napi::CallbackInfo &info);

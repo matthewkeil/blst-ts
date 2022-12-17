@@ -1,34 +1,21 @@
 import * as swigBindings from "../../src/swig/lib";
-import {SecretKey, functions} from "../../src/lib/bindings";
-import {SignatureSet} from "../../src/lib/bindings.types";
+import {functions} from "../../src/lib/bindings";
+import {makeNapiTestSets, NapiTestSet} from "../utils";
 
 interface TestTime {
   startTime: number;
   endTime: number;
 }
-
-const msg = Buffer.from("i'm a little tea pot");
-
-function makeSets(numSets: number): SignatureSet[] {
-  const sets: SignatureSet[] = [];
-  for (let i = 0; i < numSets; i++) {
-    const sk = SecretKey.keygen(Buffer.from("*".repeat(32)));
-    const publicKey = sk.getPublicKey();
-    const signature = sk.sign(msg);
-    sets.push({msg, publicKey: publicKey.serialize(), signature: signature.serialize()});
-  }
-  return sets;
-}
-function makeSwigSet(set: SignatureSet): swigBindings.SignatureSet {
+function makeSwigSet({msg, publicKey, signature}: NapiTestSet): swigBindings.SignatureSet {
   return {
-    msg: set.msg,
-    pk: swigBindings.PublicKey.fromBytes(set.publicKey),
-    sig: swigBindings.Signature.fromBytes(set.signature),
+    msg: Buffer.from(msg),
+    pk: swigBindings.PublicKey.fromBytes(publicKey.serialize()),
+    sig: swigBindings.Signature.fromBytes(signature.serialize()),
   };
 }
-async function swigSingleTest(sets: SignatureSet[]): Promise<TestTime> {
+async function swigSingleTest(sets: swigBindings.SignatureSet[]): Promise<TestTime> {
   const startTime = Date.now();
-  const res = swigBindings.verifyMultipleAggregateSignatures(sets.map(makeSwigSet));
+  const res = swigBindings.verifyMultipleAggregateSignatures(sets);
   if (!res) {
     throw new Error("invalid verification");
   }
@@ -38,10 +25,10 @@ async function swigSingleTest(sets: SignatureSet[]): Promise<TestTime> {
     endTime,
   };
 }
-async function swigLoopTest(sets: SignatureSet[], loopCount: number): Promise<TestTime> {
+async function swigLoopTest(sets: swigBindings.SignatureSet[], loopCount: number): Promise<TestTime> {
   const startTime = Date.now();
   for (let i = 0; i < loopCount; i++) {
-    const res = swigBindings.verifyMultipleAggregateSignatures(sets.map(makeSwigSet));
+    const res = swigBindings.verifyMultipleAggregateSignatures(sets);
     if (!res) {
       throw new Error("invalid verification");
     }
@@ -52,9 +39,9 @@ async function swigLoopTest(sets: SignatureSet[], loopCount: number): Promise<Te
     endTime,
   };
 }
-async function napiSingleTest(sets: SignatureSet[]): Promise<TestTime> {
+async function napiSingleTest(sets: NapiTestSet[]): Promise<TestTime> {
   const startTime = Date.now();
-  const res = await functions.verifyMultipleAggregateSignatures(sets);
+  const res = await functions.verifyMultipleAggregateSignaturesAsync(sets);
   if (!res) {
     throw new Error("invalid verification");
   }
@@ -64,12 +51,12 @@ async function napiSingleTest(sets: SignatureSet[]): Promise<TestTime> {
     endTime,
   };
 }
-async function napiLoopTest(sets: SignatureSet[], loopCount: number): Promise<TestTime> {
+async function napiLoopTest(sets: NapiTestSet[], loopCount: number): Promise<TestTime> {
   const startTime = Date.now();
   const responses: Promise<boolean>[] = [];
   for (let i = 0; i < loopCount; i++) {
     responses.push(
-      functions.verifyMultipleAggregateSignatures(sets).then((res) => {
+      functions.verifyMultipleAggregateSignaturesAsync(sets).then((res) => {
         if (!res) {
           throw new Error("invalid verification");
         }
@@ -86,12 +73,13 @@ async function napiLoopTest(sets: SignatureSet[], loopCount: number): Promise<Te
 }
 
 void (async function () {
-  const sets = makeSets(1000);
-  const swigSingle = await swigSingleTest(sets);
-  const napiSingle = await napiSingleTest(sets);
+  const napiSets = makeNapiTestSets(1000);
+  const swigSets = napiSets.map(makeSwigSet);
+  const swigSingle = await swigSingleTest(swigSets);
+  const napiSingle = await napiSingleTest(napiSets);
   const loopCount = 1;
-  const swigLoop = await swigLoopTest(sets, loopCount);
-  const napiLoop = await napiLoopTest(sets, loopCount);
+  const swigLoop = await swigLoopTest(swigSets, loopCount);
+  const napiLoop = await napiLoopTest(napiSets, loopCount);
   console.log({
     swig: swigSingle.endTime - swigSingle.startTime,
     napi: napiSingle.endTime - napiSingle.startTime,
