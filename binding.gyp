@@ -11,7 +11,7 @@
         'src/bindings/public_key.cpp',
         'src/bindings/signature.cpp',
         'src/bindings/functions/tests/byte_array.cpp',
-        'src/bindings/functions/aggregate_public_keys.cpp', 
+        'src/bindings/functions/agg_pub_keys.cc', 
         'src/bindings/functions/ver_mult_agg_sigs.cc',
         'src/bindings/functions/agg_verify.cc',
       ],

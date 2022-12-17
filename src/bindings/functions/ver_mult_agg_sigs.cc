@@ -206,7 +206,7 @@ namespace ver_mult_agg_sigs
         Napi::Env env = info.Env();
         try
         {
-            Napi::Array signature_sets = InfoIndexToArray(env, info, 0, "signatureSets");
+            Napi::Array signature_sets = InfoIndexToArray(env, info, 0, "signatureSets must be an array");
             size_t set_length{signature_sets.Length()};
             std::vector<ByteArray> msgs(set_length);
             std::vector<ByteArray> public_keys(set_length);
@@ -342,7 +342,7 @@ namespace ver_mult_agg_sigs
         Napi::Env env = info.Env();
         try
         {
-            Napi::Array signature_sets = InfoIndexToArray(env, info, 0, "signatureSets");
+            Napi::Array signature_sets = InfoIndexToArray(env, info, 0, "signatureSets must be an array");
             VerifyMultipleAggregateSignaturesWorker *worker = new VerifyMultipleAggregateSignaturesWorker{env};
             worker->Setup(env, signature_sets);
             return worker->GetPromise();

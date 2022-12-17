@@ -68,12 +68,12 @@ Napi::String ArrayIndexToString(const Napi::Env &env,
 Napi::Array InfoIndexToArray(const Napi::Env &env,
                              const Napi::CallbackInfo &info,
                              const size_t index,
-                             const std::string &obj_name)
+                             const std::string &error_msg)
 {
     Napi::Value val = info[index];
     if (!val.IsArray())
     {
-        throw Napi::Error::New(env, obj_name + " must be an array");
+        throw Napi::Error::New(env, error_msg);
     }
     return val.As<Napi::Array>();
 }

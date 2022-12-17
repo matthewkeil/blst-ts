@@ -212,8 +212,8 @@ namespace agg_verify
         Napi::Env env = info.Env();
         try
         {
-            Napi::Array msgs_arr = InfoIndexToArray(env, info, 0, "msgs");
-            Napi::Array public_keys_arr = InfoIndexToArray(env, info, 1, "publicKeys");
+            Napi::Array msgs_arr = InfoIndexToArray(env, info, 0, "msgs must be an array");
+            Napi::Array public_keys_arr = InfoIndexToArray(env, info, 1, "publicKeys must be an array");
             size_t set_length{msgs_arr.Length()};
             if (set_length == 0)
             {
@@ -258,7 +258,6 @@ namespace agg_verify
                 public_keys,
                 public_key_map,
                 thread_count);
-            std::cout << ">>>\n>>>\n>>> result: " << result << std::endl;
             return Napi::Boolean::New(env, result);
         }
         catch (const Napi::Error &err)
@@ -328,8 +327,8 @@ namespace agg_verify
     void AggregateVerifyWorker::Setup(const Napi::CallbackInfo &info)
     {
         Napi::Env env = info.Env();
-        Napi::Array msgs_arr = InfoIndexToArray(env, info, 0, "msgs");
-        Napi::Array public_keys_arr = InfoIndexToArray(env, info, 1, "publicKeys");
+        Napi::Array msgs_arr = InfoIndexToArray(env, info, 0, "msgs must be an array");
+        Napi::Array public_keys_arr = InfoIndexToArray(env, info, 1, "publicKeys must be an array");
         size_t set_length{msgs_arr.Length()};
         if (set_length == 0)
         {
@@ -395,7 +394,6 @@ namespace agg_verify
         Napi::Env env = info.Env();
         try
         {
-            Napi::Array signature_sets = InfoIndexToArray(env, info, 0, "signatureSets");
             AggregateVerifyWorker *worker = new AggregateVerifyWorker{env};
             worker->Setup(info);
             return worker->GetPromise();

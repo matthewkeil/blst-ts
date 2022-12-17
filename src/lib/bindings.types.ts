@@ -118,7 +118,8 @@ export interface TestFunctions {
 
 export interface BlstTsFunctions {
   tests: TestFunctions;
-  aggregatePublicKeys(keys: ByteArray[]): Promise<PublicKey>;
+  aggregatePublicKeys(keys: PublicKeyArg[]): PublicKey;
+  aggregatePublicKeysAsync(keys: PublicKeyArg[]): Promise<PublicKey>;
   aggregateVerify(msgs: ByteArray[], publicKeys: PublicKeyArg[], signature: SignatureArg): boolean;
   aggregateVerifyAsync(msgs: ByteArray[], publicKeys: PublicKeyArg[], signature: SignatureArg): Promise<boolean>;
   verifyMultipleAggregateSignatures(sets: SignatureSet[]): boolean;

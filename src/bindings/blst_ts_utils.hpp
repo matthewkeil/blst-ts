@@ -88,7 +88,7 @@ Napi::String ArrayIndexToString(const Napi::Env &env,
 Napi::Array InfoIndexToArray(const Napi::Env &env,
                              const Napi::CallbackInfo &info,
                              const size_t index,
-                             const std::string &obj_name);
+                             const std::string &error_msg);
 Napi::Value GetNapiValueAtKey(
     const Napi::Env &env,
     const Napi::Object &obj,

@@ -3,6 +3,12 @@
 
 Napi::Value AggregatePublicKeys(const Napi::CallbackInfo &info);
 
+namespace agg_pub_keys
+{
+    Napi::Value AggregatePublicKeys(const Napi::CallbackInfo &info);
+    Napi::Value AggregatePublicKeysAsync(const Napi::CallbackInfo &info);
+}
+
 namespace ver_mult_agg_sigs
 {
     Napi::Value VerifyMultipleAggregateSignatures(const Napi::CallbackInfo &info);
@@ -25,7 +31,9 @@ Napi::Object InitFunctions(Napi::Env env, Napi::Object exports)
 {
     Napi::Object functions = Napi::Object::New(env);
     functions.Set(Napi::String::New(env, "aggregatePublicKeys"),
-                  Napi::Function::New(env, AggregatePublicKeys));
+                  Napi::Function::New(env, agg_pub_keys::AggregatePublicKeys));
+    functions.Set(Napi::String::New(env, "aggregatePublicKeysAsync"),
+                  Napi::Function::New(env, agg_pub_keys::AggregatePublicKeysAsync));
     functions.Set(Napi::String::New(env, "aggregateVerify"),
                   Napi::Function::New(env, agg_verify::AggregateVerify));
     functions.Set(Napi::String::New(env, "aggregateVerifyAsync"),
