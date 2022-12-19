@@ -11,7 +11,7 @@ Napi::Object SecretKey::Init(Napi::Env env, Napi::Object exports)
                                                       {
                                                           StaticMethod("keygen", &SecretKey::Keygen, static_cast<napi_property_attributes>(napi_static | napi_enumerable)),
                                                           StaticMethod("fromBytes", &SecretKey::FromBytes, static_cast<napi_property_attributes>(napi_static | napi_enumerable)),
-                                                          InstanceMethod("getPublicKey", &SecretKey::GetPublicKey, static_cast<napi_property_attributes>(napi_enumerable)),
+                                                          InstanceMethod("toPublicKey", &SecretKey::ToPublicKey, static_cast<napi_property_attributes>(napi_enumerable)),
                                                           InstanceMethod("sign", &SecretKey::Sign, static_cast<napi_property_attributes>(napi_enumerable)),
                                                           InstanceMethod("toBytes", &SecretKey::Serialize, static_cast<napi_property_attributes>(napi_enumerable)),
                                                           InstanceMethod("serialize", &SecretKey::Serialize, static_cast<napi_property_attributes>(napi_enumerable)),
@@ -105,7 +105,7 @@ Napi::Value SecretKey::FromBytes(const Napi::CallbackInfo &info)
     return constructor.New({wrapped});
 }
 
-Napi::Value SecretKey::GetPublicKey(const Napi::CallbackInfo &info)
+Napi::Value SecretKey::ToPublicKey(const Napi::CallbackInfo &info)
 {
     auto env = info.Env();
     return PublicKey::Create(env, key.get());

@@ -45,7 +45,7 @@ export declare class SecretKey {
   // static keygenAsync(ikm?: Uint8Array| Buffer): Promise<SecretKey>;
   static fromBytes(skBytes: NapiBuffer): SecretKey;
   // static fromBytesAsync(skBytes: Uint8Array| Buffer): Promise<SecretKey>;
-  getPublicKey(): PublicKey;
+  toPublicKey(): PublicKey;
   // toPublicKeyAsync(): Promise<PublicKey>;
   sign(msg: NapiBuffer): Signature;
   // signAsync(msg: Uint8Array| Buffer): Promise<Signature>;

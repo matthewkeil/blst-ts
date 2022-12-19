@@ -83,7 +83,7 @@ export interface NapiTestSet {
 
 export function makeNapiTestSet(msg: Uint8Array): NapiTestSet {
   const secretKey = napiBindings.SecretKey.keygen(Buffer.from("*".repeat(32)));
-  const publicKey = secretKey.getPublicKey();
+  const publicKey = secretKey.toPublicKey();
   const signature = secretKey.sign(msg);
   return {
     msg,
@@ -99,4 +99,10 @@ export function makeNapiTestSets(numSets: number, msg = DEFAULT_TEST_MESSAGE): N
     sets.push(makeNapiTestSet(msg));
   }
   return sets;
+}
+
+export function linspace(start: number, stop: number): number[] {
+  const arr: number[] = [];
+  for (let i = start; i <= stop; i++) arr.push(i);
+  return arr;
 }

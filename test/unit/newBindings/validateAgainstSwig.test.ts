@@ -62,7 +62,7 @@ describe("validation against SWIG bindings", () => {
         expect(swigBindings.verify(msg, swigPK, swigSig)).to.be.true;
 
         const napiSK = napiBindings.SecretKey.keygen(bytes);
-        const napiPK = napiSK.getPublicKey();
+        const napiPK = napiSK.toPublicKey();
         const napiSig = napiSK.sign(msg);
         expect(
           swigBindings.verify(
