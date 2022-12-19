@@ -9,7 +9,7 @@ Napi::Object SecretKey::Init(Napi::Env env, Napi::Object exports)
     // lifetime of the addon module
     Napi::Function secretKeyConstructor = DefineClass(env, "SecretKey",
                                                       {
-                                                          StaticMethod("keygen", &SecretKey::Keygen, static_cast<napi_property_attributes>(napi_static | napi_enumerable)),
+                                                          StaticMethod("fromKeygen", &SecretKey::FromKeygen, static_cast<napi_property_attributes>(napi_static | napi_enumerable)),
                                                           StaticMethod("fromBytes", &SecretKey::FromBytes, static_cast<napi_property_attributes>(napi_static | napi_enumerable)),
                                                           InstanceMethod("toPublicKey", &SecretKey::ToPublicKey, static_cast<napi_property_attributes>(napi_enumerable)),
                                                           InstanceMethod("sign", &SecretKey::Sign, static_cast<napi_property_attributes>(napi_enumerable)),
@@ -46,7 +46,7 @@ SecretKey::SecretKey(const Napi::CallbackInfo &info)
     key->keygen(ByteArray::RandomBytes(SECRET_KEY_LENGTH).Data(), SECRET_KEY_LENGTH);
 }
 
-Napi::Value SecretKey::Keygen(const Napi::CallbackInfo &info)
+Napi::Value SecretKey::FromKeygen(const Napi::CallbackInfo &info)
 {
     Napi::Env env = info.Env();
     ByteArray ikm;

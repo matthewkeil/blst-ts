@@ -41,7 +41,7 @@ export type ByteArray = NapiBuffer | string;
  */
 export declare class SecretKey {
   constructor();
-  static keygen(ikm?: NapiBuffer): SecretKey;
+  static fromKeygen(ikm?: NapiBuffer): SecretKey;
   // static keygenAsync(ikm?: Uint8Array| Buffer): Promise<SecretKey>;
   static fromBytes(skBytes: NapiBuffer): SecretKey;
   // static fromBytesAsync(skBytes: Uint8Array| Buffer): Promise<SecretKey>;
@@ -56,7 +56,7 @@ export declare class SecretKey {
 }
 export interface SecretKeyConstructor {
   new (): SecretKey;
-  keygen(ikm?: NapiBuffer): SecretKey;
+  fromKeygen(ikm?: NapiBuffer): SecretKey;
   // keygenAsync(ikm?: Uint8Array| Buffer): Promise<SecretKey>;
   fromBytes(skBytes: NapiBuffer): SecretKey;
   // fromBytesAsync(skBytes: Uint8Array| Buffer): Promise<SecretKey>;

@@ -16,7 +16,7 @@ describe("validation against SWIG bindings", () => {
       let napiKey = napiBindings.SecretKey.fromBytes(swigKey).serialize();
       expectHex(swigKey, napiKey);
 
-      napiKey = napiBindings.SecretKey.keygen(swigBindings.randomBytesNonZero(32)).serialize();
+      napiKey = napiBindings.SecretKey.fromKeygen(swigBindings.randomBytesNonZero(32)).serialize();
       swigKey = swigBindings.SecretKey.fromBytes(napiKey).toBytes();
       expectHex(swigKey, napiKey);
     });
@@ -27,7 +27,7 @@ describe("validation against SWIG bindings", () => {
       let napiKey = napiBindings.PublicKey.fromBytes(swigKey, CoordType.jacobian).serialize();
       expectHex(swigKey, napiKey);
 
-      const sk = napiBindings.SecretKey.keygen(swigBindings.randomBytesNonZero(32));
+      const sk = napiBindings.SecretKey.fromKeygen(swigBindings.randomBytesNonZero(32));
       napiKey = new napiBindings.PublicKey(sk).serialize();
       swigKey = swigBindings.PublicKey.fromBytes(napiKey, CoordType.jacobian).serialize();
       expectHex(swigKey, napiKey);
@@ -61,7 +61,7 @@ describe("validation against SWIG bindings", () => {
         const swigSig = swigSK.sign(msg);
         expect(swigBindings.verify(msg, swigPK, swigSig)).to.be.true;
 
-        const napiSK = napiBindings.SecretKey.keygen(bytes);
+        const napiSK = napiBindings.SecretKey.fromKeygen(bytes);
         const napiPK = napiSK.toPublicKey();
         const napiSig = napiSK.sign(msg);
         expect(

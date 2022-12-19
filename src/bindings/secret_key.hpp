@@ -15,7 +15,7 @@ public:
     static const std::string kType_;
 
     static Napi::Object Init(Napi::Env env, Napi::Object exports);
-    static Napi::Value Keygen(const Napi::CallbackInfo &info);
+    static Napi::Value FromKeygen(const Napi::CallbackInfo &info);
     static Napi::Value FromBytes(const Napi::CallbackInfo &info);
     SecretKey(const Napi::CallbackInfo &info);
 

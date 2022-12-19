@@ -1,50 +1,84 @@
 import * as swigBindings from "../../src/swig/lib";
 import napiBindings from "../../src/lib/bindings";
-import {SecretKey, PublicKey, Signature, SignatureSet} from "../../src/lib/bindings.types";
+import {SecretKey, PublicKey, Signature} from "../../src/lib/bindings.types";
 
-type KeyPair = {publicKey: PublicKey; secretKey: SecretKey};
+type SetType = "swig" | "napi";
+interface KeyPair {
+  ikm: Uint8Array;
+  secretKey: SecretKey;
+  publicKey: PublicKey;
+}
+interface NapiTestSet extends KeyPair {
+  msg: Uint8Array;
+  signature: Signature;
+}
+interface SwigTestSetUnmapped {
+  ikm: Uint8Array;
+  msg: Uint8Array;
+  secretKey: swigBindings.SecretKey;
+  publicKey: swigBindings.PublicKey;
+  signature: swigBindings.Signature;
+}
+interface SwigTestSet {
+  ikm: Uint8Array;
+  msg: Uint8Array;
+  sk: swigBindings.SecretKey;
+  pk: swigBindings.PublicKey;
+  sig: swigBindings.Signature;
+}
 
 // Create and cache (on demand) crypto data to benchmark
-const napiSets = new Map<number, SignatureSet>();
-const swigSets = new Map<number, SignatureSet>();
+const napiSets = new Map<number, NapiTestSet>();
+const swigSets = new Map<number, SwigTestSetUnmapped>();
 const napiKeyPairs = new Map<number, KeyPair>();
 const swigKeyPairs = new Map<number, KeyPair>();
 
-function getKeyPair(i: number, type: "swig" | "napi"): KeyPair {
+function getKeyPair(i: number, type: SetType): KeyPair {
   const isNapi = type === "napi";
   const keyPairs = isNapi ? napiKeyPairs : swigKeyPairs;
   let keyPair = keyPairs.get(i);
   if (!keyPair) {
     const bindings = isNapi ? napiBindings : swigBindings;
-    const secretKey = bindings.SecretKey.fromBytes(Buffer.alloc(32, i + 1));
+    const ikm = Buffer.alloc(32, i + 1);
+    const secretKey = bindings.SecretKey.fromBytes(ikm);
     const publicKey = secretKey.toPublicKey();
-    keyPair = {secretKey, publicKey} as KeyPair;
-    keyPairs.set(i, keyPair as KeyPair);
+    keyPair = {ikm, secretKey, publicKey} as KeyPair;
+    keyPairs.set(i, keyPair);
   }
   return keyPair;
 }
 
-function getSet(i: number, type: "swig" | "napi"): SignatureSet {
+function getSet<T extends SetType>(i: number, type: T): T extends "napi" ? NapiTestSet : SwigTestSetUnmapped {
   const isNapi = type === "napi";
   const sets = isNapi ? napiSets : swigSets;
   let set = sets.get(i);
   if (!set) {
-    const {secretKey, publicKey} = getKeyPair(i, type);
+    const {ikm, secretKey, publicKey} = getKeyPair(i, type);
     const msg = Buffer.alloc(32, i + 1);
-    set = {msg, publicKey, signature: secretKey.sign(msg)};
-    sets.set(i, set);
+    set = {ikm, msg, secretKey, publicKey, signature: secretKey.sign(msg)};
+    sets.set(i, set as any);
   }
-  return set;
+  return set as T extends "napi" ? NapiTestSet : SwigTestSetUnmapped;
 }
 
-export const getNapiSet = (i: number): SignatureSet => getSet(i, "napi");
-export const getSwigSet = (i: number): swigBindings.SignatureSet => {
+export const getNapiSet = (i: number): NapiTestSet => getSet(i, "napi");
+export const getSwigSet = (i: number): SwigTestSet => {
   const set = getSet(i, "swig");
   return {
-    msg: set.msg as Uint8Array,
-    pk: set.publicKey as swigBindings.PublicKey,
-    sig: set.signature as swigBindings.Signature,
+    ikm: set.ikm,
+    sk: set.secretKey,
+    pk: set.publicKey,
+    msg: set.msg,
+    sig: set.signature,
   };
+};
+export const getNapiSecretKey = (i: number): SecretKey => {
+  const set = getSet(i, "napi");
+  return set.secretKey as SecretKey;
+};
+export const getSwigSecretKey = (i: number): swigBindings.SecretKey => {
+  const set = getSet(i, "swig");
+  return set.secretKey;
 };
 export const getNapiPublicKey = (i: number): PublicKey => {
   const set = getSet(i, "napi");

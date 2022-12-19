@@ -52,7 +52,6 @@ describe("verifyMultipleAggregateSignatures", () => {
           if (!isValid) throw Error("Invalid");
         },
       });
-
       itBench({
         id: `verifyMultipleAggregateSignatures ${count} - napi native implementation`,
         beforeEach: () => linspace(0, count - 1).map((i) => getNapiSet(i)),
@@ -61,7 +60,6 @@ describe("verifyMultipleAggregateSignatures", () => {
           if (!isValid) throw Error("Invalid");
         },
       });
-
       itBench({
         id: `verifyMultipleAggregateSignaturesAsync ${count} - napi promise implementation`,
         beforeEach: () => linspace(0, count - 1).map((i) => getNapiSet(i)),

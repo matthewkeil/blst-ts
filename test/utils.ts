@@ -82,7 +82,7 @@ export interface NapiTestSet {
 }
 
 export function makeNapiTestSet(msg: Uint8Array): NapiTestSet {
-  const secretKey = napiBindings.SecretKey.keygen(Buffer.from("*".repeat(32)));
+  const secretKey = napiBindings.SecretKey.fromKeygen(Buffer.from("*".repeat(32)));
   const publicKey = secretKey.toPublicKey();
   const signature = secretKey.sign(msg);
   return {
