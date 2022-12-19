@@ -8,7 +8,8 @@
 #include <vector>
 #include <iostream>
 #include <math.h>
-#include <sodium.h>
+// #include <sodium.h>
+#include <openssl/rand.h>
 #include "napi.h"
 #include "blst.hpp"
 

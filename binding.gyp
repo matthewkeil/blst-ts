@@ -15,10 +15,11 @@
         'src/bindings/functions/ver_mult_agg_sigs.cc',
         'src/bindings/functions/agg_verify.cc',
       ],
-      'libraries': [ '-lsodium' ],
+      # 'libraries': [ '-lsodium' ],
       'dependencies': [ "<!(node -p \"require('node-addon-api').gyp\")" ],
       'include_dirs': [
         'blst/bindings',
+        # '/usr/bin/openssl/include',
         "<!@(node -p \"require('node-addon-api').include_dir\")",
       ],
       'defines': [ 'NAPI_CPP_EXCEPTIONS' ],

@@ -115,7 +115,8 @@ ByteArray TryAsStringOrUint8Array(
 ByteArray ByteArray::RandomBytes(size_t length, bool non_zero)
 {
     blst::byte bytes[length];
-    randombytes_buf(bytes, length);
+    RAND_bytes(bytes, length);
+    // randombytes_buf(bytes, length);
     if (non_zero)
     {
         for (size_t i = 0; i < length; i++)

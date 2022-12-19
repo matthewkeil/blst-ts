@@ -73,26 +73,26 @@ jobs:
       #     name: blst_wrap.cpp
       #     path: prebuild/
 
-      - name: Install libsodium
-        if: matrix.os != 'windows-latest'
-        run: |
-          mkdir sodium
-          cd sodium
-          curl -o sodium.tar.gz "https://download.libsodium.org/libsodium/releases/libsodium-1.0.18.tar.gz"
-          tar -xvzf sodium.tar.gz
-          cd libsodium-1.0.18
-          ./configure
-          make && make check
-          sudo make install
+      # - name: Install libsodium
+      #   if: matrix.os != 'windows-latest'
+      #   run: |
+      #     mkdir sodium
+      #     cd sodium
+      #     curl -o sodium.tar.gz "https://download.libsodium.org/libsodium/releases/libsodium-1.0.18.tar.gz"
+      #     tar -xvzf sodium.tar.gz
+      #     cd libsodium-1.0.18
+      #     ./configure
+      #     make && make check
+      #     sudo make install
 
-      - name: Install libsodium
-        if: matrix.os == 'windows-latest'
-        run: |
-          git clone https://github.com/Microsoft/vcpkg.git
-          cd vcpkg
-          ./bootstrap-vcpkg.bat
-          ./vcpkg integrate install
-          ./vcpkg install libsodium
+      # - name: Install libsodium
+      #   if: matrix.os == 'windows-latest'
+      #   run: |
+      #     git clone https://github.com/Microsoft/vcpkg.git
+      #     cd vcpkg
+      #     ./bootstrap-vcpkg.bat
+      #     ./vcpkg integrate install
+      #     ./vcpkg install libsodium
 
       - name: Setup Node.js ${{matrix.node}}
         uses: actions/setup-node@v1
@@ -109,11 +109,11 @@ jobs:
           yarn build:ts
           node dist/scripts/install.js
 
-      - name: Test timing
-        run: yarn test:bindings:timing
-
       - name: Test unit
         run: yarn test:bindings
+
+      - name: Run benchmarks
+        run: yarn test:benchmark --local
 
   # build-arm:
   #   needs: ["build-swig"]
