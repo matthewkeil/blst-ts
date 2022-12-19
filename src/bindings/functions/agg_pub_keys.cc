@@ -1,16 +1,8 @@
-#include <sstream>
-#include <vector>
-#include <map>
-#include <memory.h>
-#include "napi.h"
-#include "blst.hpp"
-#include "../public_key.hpp"
-#include "../blst_ts_utils.hpp"
+#include "agg_pub_keys.h"
 
 namespace agg_pub_keys
 {
-
-    void AggregatePublicKeys(
+    void RunKeysAggregation(
         blst::P1 &point,
         bool &has_error,
         std::string &error_msg,
@@ -85,10 +77,8 @@ namespace agg_pub_keys
         throw Napi::TypeError::New(env, key_name + " must be a string, Uint8Array or PublicKey");
     }
 
-    Napi::Value AggregatePublicKeys(const Napi::CallbackInfo &info)
+    Napi::Value AggregatePublicKeysCore(const Napi::Env &env, const Napi::Array &public_keys_arr)
     {
-        Napi::Env env = info.Env();
-        Napi::Array public_keys_arr = InfoIndexToArray(env, info, 0, "aggregatePublicKeys() takes and array");
         size_t keys_length = public_keys_arr.Length();
         std::vector<ByteArray> public_keys(keys_length);
         std::map<size_t, PublicKey *> public_key_map;
@@ -99,7 +89,7 @@ namespace agg_pub_keys
         blst::P1 *point = new blst::P1;
         bool has_error = false;
         std::string error_msg;
-        AggregatePublicKeys(*point, has_error, error_msg, keys_length, public_keys, public_key_map);
+        RunKeysAggregation(*point, has_error, error_msg, keys_length, public_keys, public_key_map);
         if (has_error)
         {
             Napi::Error::New(env, error_msg).ThrowAsJavaScriptException();
@@ -107,23 +97,12 @@ namespace agg_pub_keys
         return PublicKey::Create(env, point, nullptr);
     }
 
-    class AggPubKeysWorker : public Napi::AsyncWorker
+    Napi::Value AggregatePublicKeys(const Napi::CallbackInfo &info)
     {
-    public:
-        AggPubKeysWorker(const Napi::Env &env, const Napi::Array &public_keys_arr);
-        void Setup(const Napi::Env &env, const Napi::Array &public_keys_arr);
-        void Execute() override;
-        void OnOK() override;
-        void OnError(Napi::Error const &err) override;
-        Napi::Promise GetPromise();
-
-    private:
-        Napi::Promise::Deferred deferred;
-        blst::P1 point;
-        size_t keys_length;
-        std::vector<ByteArray> public_keys;
-        std::map<size_t, PublicKey *> public_key_map;
-    };
+        Napi::Env env = info.Env();
+        Napi::Array public_keys_arr = InfoIndexToArray(env, info, 0, "aggregatePublicKeys() takes and array");
+        return AggregatePublicKeysCore(env, public_keys_arr);
+    }
 
     Napi::Value AggregatePublicKeysAsync(const Napi::CallbackInfo &info)
     {
@@ -157,13 +136,19 @@ namespace agg_pub_keys
     {
         bool has_error = false;
         std::string error_msg;
-        AggregatePublicKeys(point, has_error, error_msg, keys_length, public_keys, public_key_map);
+        RunKeysAggregation(point, has_error, error_msg, keys_length, public_keys, public_key_map);
         if (has_error)
         {
             this->SetError(error_msg);
         }
-        public_keys.clear();
-        public_key_map.clear();
+        if (public_keys.size() > 0)
+        {
+            public_keys.clear();
+        }
+        if (public_key_map.size() > 0)
+        {
+            public_key_map.clear();
+        }
     }
 
     void AggPubKeysWorker::OnOK()
