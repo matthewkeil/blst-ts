@@ -10,22 +10,21 @@
     "blst"
   ],
   "scripts": {
-    "node": "node",
-    "ts": "npm run node -- -r ts-node/register",
-    "lint": "eslint --color --ext .ts src/ test/",
-    "build:addon": "node-gyp build",
+    "build": "yarn build:bindings && yarn build:ts",
+    "test": "yarn test:unit && yarn test:spec && yarn test:perf",
     "dev": "ts-node src/scripts/dev",
+    "lint": "eslint --color --ext .ts src/ test/",
+    "clean": "rm -rf build dist",
+    "build:bindings": "node-gyp build",
+    "build:bindings:debug": "node-gyp build --debug",
     "build:ts": "tsc --project tsconfig.build.json",
-    "build:ts:watch": "tsc --project tsconfig.build.json --watch",
-    "build": "npm run build:ts",
-    "bootstrap": "yarn install --ignore-scripts && yarn build && yarn install",
-    "clean": "rm -rf prebuild/*.node dist blst/libblst.a blst/bindings/libblst.a blst/bindings/node.js/blst.node blst/bindings/node.js/blst_wrap.cpp",
-    "test": "yarn test:unit && yarn test:spec",
-    "test:benchmark": "benchmark test/perf/**/*.perf.ts",
-    "test:bindings": "mocha test/unit/newBindings/*.test.ts",
+    "build:ts:watch": "yarn build:ts --watch",
     "test:unit": "mocha test/unit/**/*.test.ts",
     "test:spec": "mocha 'test/spec/**/*.test.ts'",
-    "download-spec-tests": "node -r ts-node/register test/spec/downloadTests.ts"
+    "test:perf": "benchmark test/perf/**/*.perf.ts",
+    "download-spec-tests": "ts-node test/spec/downloadTests.ts",
+    "bootstrap": "yarn install --ignore-scripts && yarn build && yarn install",
+    "clean:swig": "rm -rf prebuild/*.node dist blst/libblst.a blst/bindings/libblst.a blst/bindings/node.js/blst.node blst/bindings/node.js/blst_wrap.cpp"
   },
   "repository": {
     "type": "git",
@@ -48,6 +47,7 @@
     "@typescript-eslint/eslint-plugin": "^4.21.0",
     "@typescript-eslint/parser": "^4.21.0",
     "chai": "^4.2.0",
+    "chokidar": "^3.5.3",
     "eslint": "^7.23.0",
     "eslint-plugin-import": "^2.22.1",
     "eslint-plugin-node": "^11.1.0",
@@ -60,7 +60,7 @@
     "typescript": "^4.0.3"
   },
   "dependencies": {
-    "chokidar": "^3.5.3",
+    "bindings": "^1.5.0",
     "node-addon-api": "^4.3.0",
     "node-fetch": "^2.6.1",
     "node-gyp": "^9.3.0"
