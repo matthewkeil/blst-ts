@@ -1,6 +1,6 @@
 import {expect} from "chai";
-import {functions} from "../../../src/lib/bindings";
-import {makeNapiTestSets} from "../../utils";
+import {functions} from "../../src/lib/bindings";
+import {makeNapiTestSets} from "../utils";
 
 describe("verifyMultipleAggregateSignatures", () => {
   const sets = makeNapiTestSets(10).map((set) => {

@@ -1,6 +1,6 @@
 import {expect} from "chai";
-import {functions, PublicKey} from "../../../src/lib/bindings";
-import {makeNapiTestSets} from "../../utils";
+import {functions, PublicKey} from "../../../../src/lib/bindings";
+import {makeNapiTestSets} from "../../../../test/utils";
 
 describe("aggregatePublicKeys()", () => {
   const sets = makeNapiTestSets(10);

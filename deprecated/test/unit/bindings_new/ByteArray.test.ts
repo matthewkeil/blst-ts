@@ -1,6 +1,6 @@
 import {expect} from "chai";
-import bindings from "../../../src/lib/bindings";
-import {expectHex, getFilledUint8} from "../../utils";
+import bindings from "../../src/lib/bindings";
+import {expectHex, getFilledUint8} from "../utils";
 
 const {
   testBufferAsBuffer,

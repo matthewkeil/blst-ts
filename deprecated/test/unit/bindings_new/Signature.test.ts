@@ -1,7 +1,7 @@
 import {expect} from "chai";
-import napiBindings from "../../../src/lib/bindings";
-import {expectHex} from "../../utils";
-import {signatureExample} from "../../__fixtures__";
+import napiBindings from "../../src/lib/bindings";
+import {expectHex} from "../utils";
+import {signatureExample} from "../__fixtures__";
 
 describe("Signature", () => {
   it("should exist", () => {

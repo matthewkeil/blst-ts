@@ -1,9 +1,9 @@
 import {expect} from "chai";
 import * as swigBindings from "../../../src/swig/lib";
-import napiBindings from "../../../src/lib/bindings";
-import {CoordType} from "../../../src/lib/bindings.types";
-import {expectHex} from "../../utils";
-import {getBindingTestSets, BindingTestSet} from "../../__fixtures__";
+import napiBindings from "../../src/lib/bindings";
+import {CoordType} from "../../src/lib/bindings.types";
+import {expectHex} from "../utils";
+import {getBindingTestSets, BindingTestSet} from "../__fixtures__";
 
 describe("validation against SWIG bindings", () => {
   let bindingSets: BindingTestSet[] = [];

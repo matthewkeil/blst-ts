@@ -1,7 +1,7 @@
 import {expect} from "chai";
-import {functions} from "../../../src/lib/bindings";
-import {PublicKey, Signature} from "../../../src/lib/bindings.types";
-import {makeNapiTestSets} from "../../utils";
+import {functions} from "../../src/lib/bindings";
+import {PublicKey, Signature} from "../../src/lib/bindings.types";
+import {makeNapiTestSets} from "../utils";
 
 describe("aggregateVerify", () => {
   let signature: Signature;

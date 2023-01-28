@@ -1,7 +1,7 @@
 import {expect} from "chai";
-import {PublicKey, SecretKey, Signature} from "../../../src/lib/bindings";
-import {SecretKey as SkType} from "../../../src/lib/bindings.types";
-import {KEY_MATERIAL, SECRET_KEY_BYTES} from "../../__fixtures__";
+import {PublicKey, SecretKey, Signature} from "../../../../src/lib/bindings";
+import {SecretKey as SkType} from "../../../../src/lib/bindings.types";
+import {KEY_MATERIAL, SECRET_KEY_BYTES} from "../../../__fixtures__";
 
 describe("SecretKey", () => {
   it("should exist", () => {
@@ -27,7 +27,9 @@ describe("SecretKey", () => {
       it("should throw on non-Uint8Array ikm", () => {
         expect(() => SecretKey.fromKeygen(null as any)).to.throw("IKM for new SecretKey(ikm) must be a Uint8Array");
         expect(() => SecretKey.fromKeygen(42 as any)).to.throw("IKM for new SecretKey(ikm) must be a Uint8Array");
-        expect(() => SecretKey.fromKeygen("Uint8Array" as any)).to.throw("IKM for new SecretKey(ikm) must be a Uint8Array");
+        expect(() => SecretKey.fromKeygen("Uint8Array" as any)).to.throw(
+          "IKM for new SecretKey(ikm) must be a Uint8Array"
+        );
         expect(() => SecretKey.fromKeygen({} as any)).to.throw("IKM for new SecretKey(ikm) must be a Uint8Array");
         expect(() => SecretKey.fromKeygen([] as any)).to.throw("IKM for new SecretKey(ikm) must be a Uint8Array");
       });

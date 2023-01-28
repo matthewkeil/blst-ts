@@ -1,7 +1,7 @@
 import {expect} from "chai";
-import {PublicKey, SecretKey} from "../../../src/lib/bindings";
-import {expectHex} from "../../utils";
-import {publicKeyExample, SECRET_KEY_BYTES} from "../../__fixtures__";
+import {PublicKey, SecretKey} from "../../src/lib/bindings";
+import {expectHex} from "../utils";
+import {publicKeyExample, SECRET_KEY_BYTES} from "../__fixtures__";
 
 describe("PublicKey", () => {
   it("should exist", () => {
