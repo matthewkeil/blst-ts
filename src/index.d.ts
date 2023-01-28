@@ -14,6 +14,11 @@ export enum CoordType {
 
 export type NapiBuffer = Uint8Array | Buffer;
 export type ByteArray = NapiBuffer | string;
+
+export interface Serializable {
+  serialize(): Uint8Array;
+}
+
 /*
  * Private constructor will randomly generate ikm when new'ing a key.
  * Use static methods SecretKey.fromBytes and SecretKey.keygen to
@@ -30,37 +35,31 @@ export type ByteArray = NapiBuffer | string;
  * key = SecretKey.fromBytes(key.serialize());
  * ```
  */
-export class SecretKey {
+export class SecretKey implements Serializable {
   private constructor();
-  static fromKeygen(ikm?: NapiBuffer): SecretKey;
+  static fromKeygen(ikm?: NapiBuffer): Promise<SecretKey>;
   static fromKeygenSync(ikm?: NapiBuffer): SecretKey;
-  static deserialize(skBytes: NapiBuffer): Promise<SecretKey>;
-  static deserializeSync(skBytes: NapiBuffer): Promise<SecretKey>;
-  toPublicKey(): PublicKey;
-  toPublicKeySync(): Promise<PublicKey>;
-  sign(msg: NapiBuffer): Signature;
-  signSync(msg: NapiBuffer): Promise<Signature>;
+  static deserialize(skBytes: NapiBuffer): SecretKey;
   serialize(compress?: boolean): Buffer;
-  serializeSync(compress?: boolean): Promise<Buffer>;
+  toPublicKey(): Promise<PublicKey>;
+  toPublicKeySync(): PublicKey;
+  sign(msg: NapiBuffer): Promise<Signature>;
+  signSync(msg: NapiBuffer): Signature;
 }
-export class PublicKey {
+export class PublicKey implements Serializable {
   constructor(sk: NapiBuffer | SecretKey);
   static deserialize(skBytes: NapiBuffer, coordType?: CoordType): PublicKey;
-  static deserializeSync(skBytes: NapiBuffer, coordType?: CoordType): PublicKey;
-  keyValidate(): void;
-  keyValidateSync(): Promise<void>;
   serialize(compress?: boolean): Buffer;
-  serializeSync(compress?: boolean): Promise<Buffer>;
+  keyValidate(): Promise<void>;
+  keyValidateSync(): void;
 }
 export type PublicKeyArg = NapiBuffer | PublicKey;
-export class Signature {
+export class Signature implements Serializable {
   private constructor();
-  static deserialize(skBytes: NapiBuffer, coordType?: CoordType): PublicKey;
-  static deserializeSync(skBytes: NapiBuffer, coordType?: CoordType): PublicKey;
-  sigValidate(): void;
-  sigValidateSync(): Promise<void>;
+  static deserialize(skBytes: NapiBuffer, coordType?: CoordType): Signature;
   serialize(compress?: boolean): Buffer;
-  serializeSync(compress?: boolean): Promise<Buffer>;
+  sigValidate(): Promise<void>;
+  sigValidateSync(): void;
 }
 export type SignatureArg = NapiBuffer | Signature;
 export interface SignatureSet {
@@ -68,21 +67,19 @@ export interface SignatureSet {
   publicKey: PublicKeyArg;
   signature: SignatureArg;
 }
-interface TestFunctions {
-  testBufferAsBuffer(buff: Buffer): Buffer;
-  testBufferAsString(buff: Buffer): string;
-  testStringAsBuffer(str: string): Buffer;
-  testTypedArrayAsTypedArray(buff: Uint8Array): Uint8Array;
-  testTypedArrayAsString(buff: Uint8Array): string;
-}
 interface BlstTsFunctions {
-  tests: TestFunctions;
-  aggregatePublicKeys(keys: PublicKeyArg[]): PublicKey;
-  aggregatePublicKeysAsync(keys: PublicKeyArg[]): Promise<PublicKey>;
-  aggregateVerify(msgs: ByteArray[], publicKeys: PublicKeyArg[], signature: SignatureArg): boolean;
-  aggregateVerifyAsync(msgs: ByteArray[], publicKeys: PublicKeyArg[], signature: SignatureArg): Promise<boolean>;
-  verifyMultipleAggregateSignatures(sets: SignatureSet[]): boolean;
-  verifyMultipleAggregateSignaturesAsync(sets: SignatureSet[]): Promise<boolean>;
+  aggregatePublicKeys(keys: PublicKeyArg[]): Promise<PublicKey>;
+  aggregatePublicKeysSync(keys: PublicKeyArg[]): PublicKey;
+  aggregateSignatures(signatures: SignatureArg[]): Promise<Signature>;
+  aggregateSignaturesSync(signatures: SignatureArg[]): Signature;
+  verify(msgs: ByteArray, publicKeys: PublicKeyArg, signature: SignatureArg): Promise<boolean>;
+  verifySync(msgs: ByteArray, publicKeys: PublicKeyArg, signature: SignatureArg): boolean;
+  aggregateVerify(msgs: ByteArray[], publicKeys: PublicKeyArg[], signature: SignatureArg): Promise<boolean>;
+  aggregateVerifySync(msgs: ByteArray[], publicKeys: PublicKeyArg[], signature: SignatureArg): boolean;
+  fastAggregateVerify(msgs: ByteArray, publicKeys: PublicKeyArg[], signature: SignatureArg): Promise<boolean>;
+  fastAggregateVerifySync(msgs: ByteArray, publicKeys: PublicKeyArg[], signature: SignatureArg): boolean;
+  verifyMultipleAggregateSignatures(sets: SignatureSet[]): Promise<boolean>;
+  verifyMultipleAggregateSignaturesSync(sets: SignatureSet[]): boolean;
 }
 export const functions: BlstTsFunctions;
 export const DST: string;

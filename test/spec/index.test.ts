@@ -3,8 +3,8 @@ import fs from "fs";
 import path from "path";
 import jsYaml from "js-yaml";
 import {SPEC_TEST_LOCATION} from "./specTestVersioning";
-import * as blst from "../../../src/swig/lib";
-import {fromHex, toHex} from "../../../test/utils";
+import {functions, SecretKey, PublicKey, Signature} from "../../src";
+import {fromHex, toHex} from "../utils";
 
 // Example full path
 // blst-ts/spec-tests/tests/general/altair/bls/eth_aggregate_pubkeys/small/eth_aggregate_pubkeys_empty_list
@@ -103,8 +103,8 @@ for (const fork of fs.readdirSync(testRootDirByFork)) {
  * ```
  */
 function aggregate(input: string[]): string | null {
-  const agg = blst.aggregateSignatures(input.map((hex) => blst.Signature.fromBytes(fromHex(hex))));
-  return toHex(agg.toBytes());
+  const agg = functions.aggregateSignaturesSync(input.map((hex) => Signature.deserialize(fromHex(hex))));
+  return toHex(agg.serialize());
 }
 
 /**
@@ -118,10 +118,10 @@ function aggregate(input: string[]): string | null {
  */
 function aggregate_verify(input: {pubkeys: string[]; messages: string[]; signature: string}): boolean {
   const {pubkeys, messages, signature} = input;
-  return blst.aggregateVerify(
+  return functions.aggregateVerifySync(
     messages.map(fromHex),
-    pubkeys.map((hex) => blst.PublicKey.fromBytes(fromHex(hex))),
-    blst.Signature.fromBytes(fromHex(signature))
+    pubkeys.map((hex) => PublicKey.deserialize(fromHex(hex))),
+    Signature.deserialize(fromHex(signature))
   );
 }
 
@@ -137,8 +137,8 @@ function eth_aggregate_pubkeys(input: string[]): string | null {
     if (pk === G1_POINT_AT_INFINITY) return null;
   }
 
-  const agg = blst.aggregatePubkeys(input.map((hex) => blst.PublicKey.fromBytes(fromHex(hex))));
-  return toHex(agg.toBytes());
+  const agg = functions.aggregatePublicKeysSync(input.map((hex) => PublicKey.deserialize(fromHex(hex))));
+  return toHex(agg.serialize());
 }
 
 /**
@@ -162,10 +162,10 @@ function eth_fast_aggregate_verify(input: {pubkeys: string[]; message: string; s
     if (pk === G1_POINT_AT_INFINITY) return false;
   }
 
-  return blst.fastAggregateVerify(
+  return functions.fastAggregateVerifySync(
     fromHex(message),
-    pubkeys.map((hex) => blst.PublicKey.fromBytes(fromHex(hex))),
-    blst.Signature.fromBytes(fromHex(signature))
+    pubkeys.map((hex) => PublicKey.deserialize(fromHex(hex))),
+    Signature.deserialize(fromHex(signature))
   );
 }
 
@@ -186,10 +186,10 @@ function fast_aggregate_verify(input: {pubkeys: string[]; message: string; signa
     if (pk === G1_POINT_AT_INFINITY) return false;
   }
 
-  return blst.fastAggregateVerify(
+  return functions.fastAggregateVerifySync(
     fromHex(message),
-    pubkeys.map((hex) => blst.PublicKey.fromBytes(fromHex(hex))),
-    blst.Signature.fromBytes(fromHex(signature))
+    pubkeys.map((hex) => PublicKey.deserialize(fromHex(hex))),
+    Signature.deserialize(fromHex(signature))
   );
 }
 
@@ -201,9 +201,9 @@ function fast_aggregate_verify(input: {pubkeys: string[]; message: string; signa
  */
 function sign(input: {privkey: string; message: string}): string | null {
   const {privkey, message} = input;
-  const sk = blst.SecretKey.fromBytes(fromHex(privkey));
-  const signature = sk.sign(fromHex(message));
-  return toHex(signature.toBytes());
+  const sk = SecretKey.deserialize(fromHex(privkey));
+  const signature = sk.signSync(fromHex(message));
+  return toHex(signature.serialize());
 }
 
 /**
@@ -215,13 +215,13 @@ function sign(input: {privkey: string; message: string}): string | null {
  */
 function verify(input: {pubkey: string; message: string; signature: string}): boolean {
   const {pubkey, message, signature} = input;
-  return blst.verify(
+  return functions.verifySync(
     fromHex(message),
-    blst.PublicKey.fromBytes(fromHex(pubkey)),
-    blst.Signature.fromBytes(fromHex(signature))
+    PublicKey.deserialize(fromHex(pubkey)),
+    Signature.deserialize(fromHex(signature))
   );
 }
 
 function isBlstError(e: unknown): boolean {
-  return (e as Error).message.includes("BLST_ERROR") || e instanceof blst.ErrorBLST;
+  return (e as Error).message.includes("BLST_ERROR");
 }

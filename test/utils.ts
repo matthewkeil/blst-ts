@@ -1,12 +1,7 @@
 import {expect} from "chai";
-import napiBindings from "../src/lib/bindings";
-import {SecretKey, PublicKey, Signature} from "../src/lib/bindings.types";
+import {ByteArray, Serializable, SecretKey, PublicKey, Signature} from "../src";
 
-interface BaseSerializable {
-  serialize(): Uint8Array;
-}
-
-type Bufferish = string | Uint8Array | Buffer | BaseSerializable;
+type Bufferish = ByteArray | Serializable;
 
 export function toHex(bytes: Bufferish): string {
   const hex = toHexNoPrefix(bytes);
@@ -55,10 +50,10 @@ export function runInstanceTestCases<InstanceType extends {[key: string]: any}>(
   for (const [key, testCases] of Object.entries(instanceTestCases)) {
     const methodKey = key as keyof InstanceType;
     for (const testCase of testCases) {
-      it(`${methodKey}: ${testCase.id || ""}`, () => {
+      it(`${String(methodKey)}: ${testCase.id || ""}`, () => {
         // Get a new fresh instance for this test
         const instance = testCase.instance || getInstance();
-        if (typeof instance[methodKey] !== "function") throw Error(`Method ${methodKey} does not exist`);
+        if (typeof instance[methodKey] !== "function") throw Error(`Method ${String(methodKey)} does not exist`);
         const res = (instance[methodKey] as (...args: any) => any)(...testCase.args);
         if (!res) {
           // OK
@@ -82,9 +77,9 @@ export interface NapiTestSet {
 }
 
 export function makeNapiTestSet(msg: Uint8Array): NapiTestSet {
-  const secretKey = napiBindings.SecretKey.fromKeygen(Buffer.from("*".repeat(32)));
-  const publicKey = secretKey.toPublicKey();
-  const signature = secretKey.sign(msg);
+  const secretKey = SecretKey.fromKeygenSync(Buffer.from("*".repeat(32)));
+  const publicKey = secretKey.toPublicKeySync();
+  const signature = secretKey.signSync(msg);
   return {
     msg,
     secretKey,
