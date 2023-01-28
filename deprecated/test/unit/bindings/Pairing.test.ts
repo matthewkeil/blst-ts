@@ -1,5 +1,5 @@
-import {blst, Pairing} from "../../../src/swig/bindings";
-import {fromHex, runInstanceTestCases} from "../../utils";
+import {blst, Pairing} from "../../../../deprecated/src/lib/bindings";
+import {fromHex, runInstanceTestCases} from "../../../utils";
 
 describe("Pairing", () => {
   const sample = {

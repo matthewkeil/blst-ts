@@ -1,5 +1,5 @@
 import {expect} from "chai";
-import * as bls from "../../../src/swig/lib";
+import * as bls from "../../../../src/swig/lib";
 
 describe("bls lib", () => {
   const n = 3;

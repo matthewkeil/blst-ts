@@ -1,4 +1,4 @@
-import {blst} from "../../../src/swig/bindings";
+import {blst} from "../../../../deprecated/src/lib/bindings";
 
 describe("blst sample case", () => {
   it("Should verify a signature", () => {

@@ -1,5 +1,5 @@
-import {blst, BLST_ERROR, P2, P2_Affine, P2Constructor} from "../../../src/swig/bindings";
-import {fromHex, runInstanceTestCases} from "../../utils";
+import {blst, BLST_ERROR, P2, P2_Affine, P2Constructor} from "../../../../deprecated/src/lib/bindings";
+import {fromHex, runInstanceTestCases} from "../../../utils";
 
 describe("P2", () => {
   const sample = {

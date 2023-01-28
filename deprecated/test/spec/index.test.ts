@@ -3,8 +3,8 @@ import fs from "fs";
 import path from "path";
 import jsYaml from "js-yaml";
 import {SPEC_TEST_LOCATION} from "./specTestVersioning";
-import * as blst from "../../src/swig/lib";
-import {fromHex, toHex} from "../utils";
+import * as blst from "../../../src/swig/lib";
+import {fromHex, toHex} from "../../../test/utils";
 
 // Example full path
 // blst-ts/spec-tests/tests/general/altair/bls/eth_aggregate_pubkeys/small/eth_aggregate_pubkeys_empty_list
