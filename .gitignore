@@ -4,6 +4,7 @@ build
 dist
 node_modules
 prebuild/*.node
+.VSCodeCounter
 
 npm-debug.log
 yarn-error.log
