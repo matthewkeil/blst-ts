@@ -1,4 +1,4 @@
-import {blst, BLST_ERROR} from "./blst.hpp";
+import {BLST_ERROR} from "./blst.hpp";
 export {BLST_ERROR};
 
 export const SECRET_KEY_LENGTH = 32;
@@ -41,10 +41,6 @@ export type ByteArray = NapiBuffer | string;
  */
 export declare class SecretKey {
   constructor();
-  static fromKeygen(ikm?: NapiBuffer): SecretKey;
-  // static keygenAsync(ikm?: Uint8Array| Buffer): Promise<SecretKey>;
-  static fromBytes(skBytes: NapiBuffer): SecretKey;
-  // static fromBytesAsync(skBytes: Uint8Array| Buffer): Promise<SecretKey>;
   toPublicKey(): PublicKey;
   // toPublicKeyAsync(): Promise<PublicKey>;
   sign(msg: NapiBuffer): Signature;
@@ -61,13 +57,8 @@ export interface SecretKeyConstructor {
   fromBytes(skBytes: NapiBuffer): SecretKey;
   // fromBytesAsync(skBytes: Uint8Array| Buffer): Promise<SecretKey>;
 }
-
-// export type BlstP1 = InstanceType<typeof blst.P1>;
-// export type BlstP1Affine = InstanceType<typeof blst.P1_Affine>;
 export declare class PublicKey {
   constructor(sk?: SecretKey);
-  static fromBytes(bytes: NapiBuffer, coordType?: CoordType): PublicKey;
-  // static fromBytesAsync(bytes: NapiBuffer, coordType?: CoordType): Promise<PublicKey>;
   toBytes(): Uint8Array;
   compress(): Uint8Array;
   serialize(): Uint8Array;
@@ -79,15 +70,8 @@ export interface PublicKeyConstructor {
   fromBytes(bytes: NapiBuffer, coordType?: CoordType): PublicKey;
   // fromBytesAsync(): Promise<PublicKey>;
 }
-
-type BlstSignature = InstanceType<typeof blst.P2>;
-type BlstSignatureAffine = InstanceType<typeof blst.P2_Affine>;
 export declare class Signature {
   private constructor();
-  static fromBytes(bytes: NapiBuffer): Signature;
-  // static fromBytesAsync(): Promise<Signature>;
-  get jacobian(): BlstSignature;
-  get affine(): BlstSignatureAffine;
   toBytes(): Uint8Array;
   compress(): Uint8Array;
   serialize(): Uint8Array;
@@ -95,7 +79,6 @@ export declare class Signature {
   // sigValidateAsync(): Promise<void>;
 }
 export interface SignatureConstructor {
-  // new (): Signature;
   fromBytes(bytes: NapiBuffer): Signature;
   // fromBytesAsync(): Promise<Signature>;
 }

@@ -1,4 +1,4 @@
-import {getBinaryPath} from "../scripts/paths";
+import {getBinaryPath} from "../../../src/scripts/paths";
 // eslint-disable-next-line
 export const blst: Blst = require(getBinaryPath());
 
