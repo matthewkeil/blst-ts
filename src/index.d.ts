@@ -12,9 +12,14 @@ export enum CoordType {
   jacobian,
 }
 
-export type NapiBuffer = Uint8Array | Buffer;
-export type ByteArray = NapiBuffer | string;
-
+export type BlstBuffer = Uint8Array | Buffer;
+export type PublicKeyArg = BlstBuffer | PublicKey;
+export type SignatureArg = BlstBuffer | Signature;
+export interface SignatureSet {
+  msg: BlstBuffer;
+  publicKey: PublicKeyArg;
+  signature: SignatureArg;
+}
 export interface Serializable {
   serialize(): Uint8Array;
 }
@@ -37,54 +42,48 @@ export interface Serializable {
  */
 export class SecretKey implements Serializable {
   private constructor();
-  static fromKeygen(ikm?: NapiBuffer): Promise<SecretKey>;
-  static fromKeygenSync(ikm?: NapiBuffer): SecretKey;
-  static deserialize(skBytes: NapiBuffer): SecretKey;
+  static fromKeygen(ikm?: BlstBuffer): Promise<SecretKey>;
+  static fromKeygenSync(ikm?: BlstBuffer): SecretKey;
+  static deserialize(skBytes: BlstBuffer): SecretKey;
   serialize(compress?: boolean): Buffer;
   toPublicKey(): Promise<PublicKey>;
   toPublicKeySync(): PublicKey;
-  sign(msg: NapiBuffer): Promise<Signature>;
-  signSync(msg: NapiBuffer): Signature;
+  sign(msg: BlstBuffer): Promise<Signature>;
+  signSync(msg: BlstBuffer): Signature;
 }
 export class PublicKey implements Serializable {
-  constructor(sk: NapiBuffer | SecretKey);
-  static deserialize(skBytes: NapiBuffer, coordType?: CoordType): PublicKey;
+  constructor(sk: BlstBuffer | SecretKey);
+  static deserialize(skBytes: BlstBuffer, coordType?: CoordType): PublicKey;
   serialize(compress?: boolean): Buffer;
   keyValidate(): Promise<void>;
   keyValidateSync(): void;
 }
-export type PublicKeyArg = NapiBuffer | PublicKey;
 export class Signature implements Serializable {
   private constructor();
-  static deserialize(skBytes: NapiBuffer, coordType?: CoordType): Signature;
+  static deserialize(skBytes: BlstBuffer, coordType?: CoordType): Signature;
   serialize(compress?: boolean): Buffer;
   sigValidate(): Promise<void>;
   sigValidateSync(): void;
 }
-export type SignatureArg = NapiBuffer | Signature;
-export interface SignatureSet {
-  msg: NapiBuffer;
-  publicKey: PublicKeyArg;
-  signature: SignatureArg;
-}
-interface BlstTsFunctions {
+export const functions: {
   aggregatePublicKeys(keys: PublicKeyArg[]): Promise<PublicKey>;
   aggregatePublicKeysSync(keys: PublicKeyArg[]): PublicKey;
   aggregateSignatures(signatures: SignatureArg[]): Promise<Signature>;
   aggregateSignaturesSync(signatures: SignatureArg[]): Signature;
-  verify(msgs: ByteArray, publicKeys: PublicKeyArg, signature: SignatureArg): Promise<boolean>;
-  verifySync(msgs: ByteArray, publicKeys: PublicKeyArg, signature: SignatureArg): boolean;
-  aggregateVerify(msgs: ByteArray[], publicKeys: PublicKeyArg[], signature: SignatureArg): Promise<boolean>;
-  aggregateVerifySync(msgs: ByteArray[], publicKeys: PublicKeyArg[], signature: SignatureArg): boolean;
-  fastAggregateVerify(msgs: ByteArray, publicKeys: PublicKeyArg[], signature: SignatureArg): Promise<boolean>;
-  fastAggregateVerifySync(msgs: ByteArray, publicKeys: PublicKeyArg[], signature: SignatureArg): boolean;
+  verify(msgs: BlstBuffer, publicKeys: PublicKeyArg, signature: SignatureArg): Promise<boolean>;
+  verifySync(msgs: BlstBuffer, publicKeys: PublicKeyArg, signature: SignatureArg): boolean;
+  aggregateVerify(msgs: BlstBuffer[], publicKeys: PublicKeyArg[], signature: SignatureArg): Promise<boolean>;
+  aggregateVerifySync(msgs: BlstBuffer[], publicKeys: PublicKeyArg[], signature: SignatureArg): boolean;
+  fastAggregateVerify(msgs: BlstBuffer, publicKeys: PublicKeyArg[], signature: SignatureArg): Promise<boolean>;
+  fastAggregateVerifySync(msgs: BlstBuffer, publicKeys: PublicKeyArg[], signature: SignatureArg): boolean;
   verifyMultipleAggregateSignatures(sets: SignatureSet[]): Promise<boolean>;
   verifyMultipleAggregateSignaturesSync(sets: SignatureSet[]): boolean;
-}
-export const functions: BlstTsFunctions;
-export const DST: string;
-export const SECRET_KEY_LENGTH: number;
-export const PUBLIC_KEY_LENGTH_UNCOMPRESSED: number;
-export const PUBLIC_KEY_LENGTH_COMPRESSED: number;
-export const SIGNATURE_LENGTH_UNCOMPRESSED: number;
-export const SIGNATURE_LENGTH_COMPRESSED: number;
+};
+export const BLST_CONSTANTS: {
+  DST: string;
+  SECRET_KEY_LENGTH: number;
+  PUBLIC_KEY_LENGTH_UNCOMPRESSED: number;
+  PUBLIC_KEY_LENGTH_COMPRESSED: number;
+  SIGNATURE_LENGTH_UNCOMPRESSED: number;
+  SIGNATURE_LENGTH_COMPRESSED: number;
+};

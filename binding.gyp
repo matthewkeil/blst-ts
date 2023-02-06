@@ -1,12 +1,12 @@
 {
   'targets': [
     {
-      'target_name': 'blst-ts',
+      'target_name': 'blst_ts_addon',
       'sources': [
         'blst/src/server.c',
         'blst/build/assembly.S',
         'src/bindings/addon.cc',
-        'src/bindings/secret_key.cc',
+        # 'src/bindings/secret_key.cc',
       ],
       'dependencies': [ "<!(node -p \"require('node-addon-api').gyp\")" ],
       'include_dirs': [
