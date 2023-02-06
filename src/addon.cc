@@ -1,5 +1,7 @@
 #include "addon.h"
 
+std::mutex GlobalState::lock_;
+
 GlobalState::GlobalState()
     : dst_{"BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_"},
       secret_key_length_{32},
@@ -55,9 +57,11 @@ void BlstTsAddon::BuildConstants(Napi::Env env)
 
 BlstTsAddon::BlstTsAddon(Napi::Env env, Napi::Object exports)
 {
+    // SecretKey::Init(env, exports, secret_key_ctr_, this);
     BuildConstants(env);
     DefineAddon(exports, {
                              InstanceValue("BLST_CONSTANTS", js_constants_, napi_enumerable),
+                             //   InstanceMethod("SecretKey", secret_key_ctr_, napi_enumerable)
                          });
 };
 

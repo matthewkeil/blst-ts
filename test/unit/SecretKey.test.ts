@@ -1,5 +1,5 @@
 import {expect} from "chai";
-import {PublicKey, SecretKey, Signature} from "../../src";
+import {PublicKey, SecretKey, Signature} from "../../lib";
 import {KEY_MATERIAL, SECRET_KEY_BYTES} from "../__fixtures__";
 
 describe("SecretKey", () => {

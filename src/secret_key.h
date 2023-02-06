@@ -2,10 +2,14 @@
 #define BLST_TS_SECRET_KEY_H__
 
 #include "napi.h"
+#include "blst.hpp"
+#include "addon.h"
 
 class SecretKey : public Napi::ObjectWrap<SecretKey>
 {
 public:
+    std::unique_ptr<blst::SecretKey> _key;
+
     static void Init(const Napi::Env &env, Napi::Object &exports, Napi::Function &ctr, BlstTsAddon *module);
     static Napi::Value FromKeygen(const Napi::CallbackInfo &info);
     static Napi::Value FromKeygenSync(const Napi::CallbackInfo &info);
@@ -18,7 +22,7 @@ public:
     Napi::Value SignSync(const Napi::CallbackInfo &info);
 
 private:
-    BlstTsAddon &module_;
+    BlstTsAddon *_module;
 };
 
 #endif /* BLST_TS_SECRET_KEY_H__ */

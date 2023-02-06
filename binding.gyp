@@ -3,14 +3,14 @@
     {
       'target_name': 'blst_ts_addon',
       'sources': [
-        'blst/src/server.c',
-        'blst/build/assembly.S',
-        'src/bindings/addon.cc',
-        # 'src/bindings/secret_key.cc',
+        'deps/blst/src/server.c',
+        'deps/blst/build/assembly.S',
+        'src/addon.cc',
+        'src/secret_key.cc',
       ],
       'dependencies': [ "<!(node -p \"require('node-addon-api').gyp\")" ],
       'include_dirs': [
-        'blst/bindings',
+        'deps/blst/bindings',
         "<!@(node -p \"require('node-addon-api').include_dir\")",
       ],
       'defines': [ 'NAPI_CPP_EXCEPTIONS' ],

@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 import jsYaml from "js-yaml";
 import {SPEC_TEST_LOCATION} from "./specTestVersioning";
-import {functions, SecretKey, PublicKey, Signature} from "../../src";
+import {functions, SecretKey, PublicKey, Signature} from "../../lib";
 import {fromHex, toHex} from "../utils";
 
 // Example full path

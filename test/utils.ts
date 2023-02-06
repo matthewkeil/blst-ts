@@ -1,7 +1,7 @@
 import {expect} from "chai";
-import {ByteArray, Serializable, SecretKey, PublicKey, Signature} from "../src";
+import {BlstBuffer, Serializable, SecretKey, PublicKey, Signature} from "../lib";
 
-type Bufferish = ByteArray | Serializable;
+type Bufferish = BlstBuffer | Serializable;
 
 export function toHex(bytes: Bufferish): string {
   const hex = toHexNoPrefix(bytes);
