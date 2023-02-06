@@ -31,7 +31,7 @@ Napi::Value PublicKey::Deserialize(const Napi::CallbackInfo &info)
         module->_global_state->_public_key_compressed_length,
         module->_global_state->_public_key_uncompressed_length,
         'pkBytes')
-    Napi::Object wrapped = module->_secret_key_ctr.New({Napi::External<void>::New(env, nullptr)});
+    Napi::Object wrapped = module->_public_key_ctr.New({Napi::External<void>::New(env, nullptr)});
     PublicKey *pk = PublicKey::Unwrap(wrapped);
     pk->_is_jacobian = true;
     if (!info[1].IsUndefined())
@@ -85,9 +85,9 @@ Napi::Value PublicKey::Serialize(const Napi::CallbackInfo &info)
 {
     Napi::Env env = info.Env();
     bool compressed{true};
-    if (!info[1].IsUndefined())
+    if (!info[0].IsUndefined())
     {
-        compressed = info[1].ToBoolean().Value();
+        compressed = info[0].ToBoolean().Value();
     }
     size_t length = compressed ? _module._global_state->_public_key_compressed_length : _module._global_state->_public_key_uncompressed_length;
     Napi::Buffer<uint8_t> serialized = Napi::Buffer<uint8_t>::New(env, length);

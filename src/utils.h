@@ -1,6 +1,7 @@
 #ifndef BLST_TS_UTILS_H__
 #define BLST_TS_UTILS_H__
 
+#include <sstream>
 #include "napi.h"
 #include "addon.h"
 
@@ -41,13 +42,14 @@
         THROW_ERROR_UNDEFINED(ENV, #ERROR_PREFIX " must be " #LENGTH " bytes long"); \
     }
 
-#include <iostream>
-
-#define CHECK_UINT8_2_LENGTHS_UNDEFINED(ENV, ARR, LENGTH1, LENGTH2, ERROR_PREFIX)                     \
-    std::cout << ARR.ByteLength() << std::endl;                                                       \
-    if (!(ARR.ByteLength() == (LENGTH1) || ARR.ByteLength() == (LENGTH2)))                            \
-    {                                                                                                 \
-        THROW_ERROR_UNDEFINED(ENV, #ERROR_PREFIX " must be " #LENGTH1 " or " #LENGTH2 " bytes long"); \
+#define CHECK_UINT8_2_LENGTHS_UNDEFINED(ENV, ARR, LENGTH1, LENGTH2, ERROR_PREFIX)                                            \
+    size_t length = ARR.ByteLength();                                                                                        \
+    if (!(length == LENGTH1 || length == LENGTH2))                                                                       \
+    {                                                                                                                        \
+        std::ostringstream msg;                                                                                              \
+        msg << #ERROR_PREFIX << " is " << length << " bytes, but must be " << LENGTH1 << " or " << LENGTH2 << " bytes long"; \
+        std::string msg_str = msg.str();                                                                                     \
+        THROW_ERROR_UNDEFINED(ENV, msg_str);                                                                                 \
     }
 
 #define ARG_TO_UINT8_UNDEFINED(INFO, ENV, NUM, NAME, ERROR_PREFIX)         \

@@ -8,7 +8,6 @@ void SecretKey::Init(const Napi::Env &env, Napi::Object &exports, BlstTsAddon *m
         StaticMethod("deserialize", &SecretKey::Deserialize, static_cast<napi_property_attributes>(napi_static | napi_enumerable)),
         InstanceMethod("serialize", &SecretKey::Serialize, static_cast<napi_property_attributes>(napi_enumerable)),
         InstanceMethod("toPublicKey", &SecretKey::ToPublicKey, static_cast<napi_property_attributes>(napi_enumerable)),
-        InstanceMethod("toPublicKeySync", &SecretKey::ToPublicKeySync, static_cast<napi_property_attributes>(napi_enumerable)),
         InstanceMethod("sign", &SecretKey::Sign, static_cast<napi_property_attributes>(napi_enumerable)),
         InstanceMethod("signSync", &SecretKey::SignSync, static_cast<napi_property_attributes>(napi_enumerable)),
         /**
@@ -85,30 +84,30 @@ namespace
         Napi::Reference<Napi::TypedArrayOf<u_int8_t>> _entropy_array_ref;
     };
 
-    class ToPublicKeyWorker : public BlstAsyncWorker
-    {
-    public:
-        ToPublicKeyWorker(const Napi::CallbackInfo &info, const blst::SecretKey &key)
-            : BlstAsyncWorker{info}, _key{key}, _point{} {};
+    // class ToPublicKeyWorker : public BlstAsyncWorker
+    // {
+    // public:
+    //     ToPublicKeyWorker(const Napi::CallbackInfo &info, const blst::SecretKey &key)
+    //         : BlstAsyncWorker{info}, _key{key}, _point{} {};
 
-        void Setup() override
-        {
-            /* no-op */;
-        }
-        void Execute() override { _point = blst::P1{_key}; };
-        Napi::Value GetReturnValue() override
-        {
-            Napi::Object wrapped = _module->_secret_key_ctr.New({Napi::External<void *>::New(Env(), nullptr)});
-            PublicKey *pk = PublicKey::Unwrap(wrapped);
-            pk->_jacobian.reset(new blst::P1{_point});
-            pk->_is_jacobian = true;
-            return wrapped;
-        };
+    //     void Setup() override
+    //     {
+    //         /* no-op */;
+    //     }
+    //     void Execute() override { _point = blst::P1{_key}; };
+    //     Napi::Value GetReturnValue() override
+    //     {
+    //         Napi::Object wrapped = _module->_secret_key_ctr.New({Napi::External<void *>::New(Env(), nullptr)});
+    //         PublicKey *pk = PublicKey::Unwrap(wrapped);
+    //         pk->_jacobian.reset(new blst::P1{_point});
+    //         pk->_is_jacobian = true;
+    //         return wrapped;
+    //     };
 
-    private:
-        const blst::SecretKey &_key;
-        blst::P1 _point;
-    };
+    // private:
+    //     const blst::SecretKey &_key;
+    //     blst::P1 _point;
+    // };
 
     class SignWorker : public BlstAsyncWorker
     {
@@ -200,14 +199,11 @@ Napi::Value SecretKey::Serialize(const Napi::CallbackInfo &info)
 
 Napi::Value SecretKey::ToPublicKey(const Napi::CallbackInfo &info)
 {
-    ToPublicKeyWorker worker{info, *_key};
-    return worker.Run();
-}
-
-Napi::Value SecretKey::ToPublicKeySync(const Napi::CallbackInfo &info)
-{
-    ToPublicKeyWorker worker{info, *_key};
-    return worker.RunSync();
+    Napi::Object wrapped = _module->_public_key_ctr.New({Napi::External<void *>::New(Env(), nullptr)});
+    PublicKey *pk = PublicKey::Unwrap(wrapped);
+    pk->_jacobian.reset(new blst::P1{*_key});
+    pk->_is_jacobian = true;
+    return wrapped;
 }
 
 Napi::Value SecretKey::Sign(const Napi::CallbackInfo &info)
