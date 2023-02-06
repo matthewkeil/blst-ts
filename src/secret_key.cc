@@ -49,8 +49,8 @@ namespace
                 _data = nullptr;
                 return;
             }
-            ARG_UINT8_OF_LENGTH_RETURN_VOID(_info, _env, 0, entropy, _module->_global_state->_secret_key_length, "IKM for new SecretKey(ikm)");
-            _entropy_array_ref = Napi::Reference<Napi::TypedArrayOf<u_int8_t>>::New(entropy, 1);
+            ARG_UINT8_OF_LENGTH_RETURN_VOID(_info, _env, 0, entropy, _module->_global_state->_secret_key_length, "ikm");
+            _entropy_array_ref = Napi::Persistent<Napi::TypedArrayOf<u_int8_t>>(entropy);
             _data = entropy.Data();
         };
 
@@ -83,31 +83,6 @@ namespace
         uint8_t *_data;
         Napi::Reference<Napi::TypedArrayOf<u_int8_t>> _entropy_array_ref;
     };
-
-    // class ToPublicKeyWorker : public BlstAsyncWorker
-    // {
-    // public:
-    //     ToPublicKeyWorker(const Napi::CallbackInfo &info, const blst::SecretKey &key)
-    //         : BlstAsyncWorker{info}, _key{key}, _point{} {};
-
-    //     void Setup() override
-    //     {
-    //         /* no-op */;
-    //     }
-    //     void Execute() override { _point = blst::P1{_key}; };
-    //     Napi::Value GetReturnValue() override
-    //     {
-    //         Napi::Object wrapped = _module->_secret_key_ctr.New({Napi::External<void *>::New(Env(), nullptr)});
-    //         PublicKey *pk = PublicKey::Unwrap(wrapped);
-    //         pk->_jacobian.reset(new blst::P1{_point});
-    //         pk->_is_jacobian = true;
-    //         return wrapped;
-    //     };
-
-    // private:
-    //     const blst::SecretKey &_key;
-    //     blst::P1 _point;
-    // };
 
     class SignWorker : public BlstAsyncWorker
     {
