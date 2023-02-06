@@ -1,13 +1,4 @@
-#include <iostream>
-#include <openssl/rand.h>
-#include "napi.h"
-#include "blst.hpp"
-#include "addon.h"
-#include "macros.h"
-#include "utils.h"
 #include "secret_key.h"
-// #include "public_key.h"
-// #include "signature.h"
 
 void SecretKey::Init(const Napi::Env &env, Napi::Object &exports, BlstTsAddon *module)
 {
@@ -67,7 +58,6 @@ namespace
         void Execute() override
         {
             size_t sk_length = _module->_global_state->_secret_key_length;
-            std::cout << "sk_length: " << sk_length << std::endl;
             if (_data == nullptr) // no entropy passed
             {
                 blst::byte ikm[sk_length];
@@ -99,24 +89,23 @@ namespace
     {
     public:
         ToPublicKeyWorker(const Napi::CallbackInfo &info, const blst::SecretKey &key)
-            : BlstAsyncWorker{info}, _info{info}, _key{key}, _point{} {};
-        void Setup() override{/* no-op */};
+            : BlstAsyncWorker{info}, _key{key}, _point{} {};
+
+        void Setup() override
+        {
+            /* no-op */;
+        }
         void Execute() override { _point = blst::P1{_key}; };
         Napi::Value GetReturnValue() override
         {
-            return _info.Env().Undefined();
-            // Napi::Object wrapped = _module->secret_key_ctr_.New({Napi::External<void>::New(Env(), nullptr)});
-            // PublicKey *pk = PublicKey::Unwrap(wrapped);
-            // // TODO: check
-            // pk->_point->add(_point);
-            // // TODO: was like line below but think we can just add to the initialized point here,
-            // //       check during PR and change other instances if not correct
-            // // pk->_point.reset(new blst::P1{_point});
-            // return wrapped;
+            Napi::Object wrapped = _module->_secret_key_ctr.New({Napi::External<void *>::New(Env(), nullptr)});
+            PublicKey *pk = PublicKey::Unwrap(wrapped);
+            pk->_jacobian.reset(new blst::P1{_point});
+            pk->_is_jacobian = true;
+            return wrapped;
         };
 
     private:
-        const Napi::CallbackInfo &_info;
         const blst::SecretKey &_key;
         blst::P1 _point;
     };
@@ -141,7 +130,7 @@ namespace
         Napi::Value GetReturnValue() override
         {
             return _info.Env().Undefined();
-            // Napi::Object wrapped = _module->signature_ctr_.New({Napi::External<void>::New(Env(), nullptr)});
+            // Napi::Object wrapped = _module->signature_ctr_.New({Napi::External<void *>::New(Env(), nullptr)});
             // Signature *sig = Signature::Unwrap(wrapped);
             // // TODO: see note in ToPublicKeyWorker::GetReturnValue()
             // sig->_point->add(_point);

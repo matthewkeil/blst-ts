@@ -45,7 +45,7 @@ export class SecretKey implements Serializable {
   static fromKeygen(ikm?: BlstBuffer): Promise<SecretKey>;
   static fromKeygenSync(ikm?: BlstBuffer): SecretKey;
   static deserialize(skBytes: BlstBuffer): SecretKey;
-  serialize(compress?: boolean): Buffer;
+  serialize(): Buffer;
   toPublicKey(): Promise<PublicKey>;
   toPublicKeySync(): PublicKey;
   sign(msg: BlstBuffer): Promise<Signature>;

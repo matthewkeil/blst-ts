@@ -1,5 +1,4 @@
 #include "addon.h"
-#include <iostream>
 
 std::mutex GlobalState::_lock;
 
@@ -54,10 +53,16 @@ void BlstTsAddon::BuildJsConstants(Napi::Env &env)
     _js_constants.Set(Napi::String::New(env, "SIGNATURE_LENGTH_COMPRESSED"), Napi::Number::New(env, _global_state->_signature_compressed_length));
 }
 
+std::string BlstTsAddon::GetBlstErrorString(blst::BLST_ERROR &err)
+{
+    return _global_state->_blst_error_strings[err];
+}
+
 BlstTsAddon::BlstTsAddon(Napi::Env env, Napi::Object exports)
 {
     env.SetInstanceData(this);
     SecretKey::Init(env, exports, this);
+    PublicKey::Init(env, exports, this);
     BuildJsConstants(env);
     DefineAddon(exports, {
                              InstanceValue("BLST_CONSTANTS", _js_constants, napi_enumerable),

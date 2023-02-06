@@ -1,11 +1,6 @@
-#include <sstream>
-#include <openssl/rand.h>
-#include "napi.h"
-#include "blst.hpp"
-#include "addon.h"
 #include "public_key.h"
 
-void PublicKey::Init(const Napi::Env &env, Napi::Object &exports, Napi::Function &ctr, BlstTsAddon *module)
+void PublicKey::Init(const Napi::Env &env, Napi::Object &exports, BlstTsAddon *module)
 {
     auto proto = {
         StaticMethod("deserialize", &PublicKey::Deserialize, static_cast<napi_property_attributes>(napi_static | napi_enumerable)),
@@ -19,40 +14,63 @@ void PublicKey::Init(const Napi::Env &env, Napi::Object &exports, Napi::Function
          */
         InstanceValue("__type", Napi::String::New(env, module->_global_state->public_key_type_), static_cast<napi_property_attributes>(napi_default)),
     };
-    ctr = DefineClass(env, "PublicKey", proto, module);
+    Napi::Function ctr = DefineClass(env, "PublicKey", proto, module);
+    module->_public_key_ctr = Napi::Persistent(ctr);
     exports.Set(Napi::String::New(env, "PublicKey"), ctr);
 }
 
 Napi::Value PublicKey::Deserialize(const Napi::CallbackInfo &info)
 {
-    BlstTsAddon *_module{reinterpret_cast<BlstTsAddon *>(info.Data())};
     Napi::Env env = info.Env();
-    Napi::Value skBytes = info[0].As<Napi::Value>();
-    if (!skBytes.IsTypedArray())
+    BlstTsAddon *module = env.GetInstanceData<BlstTsAddon>();
+    UINT8_ARG_CHECK_2_LENGTHS_UNDEFINED(
+        info,
+        env,
+        0,
+        pkBytes,
+        module->_global_state->_public_key_compressed_length,
+        module->_global_state->_public_key_uncompressed_length,
+        'pkBytes')
+    Napi::Object wrapped = module->_secret_key_ctr.New({Napi::External<void>::New(env, nullptr)});
+    PublicKey *pk = PublicKey::Unwrap(wrapped);
+    pk->_is_jacobian = true;
+    if (!info[1].IsUndefined())
     {
-        Napi::TypeError::New(env, "skBytes must be a Uint8Array").ThrowAsJavaScriptException();
+        Napi::Value type_val = info[1].As<Napi::Value>();
+        if (!type_val.IsNumber())
+        {
+            Napi::TypeError::New(env, "type must be of enum CoordType (number)").ThrowAsJavaScriptException();
+            return env.Undefined();
+        }
+        if (type_val.As<Napi::Number>().Uint32Value() == 0)
+        {
+            pk->_is_jacobian = false;
+        }
     }
-    auto skBytesArray = skBytes.As<Napi::TypedArrayOf<u_int8_t>>();
-    auto skBytesData = skBytesArray.Data();
-    auto skBytesLength = skBytesArray.ByteLength();
-    if (skBytesLength != _module->_global_state->_secret_key_length)
+    try
     {
-        std::ostringstream msg;
-        msg << "BLST_ERROR::BLST_INVALID_SIZE - ikm must be " << _module->_global_state->_secret_key_length << " bytes long";
-        Napi::Error::New(env, msg.str()).ThrowAsJavaScriptException();
-        return;
+        if (pk->_is_jacobian)
+        {
+            pk->_jacobian.reset(new blst::P1{pkBytes.Data(), pkBytes.ByteLength()});
+        }
+        else
+        {
+            pk->_affine.reset(new blst::P1_Affine{pkBytes.Data(), pkBytes.ByteLength()});
+        }
     }
-
-    auto external = Napi::External<void>::New(info.Env(), nullptr);
-    Napi::Object wrapped = _module->secret_key_ctr_.New({external});
-    PublicKey *sk = PublicKey::Unwrap(wrapped);
-    sk->_key->from_bendian(skBytesData);
+    catch (blst::BLST_ERROR err)
+    {
+        Napi::RangeError::New(env, module->GetBlstErrorString(err)).ThrowAsJavaScriptException();
+        return env.Undefined();
+    }
     return wrapped;
 }
 
 PublicKey::PublicKey(const Napi::CallbackInfo &info)
     : Napi::ObjectWrap<PublicKey>{info},
-      _key{new blst::PublicKey},
+      _is_jacobian{false},
+      _jacobian{nullptr},
+      _affine{nullptr},
       _module{*reinterpret_cast<BlstTsAddon *>(info.Data())}
 {
     Napi::Env env = info.Env();
@@ -65,9 +83,27 @@ PublicKey::PublicKey(const Napi::CallbackInfo &info)
 
 Napi::Value PublicKey::Serialize(const Napi::CallbackInfo &info)
 {
-    BlstTsAddon *_module{reinterpret_cast<BlstTsAddon *>(info.Data())};
     Napi::Env env = info.Env();
-    Napi::Buffer<uint8_t> serialized = Napi::Buffer<uint8_t>::New(env, _module->_global_state->_secret_key_length);
-    _key->to_bendian(serialized.Data());
+    bool compressed{true};
+    if (!info[1].IsUndefined())
+    {
+        compressed = info[1].ToBoolean().Value();
+    }
+    size_t length = compressed ? _module._global_state->_public_key_compressed_length : _module._global_state->_public_key_uncompressed_length;
+    Napi::Buffer<uint8_t> serialized = Napi::Buffer<uint8_t>::New(env, length);
+    if (compressed)
+    {
+        if (_is_jacobian)
+            _jacobian->compress(serialized.Data());
+        else
+            _affine->compress(serialized.Data());
+    }
+    else
+    {
+        if (_is_jacobian)
+            _jacobian->serialize(serialized.Data());
+        else
+            _affine->serialize(serialized.Data());
+    }
     return serialized;
 }

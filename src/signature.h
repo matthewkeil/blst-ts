@@ -9,8 +9,8 @@
 class Signature : public Napi::ObjectWrap<Signature>
 {
 public:
-    std::unique_ptr<blst::P2> _point;
-    std::unique_ptr<blst::P2_Affine> affine_;
+    std::unique_ptr<blst::P2> _jacobian;
+    std::unique_ptr<blst::P2_Affine> _affine;
 
     static void Init(const Napi::Env &env, Napi::Object &exports, Napi::Function &ctr, BlstTsAddon *module);
     static Napi::Value Deserialize(const Napi::CallbackInfo &info);

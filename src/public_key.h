@@ -5,14 +5,16 @@
 #include "blst.hpp"
 #include "addon.h"
 #include "utils.h"
+#include "addon.h"
 
 class PublicKey : public Napi::ObjectWrap<PublicKey>
 {
 public:
-    std::unique_ptr<blst::P1> _point;
-    std::unique_ptr<blst::P1_Affine> affine_;
-
-    static void Init(const Napi::Env &env, Napi::Object &exports, Napi::Function &ctr, BlstTsAddon *module);
+    bool _is_jacobian;
+    std::unique_ptr<blst::P1> _jacobian;
+    std::unique_ptr<blst::P1_Affine> _affine;
+    
+    static void Init(const Napi::Env &env, Napi::Object &exports, BlstTsAddon *module);
     static Napi::Value Deserialize(const Napi::CallbackInfo &info);
     PublicKey(const Napi::CallbackInfo &info);
     Napi::Value Serialize(const Napi::CallbackInfo &info);

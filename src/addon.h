@@ -18,6 +18,7 @@
 class BlstTsAddon;
 
 #include "secret_key.h"
+#include "public_key.h"
 
 class GlobalState
 {
@@ -51,14 +52,16 @@ public:
     std::shared_ptr<GlobalState> _global_state = GlobalState::GetInstance(this);
     Napi::Object _js_constants;
     Napi::FunctionReference _secret_key_ctr;
-    Napi::Function _public_key_ctr;
-    Napi::Function _signature_ctr;
+    Napi::FunctionReference _public_key_ctr;
+    Napi::FunctionReference _signature_ctr;
 
     BlstTsAddon(Napi::Env env, Napi::Object exports);
     BlstTsAddon(BlstTsAddon &&source) = delete;
     BlstTsAddon(const BlstTsAddon &source) = delete;
     BlstTsAddon &operator=(BlstTsAddon &&source) = delete;
     BlstTsAddon &operator=(const BlstTsAddon &source) = delete;
+
+    std::string GetBlstErrorString(blst::BLST_ERROR &err);
 
 private:
     void BuildJsConstants(Napi::Env &env);
