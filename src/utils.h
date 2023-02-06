@@ -7,12 +7,11 @@
 class BlstAsyncWorker : public Napi::AsyncWorker
 {
 public:
-    BlstTsAddon *_module;
 
     BlstAsyncWorker(const Napi::CallbackInfo &info) : Napi::AsyncWorker{info.Env()},
-                                                      _module{reinterpret_cast<BlstTsAddon *>(info.Data())},
+                                                      _module{info.Env().GetInstanceData<BlstTsAddon>()},
                                                       _info{info},
-                                                      _env{std::move(info.Env())},
+                                                      _env{Env()},
                                                       _deferred{_env},
                                                       _use_deferred{false},
                                                       _threw_error{false} {};
@@ -27,7 +26,6 @@ public:
         SuppressDestruct();
         OnWorkComplete(_env, napi_ok);
         Napi::Value return_val = _threw_error ? _env.Undefined() : GetReturnValue();
-        Destroy();
         return return_val;
     }
     Napi::Value Run()
@@ -39,8 +37,9 @@ public:
     };
 
 protected:
+    BlstTsAddon *_module;
     const Napi::CallbackInfo &_info;
-    const Napi::Env &_env;
+    const Napi::Env _env;
 
     void OnOK() override
     {

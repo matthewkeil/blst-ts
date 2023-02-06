@@ -10,7 +10,7 @@ class SecretKey : public Napi::ObjectWrap<SecretKey>
 public:
     std::unique_ptr<blst::SecretKey> _key;
 
-    static void Init(const Napi::Env &env, Napi::Object &exports, Napi::Function &ctr, BlstTsAddon *module);
+    static void Init(const Napi::Env &env, Napi::Object &exports, BlstTsAddon *module);
     static Napi::Value FromKeygen(const Napi::CallbackInfo &info);
     static Napi::Value FromKeygenSync(const Napi::CallbackInfo &info);
     static Napi::Value Deserialize(const Napi::CallbackInfo &info);

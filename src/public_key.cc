@@ -17,7 +17,7 @@ void PublicKey::Init(const Napi::Env &env, Napi::Object &exports, Napi::Function
          * Until then query through JS to make sure the object passed through from JS
          * is the correct type to prevent seg fault
          */
-        InstanceValue("__type", Napi::String::New(env, module->global_state_->public_key_type_), static_cast<napi_property_attributes>(napi_default)),
+        InstanceValue("__type", Napi::String::New(env, module->_global_state->public_key_type_), static_cast<napi_property_attributes>(napi_default)),
     };
     ctr = DefineClass(env, "PublicKey", proto, module);
     exports.Set(Napi::String::New(env, "PublicKey"), ctr);
@@ -35,10 +35,10 @@ Napi::Value PublicKey::Deserialize(const Napi::CallbackInfo &info)
     auto skBytesArray = skBytes.As<Napi::TypedArrayOf<u_int8_t>>();
     auto skBytesData = skBytesArray.Data();
     auto skBytesLength = skBytesArray.ByteLength();
-    if (skBytesLength != _module->global_state_->secret_key_length_)
+    if (skBytesLength != _module->_global_state->_secret_key_length)
     {
         std::ostringstream msg;
-        msg << "BLST_ERROR::BLST_INVALID_SIZE - ikm must be " << _module->global_state_->secret_key_length_ << " bytes long";
+        msg << "BLST_ERROR::BLST_INVALID_SIZE - ikm must be " << _module->_global_state->_secret_key_length << " bytes long";
         Napi::Error::New(env, msg.str()).ThrowAsJavaScriptException();
         return;
     }
@@ -67,7 +67,7 @@ Napi::Value PublicKey::Serialize(const Napi::CallbackInfo &info)
 {
     BlstTsAddon *_module{reinterpret_cast<BlstTsAddon *>(info.Data())};
     Napi::Env env = info.Env();
-    Napi::Buffer<uint8_t> serialized = Napi::Buffer<uint8_t>::New(env, _module->global_state_->secret_key_length_);
+    Napi::Buffer<uint8_t> serialized = Napi::Buffer<uint8_t>::New(env, _module->_global_state->_secret_key_length);
     _key->to_bendian(serialized.Data());
     return serialized;
 }

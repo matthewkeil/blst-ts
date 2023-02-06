@@ -1,7 +1,7 @@
 #ifndef BLST_TS_MACROS_H__
 #define BLST_TS_MACROS_H__
 
-#define NAPI_ENV Napi::Env env = info.Env();
+// #define NAPI_ENV Napi::Env env = info.Env();
 // #define NAPI_FALSE(ENV) Napi::Boolean::New(ENV, false)
 // #define NAPI_TRUE(ENV) Napi::Boolean::New(ENV, true)
 // #define NAPI_NULL(ENV) ENV.Null()
