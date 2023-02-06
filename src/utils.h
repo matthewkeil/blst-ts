@@ -4,10 +4,82 @@
 #include "napi.h"
 #include "addon.h"
 
+#define THROW_ERROR_RETURN_VOID(ENV, MSG)                    \
+    Napi::Error::New(ENV, MSG).ThrowAsJavaScriptException(); \
+    return;
+
+#define CHECK_UINT8_LENGTH_RETURN_VOID(ENV, ARR, LENGTH, ERROR_PREFIX)                 \
+    if (ARR.ByteLength() != LENGTH)                                                    \
+    {                                                                                  \
+        THROW_ERROR_RETURN_VOID(ENV, #ERROR_PREFIX " must be " #LENGTH " bytes long"); \
+    }
+
+#define ARG_TO_UINT8_RETURN_VOID(INFO, ENV, NUM, NAME, ERROR_PREFIX)         \
+    Napi::Value NAME##_val = INFO[NUM].As<Napi::Value>();                    \
+    if (!NAME##_val.IsTypedArray())                                          \
+    {                                                                        \
+        THROW_ERROR_RETURN_VOID(ENV, #ERROR_PREFIX " must be a TypedArray"); \
+    }                                                                        \
+    Napi::TypedArray NAME##_untyped = NAME##_val.As<Napi::TypedArray>();     \
+    if (NAME##_untyped.TypedArrayType() != napi_uint8_array)                 \
+    {                                                                        \
+        THROW_ERROR_RETURN_VOID(ENV, #ERROR_PREFIX " must be a Uint8Array"); \
+    }                                                                        \
+    Napi::TypedArrayOf<u_int8_t> NAME = NAME##_untyped.As<Napi::TypedArrayOf<u_int8_t>>();
+
+#define ARG_UINT8_OF_LENGTH_RETURN_VOID(INFO, ENV, NUM, NAME, LENGTH, ERROR_PREFIX) \
+    ARG_TO_UINT8_RETURN_VOID(INFO, ENV, NUM, NAME, ERROR_PREFIX)                    \
+    CHECK_UINT8_LENGTH_RETURN_VOID(ENV, NAME, LENGTH, ERROR_PREFIX)
+
+#define THROW_ERROR_UNDEFINED(ENV, MSG)                      \
+    Napi::Error::New(ENV, MSG).ThrowAsJavaScriptException(); \
+    return ENV.Undefined();
+
+#define CHECK_UINT8_LENGTH_UNDEFINED(ENV, ARR, LENGTH, ERROR_PREFIX)                 \
+    if (ARR.ByteLength() != LENGTH)                                                  \
+    {                                                                                \
+        THROW_ERROR_UNDEFINED(ENV, #ERROR_PREFIX " must be " #LENGTH " bytes long"); \
+    }
+
+#include <iostream>
+
+#define CHECK_UINT8_2_LENGTHS_UNDEFINED(ENV, ARR, LENGTH1, LENGTH2, ERROR_PREFIX)                     \
+    std::cout << ARR.ByteLength() << std::endl;                                                       \
+    if (!(ARR.ByteLength() == (LENGTH1) || ARR.ByteLength() == (LENGTH2)))                            \
+    {                                                                                                 \
+        THROW_ERROR_UNDEFINED(ENV, #ERROR_PREFIX " must be " #LENGTH1 " or " #LENGTH2 " bytes long"); \
+    }
+
+#define ARG_TO_UINT8_UNDEFINED(INFO, ENV, NUM, NAME, ERROR_PREFIX)         \
+    Napi::Value NAME##_val = INFO[NUM].As<Napi::Value>();                  \
+    if (!NAME##_val.IsTypedArray())                                        \
+    {                                                                      \
+        THROW_ERROR_UNDEFINED(ENV, #ERROR_PREFIX " must be a TypedArray"); \
+    }                                                                      \
+    Napi::TypedArray NAME##_untyped = NAME##_val.As<Napi::TypedArray>();   \
+    if (NAME##_untyped.TypedArrayType() != napi_uint8_array)               \
+    {                                                                      \
+        THROW_ERROR_UNDEFINED(ENV, #ERROR_PREFIX " must be a Uint8Array"); \
+    }                                                                      \
+    Napi::TypedArrayOf<u_int8_t> NAME = NAME##_untyped.As<Napi::TypedArrayOf<u_int8_t>>();
+
+#define ARG_UINT8_OF_LENGTH_RETURN_UNDEFINED(INFO, ENV, NUM, NAME, LENGTH, ERROR_PREFIX) \
+    ARG_TO_UINT8_UNDEFINED(INFO, ENV, NUM, NAME, ERROR_PREFIX)                           \
+    CHECK_UINT8_LENGTH_UNDEFINED(ENV, NAME, LENGTH, ERROR_PREFIX)
+
+#define UINT8_ARG_CHECK_2_LENGTHS_UNDEFINED(INFO, ENV, NUM, NAME, LENGTH1, LENGTH2, ERROR_PREFIX) \
+    ARG_TO_UINT8_UNDEFINED(INFO, ENV, NUM, NAME, ERROR_PREFIX)                                    \
+    CHECK_UINT8_2_LENGTHS_UNDEFINED(ENV, NAME, LENGTH1, LENGTH2, ERROR_PREFIX)
+
+typedef enum
+{
+    Affine,
+    Jacobian
+} CoordType;
+
 class BlstAsyncWorker : public Napi::AsyncWorker
 {
 public:
-
     BlstAsyncWorker(const Napi::CallbackInfo &info) : Napi::AsyncWorker{info.Env()},
                                                       _module{info.Env().GetInstanceData<BlstTsAddon>()},
                                                       _info{info},
