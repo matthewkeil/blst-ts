@@ -10,7 +10,7 @@
     "src"
   ],
   "scripts": {
-    "dev": "ts-node src/scripts/dev",
+    "dev": "ts-node tools/dev",
     "test": "yarn test:unit && yarn test:spec && yarn test:perf",
     "lint": "eslint --color --ext .ts src/ test/",
     "clean": "rm -rf build dist",

@@ -39,19 +39,24 @@ export async function watchFolder({
 
   const watcher = watch(path, opts);
   watcher.on("all", (event, filepath) => {
-    console.log(filepath);
     switch (event) {
       case "add":
+        console.log(`file added: ${filepath}`);
         return onAdd ? onAdd(event, filepath) : defaultHandler(event, filepath);
       case "addDir":
+        console.log(`dir added: ${filepath}`);
         return onAddDir ? onAddDir(event, filepath) : defaultHandler(event, filepath);
       case "change":
+        console.log(`file changed: ${filepath}`);
         return onChange ? onChange(event, filepath) : defaultHandler(event, filepath);
       case "unlink":
+        console.log(`file deleted: ${filepath}`);
         return onUnlink ? onUnlink(event, filepath) : defaultHandler(event, filepath);
       case "unlinkDir":
+        console.log(`dir deleted: ${filepath}`);
         return onUnlinkDir ? onUnlinkDir(event, filepath) : defaultHandler(event, filepath);
       default:
+        console.log(`watched file triggered event: ${filepath}`);
         return defaultHandler(event, filepath);
     }
   });

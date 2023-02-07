@@ -37,11 +37,13 @@ export function cmdStringExec(
     }
     function stdoutHandler(data: string): void {
       // eslint-disable-next-line no-console
-      console.log(data);
+      // console.log(data);
+      process.stdout.write(data);
     }
     function stderrHandler(data: string): void {
       // eslint-disable-next-line no-console
-      console.error(data);
+      // console.error(data);
+      process.stderr.write(data);
     }
 
     child = EXEC(

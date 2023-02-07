@@ -78,7 +78,7 @@ export interface NapiTestSet {
 
 export function makeNapiTestSet(msg: Uint8Array): NapiTestSet {
   const secretKey = SecretKey.fromKeygenSync(Buffer.from("*".repeat(32)));
-  const publicKey = secretKey.toPublicKeySync();
+  const publicKey = secretKey.toPublicKey();
   const signature = secretKey.signSync(msg);
   return {
     msg,

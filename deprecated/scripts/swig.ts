@@ -1,4 +1,4 @@
-import {exec} from "./exec";
+import {exec} from "../../tools/exec";
 
 /**
  * Throw error if SWIG is not installed or version is < 4

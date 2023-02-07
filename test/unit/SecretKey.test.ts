@@ -66,7 +66,7 @@ describe("SecretKey", () => {
     });
     describe("toPublicKey", () => {
       it("should create a PublicKey", () => {
-        expect(SecretKey.fromKeygenSync().toPublicKeySync()).to.be.instanceOf(PublicKey);
+        expect(SecretKey.fromKeygenSync()).to.be.instanceOf(PublicKey);
       });
     });
     describe("sign", () => {

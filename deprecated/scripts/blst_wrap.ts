@@ -1,5 +1,5 @@
-import {exec} from "./exec";
-import {assertSupportedSwigVersion} from "./swig";
+import {exec} from "../../tools/exec";
+import {assertSupportedSwigVersion} from "../../tools/swig";
 
 /* eslint-disable no-console */
 
