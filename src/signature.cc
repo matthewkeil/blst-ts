@@ -21,6 +21,58 @@ void Signature::Init(const Napi::Env &env, Napi::Object &exports, BlstTsAddon *m
     exports.Set(Napi::String::New(env, "Signature"), ctr);
 }
 
+/**
+ *
+ *
+ * Signature Workers
+ *
+ *
+ */
+namespace
+{
+    class SigValidateWorker : public BlstAsyncWorker
+    {
+    public:
+        SigValidateWorker(
+            const Napi::CallbackInfo &info, bool is_jacobian, blst::P2 &jacobian, blst::P2_Affine &affine)
+            : BlstAsyncWorker(info),
+              _is_jacobian{true},
+              _jacobian{jacobian},
+              _affine{affine} {};
+
+        void Setup() { int a = 0; };
+
+        void Execute() override
+        {
+            if (_is_jacobian && !_jacobian.in_group())
+            {
+                SetError("blst::BLST_POINT_NOT_IN_GROUP");
+            }
+            else if (!_affine.in_group())
+            {
+                SetError("blst::BLST_POINT_NOT_IN_GROUP");
+            }
+        };
+
+        Napi::Value GetReturnValue() override
+        {
+            return _env.Undefined();
+        };
+
+    private:
+        bool _is_jacobian;
+        blst::P2 &_jacobian;
+        blst::P2_Affine &_affine;
+    };
+}
+
+/**
+ *
+ *
+ * Signature Methods
+ *
+ *
+ */
 Napi::Value Signature::Deserialize(const Napi::CallbackInfo &info)
 {
     Napi::Env env = info.Env();
@@ -85,12 +137,14 @@ Signature::Signature(const Napi::CallbackInfo &info)
 
 Napi::Value Signature::SigValidate(const Napi::CallbackInfo &info)
 {
-    return info.Env().Undefined();
+    SigValidateWorker worker{info, _is_jacobian, *_jacobian, *_affine};
+    return worker.Run();
 }
 
 Napi::Value Signature::SigValidateSync(const Napi::CallbackInfo &info)
 {
-    return info.Env().Undefined();
+    SigValidateWorker worker{info, _is_jacobian, *_jacobian, *_affine};
+    return worker.RunSync();
 }
 
 Napi::Value Signature::Serialize(const Napi::CallbackInfo &info)

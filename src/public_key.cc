@@ -21,6 +21,72 @@ void PublicKey::Init(const Napi::Env &env, Napi::Object &exports, BlstTsAddon *m
     exports.Set(Napi::String::New(env, "PublicKey"), ctr);
 }
 
+/**
+ *
+ *
+ * PublicKey Workers
+ *
+ *
+ */
+namespace
+{
+    class KeyValidateWorker : public BlstAsyncWorker
+    {
+    public:
+        KeyValidateWorker(
+            const Napi::CallbackInfo &info, bool is_jacobian, blst::P1 &jacobian, blst::P1_Affine &affine)
+            : BlstAsyncWorker(info),
+              _is_jacobian{true},
+              _jacobian{jacobian},
+              _affine{affine} {};
+
+        void Setup() { int a = 0; };
+
+        void Execute() override
+        {
+            if (_is_jacobian)
+            {
+                if (_jacobian.is_inf())
+                {
+                    SetError("blst::BLST_PK_IS_INFINITY");
+                }
+                if (!_jacobian.in_group())
+                {
+                    SetError("blst::BLST_POINT_NOT_IN_GROUP");
+                }
+            }
+            else
+            {
+                if (_affine.is_inf())
+                {
+                    SetError("blst::BLST_PK_IS_INFINITY");
+                }
+                if (!_affine.in_group())
+                {
+                    SetError("blst::BLST_POINT_NOT_IN_GROUP");
+                }
+            }
+        };
+
+        Napi::Value GetReturnValue() override
+        {
+            return _env.Undefined();
+        };
+
+    private:
+        bool _is_jacobian;
+        blst::P1 &_jacobian;
+        blst::P1_Affine &_affine;
+    };
+}
+
+/**
+ *
+ *
+ * PublicKey Methods
+ *
+ *
+ */
 Napi::Value PublicKey::Deserialize(const Napi::CallbackInfo &info)
 {
     Napi::Env env = info.Env();
@@ -85,12 +151,14 @@ PublicKey::PublicKey(const Napi::CallbackInfo &info)
 
 Napi::Value PublicKey::KeyValidate(const Napi::CallbackInfo &info)
 {
-    return info.Env().Undefined();
+    KeyValidateWorker worker{info, _is_jacobian, *_jacobian, *_affine};
+    return worker.Run();
 }
 
 Napi::Value PublicKey::KeyValidateSync(const Napi::CallbackInfo &info)
 {
-    return info.Env().Undefined();
+    KeyValidateWorker worker{info, _is_jacobian, *_jacobian, *_affine};
+    return worker.RunSync();
 }
 
 Napi::Value PublicKey::Serialize(const Napi::CallbackInfo &info)

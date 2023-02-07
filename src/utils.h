@@ -89,8 +89,8 @@ public:
                                                       _deferred{_env},
                                                       _use_deferred{false},
                                                       _threw_error{false} {};
-    virtual void Setup() = 0;
-    virtual Napi::Value GetReturnValue() = 0;
+    virtual void Setup(){};
+    virtual Napi::Value GetReturnValue() { return _env.Undefined(); };
 
     Napi::Value RunSync()
     {
