@@ -19,6 +19,7 @@ class BlstTsAddon;
 
 #include "secret_key.h"
 #include "public_key.h"
+#include "signature.h"
 
 class GlobalState
 {
@@ -30,8 +31,8 @@ public:
     size_t _signature_compressed_length;
     size_t _signature_uncompressed_length;
     std::string _secret_key_type;
-    std::string public_key_type_;
-    std::string signature_type_;
+    std::string _public_key_type;
+    std::string _signature_type;
     std::string _blst_error_strings[8];
 
     GlobalState();

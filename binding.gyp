@@ -8,6 +8,7 @@
         'src/addon.cc',
         'src/secret_key.cc',
         'src/public_key.cc',
+        'src/signature.cc',
       ],
       'dependencies': [ "<!(node -p \"require('node-addon-api').gyp\")" ],
       'include_dirs': [

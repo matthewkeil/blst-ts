@@ -11,8 +11,8 @@ GlobalState::GlobalState()
       _signature_uncompressed_length{192},
       // TODO: Should these be on addon with a uuid?
       _secret_key_type{"BLST_TS_SECRET_KEY"},
-      public_key_type_{"BLST_TS_PUBLIC_KEY"},
-      signature_type_{"BLST_TS_SIGNATURE"},
+      _public_key_type{"BLST_TS_PUBLIC_KEY"},
+      _signature_type{"BLST_TS_SIGNATURE"},
       _blst_error_strings{
           "BLST_SUCCESS",
           "BLST_BAD_ENCODING",
@@ -63,6 +63,7 @@ BlstTsAddon::BlstTsAddon(Napi::Env env, Napi::Object exports)
     env.SetInstanceData(this);
     SecretKey::Init(env, exports, this);
     PublicKey::Init(env, exports, this);
+    Signature::Init(env, exports, this);
     BuildJsConstants(env);
     DefineAddon(exports, {
                              InstanceValue("BLST_CONSTANTS", _js_constants, napi_enumerable),

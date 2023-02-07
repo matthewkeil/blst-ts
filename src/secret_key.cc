@@ -103,12 +103,10 @@ namespace
         };
         Napi::Value GetReturnValue() override
         {
-            return _info.Env().Undefined();
-            // Napi::Object wrapped = _module->signature_ctr_.New({Napi::External<void *>::New(Env(), nullptr)});
-            // Signature *sig = Signature::Unwrap(wrapped);
-            // // TODO: see note in ToPublicKeyWorker::GetReturnValue()
-            // sig->_point->add(_point);
-            // return wrapped;
+            Napi::Object wrapped = _module->_signature_ctr.New({Napi::External<void *>::New(Env(), nullptr)});
+            Signature *sig = Signature::Unwrap(wrapped);
+            sig->_jacobian.reset(new blst::P2{_point});
+            return wrapped;
         };
 
     private:

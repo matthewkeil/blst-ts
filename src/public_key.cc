@@ -5,6 +5,8 @@ void PublicKey::Init(const Napi::Env &env, Napi::Object &exports, BlstTsAddon *m
     auto proto = {
         StaticMethod("deserialize", &PublicKey::Deserialize, static_cast<napi_property_attributes>(napi_static | napi_enumerable)),
         InstanceMethod("serialize", &PublicKey::Serialize, static_cast<napi_property_attributes>(napi_enumerable)),
+        InstanceMethod("keyValidate", &PublicKey::KeyValidate, static_cast<napi_property_attributes>(napi_enumerable)),
+        InstanceMethod("keyValidateSync", &PublicKey::KeyValidateSync, static_cast<napi_property_attributes>(napi_enumerable)),
         /**
          * This should be switched to the resolution of this ticket.
          * https://github.com/nodejs/node-addon-api/issues/1260
@@ -12,7 +14,7 @@ void PublicKey::Init(const Napi::Env &env, Napi::Object &exports, BlstTsAddon *m
          * Until then query through JS to make sure the object passed through from JS
          * is the correct type to prevent seg fault
          */
-        InstanceValue("__type", Napi::String::New(env, module->_global_state->public_key_type_), static_cast<napi_property_attributes>(napi_default)),
+        InstanceValue("__type", Napi::String::New(env, module->_global_state->_public_key_type), static_cast<napi_property_attributes>(napi_default)),
     };
     Napi::Function ctr = DefineClass(env, "PublicKey", proto, module);
     module->_public_key_ctr = Napi::Persistent(ctr);
@@ -80,6 +82,16 @@ PublicKey::PublicKey(const Napi::CallbackInfo &info)
         return;
     }
 };
+
+Napi::Value PublicKey::KeyValidate(const Napi::CallbackInfo &info)
+{
+    return info.Env().Undefined();
+}
+
+Napi::Value PublicKey::KeyValidateSync(const Napi::CallbackInfo &info)
+{
+    return info.Env().Undefined();
+}
 
 Napi::Value PublicKey::Serialize(const Napi::CallbackInfo &info)
 {

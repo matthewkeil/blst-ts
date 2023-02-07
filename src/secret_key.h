@@ -7,7 +7,7 @@
 #include "addon.h"
 #include "utils.h"
 #include "public_key.h"
-// #include "signature.h"
+#include "signature.h"
 
 class SecretKey : public Napi::ObjectWrap<SecretKey>
 {
@@ -21,7 +21,6 @@ public:
     SecretKey(const Napi::CallbackInfo &info);
     Napi::Value Serialize(const Napi::CallbackInfo &info);
     Napi::Value ToPublicKey(const Napi::CallbackInfo &info);
-    // Napi::Value ToPublicKeySync(const Napi::CallbackInfo &info);
     Napi::Value Sign(const Napi::CallbackInfo &info);
     Napi::Value SignSync(const Napi::CallbackInfo &info);
 
