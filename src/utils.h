@@ -19,7 +19,7 @@
     Napi::Value NAME##_val = INFO[NUM].As<Napi::Value>();                    \
     if (!NAME##_val.IsTypedArray())                                          \
     {                                                                        \
-        THROW_ERROR_RETURN_VOID(ENV, #ERROR_PREFIX " must be a TypedArray"); \
+        THROW_ERROR_RETURN_VOID(ENV, #ERROR_PREFIX " must be a Uint8Array"); \
     }                                                                        \
     Napi::TypedArray NAME##_untyped = NAME##_val.As<Napi::TypedArray>();     \
     if (NAME##_untyped.TypedArrayType() != napi_uint8_array)                 \
@@ -44,7 +44,7 @@
 
 #define CHECK_UINT8_2_LENGTHS_UNDEFINED(ENV, ARR, LENGTH1, LENGTH2, ERROR_PREFIX)                                            \
     size_t length = ARR.ByteLength();                                                                                        \
-    if (!(length == LENGTH1 || length == LENGTH2))                                                                       \
+    if (!(length == LENGTH1 || length == LENGTH2))                                                                           \
     {                                                                                                                        \
         std::ostringstream msg;                                                                                              \
         msg << #ERROR_PREFIX << " is " << length << " bytes, but must be " << LENGTH1 << " or " << LENGTH2 << " bytes long"; \
@@ -56,7 +56,7 @@
     Napi::Value NAME##_val = INFO[NUM].As<Napi::Value>();                  \
     if (!NAME##_val.IsTypedArray())                                        \
     {                                                                      \
-        THROW_ERROR_UNDEFINED(ENV, #ERROR_PREFIX " must be a TypedArray"); \
+        THROW_ERROR_UNDEFINED(ENV, #ERROR_PREFIX " must be a Uint8Array"); \
     }                                                                      \
     Napi::TypedArray NAME##_untyped = NAME##_val.As<Napi::TypedArray>();   \
     if (NAME##_untyped.TypedArrayType() != napi_uint8_array)               \

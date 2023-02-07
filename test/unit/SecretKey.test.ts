@@ -6,34 +6,32 @@ describe("SecretKey", () => {
   it("should exist", () => {
     expect(SecretKey).to.exist;
   });
+  it("should create an instance", () => {
+    const sk = SecretKey.fromKeygenSync();
+    expect(sk).to.be.instanceOf(SecretKey);
+  });
   describe("constructors", () => {
     describe("new SecretKey()", () => {
-      it("should not take any arguments", () => {
+      it("should have a private constructor", () => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return
-        expect(() => new (SecretKey as any)({foo: "bar"})).to.throw(
-          "No arguments are allowed in SecretKey constructor"
-        );
-      });
-      it.only("should create an instance", () => {
-        const sk = SecretKey.fromKeygenSync();
-        expect(sk).to.be.instanceOf(SecretKey);
+        expect(() => new (SecretKey as any)("foo-bar-baz")).to.throw("SecretKey constructor is private");
       });
     });
-    describe("SecretKey.keygen", () => {
+    describe("SecretKey.fromKeygen", () => {
       it("should create an instance", () => {
-        expect(SecretKey.fromKeygen()).to.be.instanceOf(SecretKey);
+        expect(SecretKey.fromKeygenSync()).to.be.instanceOf(SecretKey);
       });
       it("should throw on non-Uint8Array ikm", () => {
-        expect(() => SecretKey.fromKeygen(null as any)).to.throw("IKM for new SecretKey(ikm) must be a Uint8Array");
-        expect(() => SecretKey.fromKeygen(42 as any)).to.throw("IKM for new SecretKey(ikm) must be a Uint8Array");
-        expect(() => SecretKey.fromKeygen("Uint8Array" as any)).to.throw(
-          "IKM for new SecretKey(ikm) must be a Uint8Array"
-        );
-        expect(() => SecretKey.fromKeygen({} as any)).to.throw("IKM for new SecretKey(ikm) must be a Uint8Array");
-        expect(() => SecretKey.fromKeygen([] as any)).to.throw("IKM for new SecretKey(ikm) must be a Uint8Array");
+        /* eslint-disable quotes */
+        expect(() => SecretKey.fromKeygenSync(null as any)).to.throw('"ikm" must be a Uint8Array');
+        expect(() => SecretKey.fromKeygenSync(42 as any)).to.throw('"ikm" must be a Uint8Array');
+        expect(() => SecretKey.fromKeygenSync("Uint8Array" as any)).to.throw('"ikm" must be a Uint8Array');
+        expect(() => SecretKey.fromKeygenSync({} as any)).to.throw('"ikm" must be a Uint8Array');
+        expect(() => SecretKey.fromKeygenSync([] as any)).to.throw('"ikm" must be a Uint8Array');
+        /* eslint-enable quotes */
       });
       it("should take UintArray8 for ikm", () => {
-        expect(SecretKey.fromKeygen(KEY_MATERIAL)).to.be.instanceOf(SecretKey);
+        expect(SecretKey.fromKeygenSync(KEY_MATERIAL)).to.be.instanceOf(SecretKey);
       });
       it("should create the same key from the same ikm", () => {
         expect(SecretKey.fromKeygenSync(KEY_MATERIAL).serialize().toString()).to.equal(
@@ -52,7 +50,7 @@ describe("SecretKey", () => {
     beforeEach(() => {
       key = SecretKey.fromKeygenSync();
     });
-    describe("toBytes", () => {
+    describe("serialize", () => {
       it("should serialize the key to Uint8Array", () => {
         expect(key.serialize()).to.be.instanceof(Uint8Array);
       });
@@ -66,7 +64,7 @@ describe("SecretKey", () => {
     });
     describe("toPublicKey", () => {
       it("should create a PublicKey", () => {
-        expect(SecretKey.fromKeygenSync()).to.be.instanceOf(PublicKey);
+        expect(SecretKey.fromKeygenSync().toPublicKey()).to.be.instanceOf(PublicKey);
       });
     });
     describe("sign", () => {

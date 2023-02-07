@@ -17,13 +17,13 @@ export const SECRET_KEY_BYTES = Uint8Array.from(
 //   Buffer.from("5620799c63c92bb7912122070f7ebb6ddd53bdf9aa63e7a7bffc177f03d14f68", "hex")
 // );
 
-// export const publicKeyExample = {
-//   keygen: "********************************", // Must be at least 32 bytes
-//   p1: fromHex(
-//     "0ae7e5822ba97ab07877ea318e747499da648b27302414f9d0b9bb7e3646d248be90c9fdaddfdb93485a6e9334f0109301f36856007e1bc875ab1b00dbf47f9ead16c5562d889d8b270002ade81e78d473204fcb51ede8659bce3d95c67903bc"
-//   ),
-//   p1Comp: fromHex("8ae7e5822ba97ab07877ea318e747499da648b27302414f9d0b9bb7e3646d248be90c9fdaddfdb93485a6e9334f01093"),
-// };
+export const publicKeyExample = {
+  keygen: "********************************", // Must be at least 32 bytes
+  p1: fromHex(
+    "0ae7e5822ba97ab07877ea318e747499da648b27302414f9d0b9bb7e3646d248be90c9fdaddfdb93485a6e9334f0109301f36856007e1bc875ab1b00dbf47f9ead16c5562d889d8b270002ade81e78d473204fcb51ede8659bce3d95c67903bc"
+  ),
+  p1Comp: fromHex("8ae7e5822ba97ab07877ea318e747499da648b27302414f9d0b9bb7e3646d248be90c9fdaddfdb93485a6e9334f01093"),
+};
 
 // export const signatureExample = {
 //   keygen: "********************************", // Must be at least 32 bytes
