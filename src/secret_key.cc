@@ -106,6 +106,7 @@ namespace
             Napi::Object wrapped = _module->_signature_ctr.New({Napi::External<void *>::New(Env(), nullptr)});
             Signature *sig = Signature::Unwrap(wrapped);
             sig->_jacobian.reset(new blst::P2{_point});
+            sig->_is_jacobian = true;
             return wrapped;
         };
 
@@ -181,8 +182,8 @@ Napi::Value SecretKey::ToPublicKey(const Napi::CallbackInfo &info)
 
 Napi::Value SecretKey::Sign(const Napi::CallbackInfo &info)
 {
-    SignWorker worker{info, *_key};
-    return worker.Run();
+    SignWorker *worker = new SignWorker{info, *_key};
+    return worker->Run();
 }
 
 Napi::Value SecretKey::SignSync(const Napi::CallbackInfo &info)

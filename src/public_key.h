@@ -16,9 +16,9 @@ public:
     static void Init(const Napi::Env &env, Napi::Object &exports, BlstTsAddon *module);
     static Napi::Value Deserialize(const Napi::CallbackInfo &info);
     PublicKey(const Napi::CallbackInfo &info);
+    Napi::Value Serialize(const Napi::CallbackInfo &info);
     Napi::Value KeyValidate(const Napi::CallbackInfo &info);
     Napi::Value KeyValidateSync(const Napi::CallbackInfo &info);
-    Napi::Value Serialize(const Napi::CallbackInfo &info);
 
 private:
     BlstTsAddon &_module;

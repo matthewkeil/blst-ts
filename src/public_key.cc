@@ -40,7 +40,8 @@ namespace
               _jacobian{jacobian},
               _affine{affine} {};
 
-        void Setup() { int a = 0; };
+    protected:
+        void Setup() override{};
 
         void Execute() override
         {
@@ -149,18 +150,6 @@ PublicKey::PublicKey(const Napi::CallbackInfo &info)
     }
 };
 
-Napi::Value PublicKey::KeyValidate(const Napi::CallbackInfo &info)
-{
-    KeyValidateWorker worker{info, _is_jacobian, *_jacobian, *_affine};
-    return worker.Run();
-}
-
-Napi::Value PublicKey::KeyValidateSync(const Napi::CallbackInfo &info)
-{
-    KeyValidateWorker worker{info, _is_jacobian, *_jacobian, *_affine};
-    return worker.RunSync();
-}
-
 Napi::Value PublicKey::Serialize(const Napi::CallbackInfo &info)
 {
     Napi::Env env = info.Env();
@@ -186,4 +175,16 @@ Napi::Value PublicKey::Serialize(const Napi::CallbackInfo &info)
             _affine->serialize(serialized.Data());
     }
     return serialized;
+}
+
+Napi::Value PublicKey::KeyValidate(const Napi::CallbackInfo &info)
+{
+    KeyValidateWorker *worker = new KeyValidateWorker{info, _is_jacobian, *_jacobian, *_affine};
+    return worker->Run();
+}
+
+Napi::Value PublicKey::KeyValidateSync(const Napi::CallbackInfo &info)
+{
+    KeyValidateWorker worker{info, _is_jacobian, *_jacobian, *_affine};
+    return worker.RunSync();
 }

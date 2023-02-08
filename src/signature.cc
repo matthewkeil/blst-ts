@@ -40,13 +40,18 @@ namespace
               _jacobian{jacobian},
               _affine{affine} {};
 
-        void Setup() { int a = 0; };
+    protected:
+        void Setup() override{};
+        ;
 
         void Execute() override
         {
-            if (_is_jacobian && !_jacobian.in_group())
+            if (_is_jacobian)
             {
-                SetError("blst::BLST_POINT_NOT_IN_GROUP");
+                if (!_jacobian.in_group())
+                {
+                    SetError("blst::BLST_POINT_NOT_IN_GROUP");
+                }
             }
             else if (!_affine.in_group())
             {
@@ -135,18 +140,6 @@ Signature::Signature(const Napi::CallbackInfo &info)
     }
 };
 
-Napi::Value Signature::SigValidate(const Napi::CallbackInfo &info)
-{
-    SigValidateWorker worker{info, _is_jacobian, *_jacobian, *_affine};
-    return worker.Run();
-}
-
-Napi::Value Signature::SigValidateSync(const Napi::CallbackInfo &info)
-{
-    SigValidateWorker worker{info, _is_jacobian, *_jacobian, *_affine};
-    return worker.RunSync();
-}
-
 Napi::Value Signature::Serialize(const Napi::CallbackInfo &info)
 {
     Napi::Env env = info.Env();
@@ -172,4 +165,16 @@ Napi::Value Signature::Serialize(const Napi::CallbackInfo &info)
             _affine->serialize(serialized.Data());
     }
     return serialized;
+}
+
+Napi::Value Signature::SigValidate(const Napi::CallbackInfo &info)
+{
+    SigValidateWorker *worker = new SigValidateWorker{info, _is_jacobian, *_jacobian, *_affine};
+    return worker->Run();
+}
+
+Napi::Value Signature::SigValidateSync(const Napi::CallbackInfo &info)
+{
+    SigValidateWorker worker{info, _is_jacobian, *_jacobian, *_affine};
+    return worker.RunSync();
 }

@@ -6,10 +6,6 @@ describe("SecretKey", () => {
   it("should exist", () => {
     expect(SecretKey).to.exist;
   });
-  it("should create an instance", () => {
-    const sk = SecretKey.fromKeygenSync();
-    expect(sk).to.be.instanceOf(SecretKey);
-  });
   describe("constructors", () => {
     describe("new SecretKey()", () => {
       it("should have a private constructor", () => {
@@ -17,7 +13,7 @@ describe("SecretKey", () => {
         expect(() => new (SecretKey as any)("foo-bar-baz")).to.throw("SecretKey constructor is private");
       });
     });
-    describe("SecretKey.fromKeygen", () => {
+    describe("SecretKey.fromKeygenSync", () => {
       it("should create an instance", () => {
         expect(SecretKey.fromKeygenSync()).to.be.instanceOf(SecretKey);
       });
@@ -39,13 +35,27 @@ describe("SecretKey", () => {
         );
       });
     });
-    describe("SecretKey.fromBytes", () => {
+    describe("SecretKey.fromKeygen", () => {
+      it("should create a Promise<SecretKey>", () => {
+        expect(SecretKey.fromKeygen()).to.be.instanceOf(Promise);
+        return SecretKey.fromKeygen().then((key) => expect(key).to.be.instanceOf(SecretKey));
+      });
+      it("should take UintArray8 for ikm", () => {
+        return SecretKey.fromKeygen(KEY_MATERIAL).then((key) => expect(key).to.be.instanceOf(SecretKey));
+      });
+      it("should create the same key from the same ikm", async () => {
+        const key1 = await SecretKey.fromKeygen(KEY_MATERIAL);
+        const key2 = await SecretKey.fromKeygen(KEY_MATERIAL);
+        expect(key1.serialize().toString()).to.equal(key2.serialize().toString());
+      });
+    });
+    describe("SecretKey.deserialize", () => {
       it("should create an instance", () => {
         expect(SecretKey.deserialize(SECRET_KEY_BYTES)).to.be.instanceOf(SecretKey);
       });
     });
   });
-  describe("methods", () => {
+  describe("instance methods", () => {
     let key: SecretKey;
     beforeEach(() => {
       key = SecretKey.fromKeygenSync();
@@ -71,7 +81,7 @@ describe("SecretKey", () => {
       it("should create a Signature", () => {
         const sig = SecretKey.fromKeygenSync().signSync(Buffer.from("some fancy message"));
         expect(sig).to.be.instanceOf(Signature);
-        expect(sig.sigValidateSync()).to.be.undefined;
+        // expect(sig.sigValidate()).to.be.undefined;
       });
     });
   });

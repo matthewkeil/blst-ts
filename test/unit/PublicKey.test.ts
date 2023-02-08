@@ -45,9 +45,15 @@ describe("PublicKey", () => {
   });
   describe("methods", () => {
     describe("keyValidate()", () => {
-      it("should not throw on valid public key",async () => {
+      it("should not throw on valid public key", async () => {
         const pk = PublicKey.deserialize(publicKeyExample.p1);
-        expect(await pk.keyValidate()).to.be.undefined;
+        return pk.keyValidate().then((res) => expect(res).to.be.undefined);
+      });
+    });
+    describe("keyValidateSync()", () => {
+      it("should not throw on valid public key", async () => {
+        const pk = PublicKey.deserialize(publicKeyExample.p1);
+        expect(pk.keyValidateSync()).to.be.undefined;
       });
     });
   });

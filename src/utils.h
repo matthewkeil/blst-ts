@@ -89,8 +89,6 @@ public:
                                                       _deferred{_env},
                                                       _use_deferred{false},
                                                       _threw_error{false} {};
-    virtual void Setup(){};
-    virtual Napi::Value GetReturnValue() { return _env.Undefined(); };
 
     Napi::Value RunSync()
     {
@@ -106,7 +104,7 @@ public:
     {
         _use_deferred = true;
         Setup();
-        Napi::AsyncWorker::Queue();
+        Queue();
         return GetPromise();
     };
 
@@ -115,14 +113,17 @@ protected:
     const Napi::CallbackInfo &_info;
     const Napi::Env _env;
 
-    void OnOK() override
+    virtual void Setup() = 0;
+    virtual Napi::Value GetReturnValue() = 0;
+
+    void virtual OnOK() override final
     {
         if (_use_deferred)
         {
             _deferred.Resolve(GetReturnValue());
         }
     }
-    void OnError(Napi::Error const &err) override
+    void virtual OnError(Napi::Error const &err) override final
     {
         if (_use_deferred)
         {
