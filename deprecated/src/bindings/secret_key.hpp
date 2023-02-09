@@ -2,6 +2,7 @@
 #define __BLST_TS_SECRET_KEY_HPP__
 
 #include <memory>
+#include <string>
 #include <napi.h>
 #include "blst.hpp"
 #include "blst_ts_utils.hpp"
@@ -29,6 +30,5 @@ private:
     friend class PublicKey;
     std::unique_ptr<blst::SecretKey> key;
 };
-
 
 #endif /* __BLST_TS_SECRET_KEY_HPP__ */

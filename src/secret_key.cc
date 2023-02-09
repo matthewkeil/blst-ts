@@ -40,7 +40,8 @@ namespace
             : BlstAsyncWorker(info),
               _key{},
               _data{nullptr},
-              _entropy_array_ref{} {};
+              _entropy_array_ref{},
+              _info_str{} {};
 
         void Setup() override
         {
@@ -52,6 +53,11 @@ namespace
             ARG_UINT8_OF_LENGTH_RETURN_VOID(_info, _env, 0, entropy, _module->_global_state->_secret_key_length, "ikm");
             _entropy_array_ref = Napi::Persistent<Napi::TypedArrayOf<u_int8_t>>(entropy);
             _data = entropy.Data();
+            if (_info[1].IsString())
+            {
+                Napi::String info = _info[1].As<Napi::String>();
+                _info_str = info.Utf8Value();
+            }
         };
 
         void Execute() override
@@ -62,6 +68,10 @@ namespace
                 blst::byte ikm[sk_length];
                 RAND_bytes(ikm, sk_length);
                 _key.keygen(ikm, sk_length);
+            }
+            else if (_info_str.length() != 0)
+            {
+                _key.keygen(_data, sk_length, _info_str);
             }
             else
             {
@@ -82,6 +92,7 @@ namespace
         blst::SecretKey _key;
         uint8_t *_data;
         Napi::Reference<Napi::TypedArrayOf<u_int8_t>> _entropy_array_ref;
+        std::string _info_str;
     };
 
     class SignWorker : public BlstAsyncWorker

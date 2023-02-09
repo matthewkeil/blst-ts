@@ -34,6 +34,11 @@ describe("SecretKey", () => {
           SecretKey.fromKeygenSync(KEY_MATERIAL).serialize().toString()
         );
       });
+      it("should take a second 'info' argument", () => {
+        expect(SecretKey.fromKeygenSync(KEY_MATERIAL, "some fancy info").serialize().toString()).not.to.equal(
+          SecretKey.fromKeygenSync(KEY_MATERIAL).serialize().toString()
+        );
+      });
     });
     describe("SecretKey.fromKeygen", () => {
       it("should create a Promise<SecretKey>", () => {
@@ -47,6 +52,11 @@ describe("SecretKey", () => {
         const key1 = await SecretKey.fromKeygen(KEY_MATERIAL);
         const key2 = await SecretKey.fromKeygen(KEY_MATERIAL);
         expect(key1.serialize().toString()).to.equal(key2.serialize().toString());
+      });
+      it("should take a second 'info' argument", async () => {
+        const key1 = await SecretKey.fromKeygen(KEY_MATERIAL, "some fancy info");
+        const key2 = await SecretKey.fromKeygen(KEY_MATERIAL);
+        expect(key1.serialize().toString()).not.to.equal(key2.serialize().toString());
       });
     });
     describe("SecretKey.deserialize", () => {

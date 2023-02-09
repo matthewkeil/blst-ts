@@ -4,7 +4,11 @@
 #include <sstream>
 #include "napi.h"
 #include "addon.h"
-
+/**
+ *
+ * void returns
+ *
+ */
 #define THROW_ERROR_RETURN_VOID(ENV, MSG)                    \
     Napi::Error::New(ENV, MSG).ThrowAsJavaScriptException(); \
     return;
@@ -32,6 +36,11 @@
     ARG_TO_UINT8_RETURN_VOID(INFO, ENV, NUM, NAME, ERROR_PREFIX)                    \
     CHECK_UINT8_LENGTH_RETURN_VOID(ENV, NAME, LENGTH, ERROR_PREFIX)
 
+/**
+ *
+ * Undefined() returns
+ *
+ */
 #define THROW_ERROR_UNDEFINED(ENV, MSG)                      \
     Napi::Error::New(ENV, MSG).ThrowAsJavaScriptException(); \
     return ENV.Undefined();
@@ -83,9 +92,9 @@ class BlstAsyncWorker : public Napi::AsyncWorker
 {
 public:
     BlstAsyncWorker(const Napi::CallbackInfo &info) : Napi::AsyncWorker{info.Env()},
-                                                      _module{info.Env().GetInstanceData<BlstTsAddon>()},
                                                       _info{info},
                                                       _env{Env()},
+                                                      _module{_env.GetInstanceData<BlstTsAddon>()},
                                                       _deferred{_env},
                                                       _use_deferred{false},
                                                       _threw_error{false} {};
@@ -109,9 +118,9 @@ public:
     };
 
 protected:
-    BlstTsAddon *_module;
     const Napi::CallbackInfo &_info;
-    const Napi::Env _env;
+    Napi::Env _env;
+    BlstTsAddon *_module;
 
     virtual void Setup() = 0;
     virtual Napi::Value GetReturnValue() = 0;

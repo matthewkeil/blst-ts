@@ -25,26 +25,27 @@ export interface Serializable {
 }
 
 /*
- * Private constructor will randomly generate ikm when new'ing a key.
- * Use static methods SecretKey.fromBytes and SecretKey.keygen to
- * generate the SecretKey from your own material (ie serialized key
- * or ikm you have created).
+ * Private constructor. Randomly generate ikm when new'ing a key if no
+ * ikm is provided.
  *
+ * Use static methods `SecretKey.deserialize`, `SecretKey.fromKeygen` or
+ * `SecretKey.fromKeygenSync` to generate `SecretKey`s from your own
+ * material (ie serialized key or ikm).
+ *
+ * example:
  * ```typescript
- * const keyInfo = "Some key info";
- * let key = new SecretKey(keyInfo);
- * // -- or --
  * const ikm = UintArray8.from(Buffer.from("your very own ikm"));
- * key: SecretKey = SecretKey.keygen(ikm, keyInfo);
- * // -- or --
+ * const keyInfo = "Some key info";
+ * const key: SecretKey = SecretKey.fromKeygen(ikm, keyInfo);
+ *
  * key = SecretKey.fromBytes(key.serialize());
  * ```
  */
 export class SecretKey implements Serializable {
   private constructor();
-  static fromKeygen(ikm?: BlstBuffer): Promise<SecretKey>;
-  static fromKeygenSync(ikm?: BlstBuffer): SecretKey;
-  static deserialize(skBytes: BlstBuffer): SecretKey;
+  static fromKeygen(ikm?: BlstBuffer, info?: string): Promise<SecretKey>;
+  static fromKeygenSync(ikm?: BlstBuffer, info?: string): SecretKey;
+  static deserialize(skBytes: BlstBuffer, info?: string): SecretKey;
   serialize(): Buffer;
   toPublicKey(): PublicKey;
   sign(msg: BlstBuffer): Promise<Signature>;
