@@ -70,12 +70,12 @@ export const functions: {
   aggregatePublicKeysSync(keys: PublicKeyArg[]): PublicKey;
   aggregateSignatures(signatures: SignatureArg[]): Promise<Signature>;
   aggregateSignaturesSync(signatures: SignatureArg[]): Signature;
-  verify(msgs: BlstBuffer, publicKeys: PublicKeyArg, signature: SignatureArg): Promise<boolean>;
-  verifySync(msgs: BlstBuffer, publicKeys: PublicKeyArg, signature: SignatureArg): boolean;
+  verify(msg: BlstBuffer, publicKey: PublicKeyArg, signature: SignatureArg): Promise<boolean>;
+  verifySync(msg: BlstBuffer, publicKey: PublicKeyArg, signature: SignatureArg): boolean;
   aggregateVerify(msgs: BlstBuffer[], publicKeys: PublicKeyArg[], signature: SignatureArg): Promise<boolean>;
   aggregateVerifySync(msgs: BlstBuffer[], publicKeys: PublicKeyArg[], signature: SignatureArg): boolean;
-  fastAggregateVerify(msgs: BlstBuffer, publicKeys: PublicKeyArg[], signature: SignatureArg): Promise<boolean>;
-  fastAggregateVerifySync(msgs: BlstBuffer, publicKeys: PublicKeyArg[], signature: SignatureArg): boolean;
+  fastAggregateVerify(msg: BlstBuffer, publicKeys: PublicKeyArg[], signature: SignatureArg): Promise<boolean>;
+  fastAggregateVerifySync(msg: BlstBuffer, publicKeys: PublicKeyArg[], signature: SignatureArg): boolean;
   verifyMultipleAggregateSignatures(sets: SignatureSet[]): Promise<boolean>;
   verifyMultipleAggregateSignaturesSync(sets: SignatureSet[]): boolean;
 };

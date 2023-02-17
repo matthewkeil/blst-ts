@@ -4,10 +4,14 @@
 #include <sstream>
 #include "napi.h"
 #include "addon.h"
+
 /**
+ * Processing props
  *
- * void returns
  *
+ * Napi::TypedArrayOf<u_int8_t>
+ *
+ * void returns on error
  */
 #define THROW_ERROR_RETURN_VOID(ENV, MSG)                    \
     Napi::Error::New(ENV, MSG).ThrowAsJavaScriptException(); \
@@ -37,9 +41,9 @@
     CHECK_UINT8_LENGTH_RETURN_VOID(ENV, NAME, LENGTH, ERROR_PREFIX)
 
 /**
+ * Napi::TypedArrayOf<u_int8_t>
  *
- * Undefined() returns
- *
+ * Undefined() returns on error
  */
 #define THROW_ERROR_UNDEFINED(ENV, MSG)                      \
     Napi::Error::New(ENV, MSG).ThrowAsJavaScriptException(); \
@@ -82,6 +86,19 @@
     ARG_TO_UINT8_UNDEFINED(INFO, ENV, NUM, NAME, ERROR_PREFIX)                                    \
     CHECK_UINT8_2_LENGTHS_UNDEFINED(ENV, NAME, LENGTH1, LENGTH2, ERROR_PREFIX)
 
+/**
+ * Napi::TypedArrayOf<u_int8_t>
+ *
+ * Undefined() returns on error
+ */
+
+#define TYPE_AT_OBJ_KEY(OBJ, OBJ_NAME, KEY_NAME)                                       \
+    if (!OBJ.Has(KEY_NAME))                                                            \
+    {                                                                                  \
+        throw Napi::Error::New(env, #OBJ_NAME " must have a '" #KEY_NAME "' property") \
+    }                                                                                  \
+    return obj.Get(key_name);
+
 typedef enum
 {
     Affine,
@@ -98,11 +115,13 @@ public:
                                                       _deferred{_env},
                                                       _use_deferred{false},
                                                       _threw_error{false} {};
-
     Napi::Value RunSync()
     {
         Napi::HandleScope scope(_env);
         Setup();
+        if (true)
+        {
+        }
         OnExecute(_env);
         SuppressDestruct();
         OnWorkComplete(_env, napi_ok);
@@ -125,6 +144,12 @@ protected:
     virtual void Setup() = 0;
     virtual Napi::Value GetReturnValue() = 0;
 
+    virtual void SetError(const std::string &err)
+    {
+        _threw_error = true;
+        Napi::AsyncWorker::SetError(err);
+    }
+
     void virtual OnOK() override final
     {
         if (_use_deferred)
@@ -140,7 +165,6 @@ protected:
         }
         else
         {
-            _threw_error = true;
             err.ThrowAsJavaScriptException();
         }
     }
@@ -153,6 +177,70 @@ private:
     Napi::Promise::Deferred _deferred;
     bool _use_deferred;
     bool _threw_error;
+};
+
+class MessageArg
+{
+public:
+    MessageArg(const Napi::Env &env, const Napi::Value &val) : _ref{}
+    {
+        if (val.IsTypedArray())
+        {
+            Napi::TypedArray untyped = val.As<Napi::TypedArray>();
+            if (untyped.TypedArrayType() == napi_uint8_array)
+            {
+                Napi::Uint8Array arr = untyped.As<Napi::TypedArrayOf<u_int8_t>>();
+                _ref = Napi::Persistent(arr);
+                return;
+            }
+        }
+        throw Napi::Error::New(env, "msg must be a BlstBuffer");
+    }
+
+    MessageArg(MessageArg &&source) = default;
+    MessageArg &operator=(MessageArg &&source) = default;
+    MessageArg(const MessageArg &source) = delete;
+    MessageArg &operator=(const MessageArg &source) = delete;
+
+    blst::byte *Data()
+    {
+        return _ref.Value().Data();
+    }
+    size_t ByteLength()
+    {
+        return _ref.Value().ByteLength();
+    }
+
+private:
+    Napi::Reference<Napi::Uint8Array> _ref;
+};
+
+class MessageArgArray : public std::vector<MessageArg>
+{
+public:
+    MessageArgArray() : std::vector<MessageArg>{} {}
+    MessageArgArray(const Napi::Env &env, const Napi::Value &raw_arg) : MessageArgArray{}
+    {
+        if (!raw_arg.IsArray())
+        {
+            throw Napi::TypeError::New(env, "msgs must be of type BlstBuffer[]");
+        }
+        Napi::Array arr = raw_arg.As<Napi::Array>();
+        for (size_t i = 0; i < arr.Length(); i++)
+        {
+            (*this)[i] = std::move(MessageArg{env, arr[i]});
+        }
+    }
+
+    MessageArgArray(MessageArgArray &&source) = default;
+    MessageArgArray &operator=(MessageArgArray &&source) = default;
+    MessageArgArray(const MessageArgArray &source) = delete;
+    MessageArgArray &operator=(const MessageArgArray &source) = delete;
+
+    MessageArg &operator[](size_t index)
+    {
+        return (*this)[index];
+    }
 };
 
 #endif /* BLST_TS_UTILS_H__ */

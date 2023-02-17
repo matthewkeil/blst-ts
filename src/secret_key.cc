@@ -109,7 +109,7 @@ namespace
         };
         void Execute() override
         {
-            _point.hash_to(_msg, _msg_length, _module->_global_state->dst_);
+            _point.hash_to(_msg, _msg_length, _module->_global_state->_dst);
             _point.sign_with(_key);
         };
         Napi::Value GetReturnValue() override

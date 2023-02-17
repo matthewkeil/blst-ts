@@ -20,11 +20,13 @@ class BlstTsAddon;
 #include "secret_key.h"
 #include "public_key.h"
 #include "signature.h"
+#include "functions.h"
 
 class GlobalState
 {
 public:
-    std::string dst_;
+    std::string _dst;
+    size_t _random_bytes_length;
     size_t _secret_key_length;
     size_t _public_key_compressed_length;
     size_t _public_key_uncompressed_length;
@@ -62,7 +64,7 @@ public:
     BlstTsAddon &operator=(BlstTsAddon &&source) = delete;
     BlstTsAddon &operator=(const BlstTsAddon &source) = delete;
 
-    std::string GetBlstErrorString(blst::BLST_ERROR &err);
+    std::string GetBlstErrorString(const blst::BLST_ERROR &err);
 
 private:
     void BuildJsConstants(Napi::Env &env);

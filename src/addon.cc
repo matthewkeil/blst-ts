@@ -3,7 +3,8 @@
 std::mutex GlobalState::_lock;
 
 GlobalState::GlobalState()
-    : dst_{"BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_"},
+    : _dst{"BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_"},
+      _random_bytes_length{8},
       _secret_key_length{32},
       _public_key_compressed_length{48},
       _public_key_uncompressed_length{96},
@@ -45,7 +46,7 @@ std::shared_ptr<GlobalState> GlobalState::GetInstance(BlstTsAddon *addon)
 void BlstTsAddon::BuildJsConstants(Napi::Env &env)
 {
     _js_constants = Napi::Object::New(env);
-    _js_constants.Set(Napi::String::New(env, "DST"), Napi::String::New(env, _global_state->dst_));
+    _js_constants.Set(Napi::String::New(env, "DST"), Napi::String::New(env, _global_state->_dst));
     _js_constants.Set(Napi::String::New(env, "SECRET_KEY_LENGTH"), Napi::Number::New(env, _global_state->_secret_key_length));
     _js_constants.Set(Napi::String::New(env, "PUBLIC_KEY_LENGTH_UNCOMPRESSED"), Napi::Number::New(env, _global_state->_public_key_uncompressed_length));
     _js_constants.Set(Napi::String::New(env, "PUBLIC_KEY_LENGTH_COMPRESSED"), Napi::Number::New(env, _global_state->_public_key_compressed_length));
@@ -53,21 +54,22 @@ void BlstTsAddon::BuildJsConstants(Napi::Env &env)
     _js_constants.Set(Napi::String::New(env, "SIGNATURE_LENGTH_COMPRESSED"), Napi::Number::New(env, _global_state->_signature_compressed_length));
 }
 
-std::string BlstTsAddon::GetBlstErrorString(blst::BLST_ERROR &err)
+std::string BlstTsAddon::GetBlstErrorString(const blst::BLST_ERROR &err)
 {
     return _global_state->_blst_error_strings[err];
 }
 
 BlstTsAddon::BlstTsAddon(Napi::Env env, Napi::Object exports)
 {
+    BuildJsConstants(env);
+    DefineAddon(exports, {
+                             InstanceValue("BLST_CONSTANTS", _js_constants, napi_enumerable)
+                         });
     env.SetInstanceData(this);
     SecretKey::Init(env, exports, this);
     PublicKey::Init(env, exports, this);
     Signature::Init(env, exports, this);
-    BuildJsConstants(env);
-    DefineAddon(exports, {
-                             InstanceValue("BLST_CONSTANTS", _js_constants, napi_enumerable),
-                         });
+    functions::Init(env, exports, this);
 };
 
 NODE_API_ADDON(BlstTsAddon)

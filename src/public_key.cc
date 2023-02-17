@@ -188,3 +188,85 @@ Napi::Value PublicKey::KeyValidateSync(const Napi::CallbackInfo &info)
     KeyValidateWorker worker{info, _is_jacobian, *_jacobian, *_affine};
     return worker.RunSync();
 }
+
+Napi::Value GetPublicKeyArg(
+    const Napi::Env &env,
+    const Napi::Value &value,
+    const std::string &err_msg = "")
+{
+    if (value.IsTypedArray() && value.As<Napi::TypedArray>().TypedArrayType() == napi_uint8_array)
+    {
+        return value.As<Napi::Uint8Array>();
+    }
+    else if (err_msg.length() != 0)
+    {
+        Napi::Error::New(env, err_msg).ThrowAsJavaScriptException();
+    }
+    return env.Undefined();
+}
+
+PublicKeyArg::PublicKeyArg(const BlstTsAddon *addon, const Napi::Env &env, const Napi::Value &raw_arg)
+    : _addon{addon},
+      _jacobian{nullptr},
+      _affine{nullptr},
+      _public_key{nullptr},
+      _bytes_ref{},
+      _bytes_data{nullptr},
+      _bytes_length{0} {}
+
+PublicKeyArg::PublicKeyArg(const BlstTsAddon *addon, const Napi::Env &env, const Napi::Value &raw_arg) : PublicKeyArg()
+{
+    if (raw_arg.IsTypedArray() && raw_arg.As<Napi::TypedArray>().TypedArrayType() == napi_uint8_array)
+    {
+        _bytes_ref = Napi::Persistent(raw_arg.As<Napi::Uint8Array>());
+        _bytes_data = _bytes_ref.Value().Data();
+        _bytes_length = _bytes_ref.Value().ByteLength();
+        return;
+    }
+    if (raw_arg.IsObject())
+    {
+        Napi::Object raw_obj = raw_arg.As<Napi::Object>();
+        if (!raw_obj.Has("__type") || (raw_obj.Get("__type").As<Napi::String>().Utf8Value().compare(_addon->_global_state->_public_key_type) != 0))
+        {
+            _public_key = PublicKey::Unwrap(raw_obj);
+            return;
+        }
+    }
+    throw Napi::TypeError::New(env, "PublicKeyArg must be a PublicKey instance or a serialized Uint8Array");
+};
+
+blst::P1 *PublicKeyArg::AsJacobian()
+{
+    if (_public_key)
+    {
+        if (!_public_key->_is_jacobian /* && !_public_key->_affine->is_inf() */)
+        {
+            _public_key->_jacobian.reset(new blst::P1{_public_key->_affine->to_jacobian()});
+            _public_key->_is_jacobian = true;
+        }
+        return _public_key->_jacobian.get();
+    }
+    if (_jacobian.get() == nullptr)
+    {
+        _jacobian.reset(new blst::P1{_bytes_data, _bytes_length});
+    }
+    return _jacobian.get();
+}
+
+blst::P1_Affine *PublicKeyArg::AsAffine()
+{
+    if (_public_key)
+    {
+        // need to check this works to not duplicate if affine is already build
+        if (_public_key->_is_jacobian /* && !_public_key->_jacobian->is_inf() */)
+        {
+            _public_key->_affine.reset(new blst::P1_Affine{_public_key->_jacobian->to_affine()});
+        }
+        return _public_key->_affine.get();
+    }
+    if (_affine.get() == nullptr)
+    {
+        _affine.reset(new blst::P1_Affine{_bytes_data, _bytes_length});
+    }
+    return _affine.get();
+}
