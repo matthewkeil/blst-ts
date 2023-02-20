@@ -59,17 +59,21 @@ std::string BlstTsAddon::GetBlstErrorString(const blst::BLST_ERROR &err)
     return _global_state->_blst_error_strings[err];
 }
 
+void BlstTsAddon::GetRandomBytes(blst::byte *ikm, size_t length)
+{
+    // TODO: use the node version of this function
+    RAND_bytes(ikm, length);
+}
+
 BlstTsAddon::BlstTsAddon(Napi::Env env, Napi::Object exports)
 {
     BuildJsConstants(env);
-    DefineAddon(exports, {
-                             InstanceValue("BLST_CONSTANTS", _js_constants, napi_enumerable)
-                         });
+    DefineAddon(exports, {InstanceValue("BLST_CONSTANTS", _js_constants, napi_enumerable)});
     env.SetInstanceData(this);
     SecretKey::Init(env, exports, this);
-    PublicKey::Init(env, exports, this);
-    Signature::Init(env, exports, this);
-    functions::Init(env, exports, this);
+    // PublicKey::Init(env, exports, this);
+    // Signature::Init(env, exports, this);
+    // functions::Init(env, exports, this);
 };
 
 NODE_API_ADDON(BlstTsAddon)

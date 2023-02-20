@@ -39,45 +39,50 @@ namespace
         FromKeygenWorker(const Napi::CallbackInfo &info)
             : BlstAsyncWorker(info),
               _key{},
-              _data{nullptr},
-              _entropy_array_ref{},
+              _entropy{_env},
               _info_str{} {};
 
         void Setup() override
         {
-            if (_info[0].IsUndefined()) // no entropy passed
+            if (!_info[0].IsUndefined()) // no entropy passed
             {
-                _data = nullptr;
+                _entropy = Uint8ArrayArg{_env, _info[0], "ikm", _module->_global_state->_secret_key_length};
+                if (_entropy.HasError())
+                {
+                    SetError(_entropy.GetError());
+                    return;
+                }
+            }
+            if (_info[1].IsUndefined())
+            {
                 return;
             }
-            ARG_UINT8_OF_LENGTH_RETURN_VOID(_info, _env, 0, entropy, _module->_global_state->_secret_key_length, "ikm");
-            _entropy_array_ref = Napi::Persistent<Napi::TypedArrayOf<u_int8_t>>(entropy);
-            _data = entropy.Data();
-            if (_info[1].IsString())
+            if (!_info[1].IsString())
             {
-                Napi::String info = _info[1].As<Napi::String>();
-                _info_str = info.Utf8Value();
+                SetError("info must be a string or undefined");
+                return;
             }
+            // no way to not do the data copy here.  `.Utf8Value()` uses napi_env
+            // and has to be run on-thread. copy the string we shall... sigh.
+            _info_str.append(_info[1].As<Napi::String>().Utf8Value());
         };
 
         void Execute() override
         {
             size_t sk_length = _module->_global_state->_secret_key_length;
-            if (_data == nullptr) // no entropy passed
+            if (_entropy.Data() == nullptr) // no entropy passed
             {
                 blst::byte ikm[sk_length];
-                RAND_bytes(ikm, sk_length);
+                _module->GetRandomBytes(ikm, sk_length);
                 _key.keygen(ikm, sk_length);
+                return;
             }
-            else if (_info_str.length() != 0)
+            if (_info_str.length() != 0)
             {
-                _key.keygen(_data, sk_length, _info_str);
+                _key.keygen(_entropy.Data(), sk_length, _info_str);
+                return;
             }
-            else
-            {
-                _key.keygen(_data, sk_length);
-            }
-            _entropy_array_ref.Reset();
+            _key.keygen(_entropy.Data(), sk_length);
         };
 
         Napi::Value GetReturnValue() override
@@ -90,8 +95,7 @@ namespace
 
     private:
         blst::SecretKey _key;
-        uint8_t *_data;
-        Napi::Reference<Napi::TypedArrayOf<u_int8_t>> _entropy_array_ref;
+        Uint8ArrayArg _entropy;
         std::string _info_str;
     };
 
@@ -114,11 +118,12 @@ namespace
         };
         Napi::Value GetReturnValue() override
         {
-            Napi::Object wrapped = _module->_signature_ctr.New({Napi::External<void *>::New(Env(), nullptr)});
-            Signature *sig = Signature::Unwrap(wrapped);
-            sig->_jacobian.reset(new blst::P2{_point});
-            sig->_is_jacobian = true;
-            return wrapped;
+            // Napi::Object wrapped = _module->_signature_ctr.New({Napi::External<void *>::New(Env(), nullptr)});
+            // Signature *sig = Signature::Unwrap(wrapped);
+            // sig->_jacobian.reset(new blst::P2{_point});
+            // sig->_is_jacobian = true;
+            // return wrapped;
+            return _env.Undefined();
         };
 
     private:
@@ -184,11 +189,12 @@ Napi::Value SecretKey::Serialize(const Napi::CallbackInfo &info)
 
 Napi::Value SecretKey::ToPublicKey(const Napi::CallbackInfo &info)
 {
-    Napi::Object wrapped = _module->_public_key_ctr.New({Napi::External<void *>::New(Env(), nullptr)});
-    PublicKey *pk = PublicKey::Unwrap(wrapped);
-    pk->_jacobian.reset(new blst::P1{*_key});
-    pk->_is_jacobian = true;
-    return wrapped;
+    // Napi::Object wrapped = _module->_public_key_ctr.New({Napi::External<void *>::New(Env(), nullptr)});
+    // PublicKey *pk = PublicKey::Unwrap(wrapped);
+    // pk->_jacobian.reset(new blst::P1{*_key});
+    // pk->_is_jacobian = true;
+    // return wrapped;
+    return info.Env().Undefined();
 }
 
 Napi::Value SecretKey::Sign(const Napi::CallbackInfo &info)

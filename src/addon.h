@@ -11,16 +11,21 @@
 #define DEBUG_LOG(...)
 #endif
 
-#include <mutex>
+#include <iostream>
 #include <memory>
-#include <napi.h>
+#include <mutex>
+#include "napi.h"
+#include "blst.hpp"
+
+using std::cout;
+using std::endl;
 
 class BlstTsAddon;
 
 #include "secret_key.h"
-#include "public_key.h"
-#include "signature.h"
-#include "functions.h"
+// #include "public_key.h"
+// #include "signature.h"
+// #include "functions.h"
 
 class GlobalState
 {
@@ -65,6 +70,7 @@ public:
     BlstTsAddon &operator=(const BlstTsAddon &source) = delete;
 
     std::string GetBlstErrorString(const blst::BLST_ERROR &err);
+    void GetRandomBytes(blst::byte *ikm, size_t length);
 
 private:
     void BuildJsConstants(Napi::Env &env);
