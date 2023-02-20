@@ -6,7 +6,7 @@
         'deps/blst/src/server.c',
         'deps/blst/build/assembly.S',
         'src/addon.cc',
-        # 'src/functions.cc',
+        'src/functions.cc',
         'src/public_key.cc',
         'src/secret_key.cc',
         'src/signature.cc',

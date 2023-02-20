@@ -4,38 +4,33 @@ Napi::Value BlstAsyncWorker::RunSync()
 {
     Napi::HandleScope scope(_env);
     Setup();
-    if (true)
+    if (HasError())
     {
-        /**
-         *
-         *
-         *
-         *
-         *
-         *
-         *
-         *
-         *
-         */
+        ThrowJsException();
+        return _env.Undefined();
     }
     OnExecute(_env);
-    SuppressDestruct();
+    SuppressDestruct(); // class is stack allocated when running this.  will clean itself up
     OnWorkComplete(_env, napi_ok);
-    Napi::Value return_val = _threw_error ? _env.Undefined() : GetReturnValue();
-    return return_val;
+    return HasError() ? _env.Undefined() : GetReturnValue();
 }
 
 Napi::Value BlstAsyncWorker::Run()
 {
     _use_deferred = true;
     Setup();
+    if (HasError())
+    {
+        ThrowJsException();
+        return _env.Undefined();
+    }
     Queue();
     return GetPromise();
 };
 
 void BlstAsyncWorker::SetError(const std::string &err)
 {
-    _threw_error = true;
+    _error = err;
     Napi::AsyncWorker::SetError(err);
 }
 
@@ -106,11 +101,6 @@ size_t Uint8ArrayArg::ByteLength()
     return _byte_length;
 };
 
-void Uint8ArrayArg::ThrowJsException()
-{
-    Napi::Error::New(_env, _error).ThrowAsJavaScriptException();
-}
-
 bool Uint8ArrayArg::ValidateLength(size_t length1, size_t length2)
 {
     bool is_valid = false;
@@ -165,6 +155,7 @@ Uint8ArrayArgArray::Uint8ArrayArgArray(
     for (size_t i = 0; i < arr.Length(); i++)
     {
         (*this)[i] = Uint8ArrayArg{env, arr[i], err_prefix_singular};
+        // TODO: This call needs to be moved into a method
         (*this)[i].ValidateLength(length1, length2);
     }
 }
@@ -180,7 +171,6 @@ GlobalState::GlobalState()
       _public_key_uncompressed_length{96},
       _signature_compressed_length{96},
       _signature_uncompressed_length{192},
-      // TODO: Should these be on addon with a uuid?
       _secret_key_type{"BLST_TS_SECRET_KEY"},
       _public_key_type{"BLST_TS_PUBLIC_KEY"},
       _signature_type{"BLST_TS_SIGNATURE"},
@@ -243,7 +233,7 @@ BlstTsAddon::BlstTsAddon(Napi::Env env, Napi::Object exports)
     SecretKey::Init(env, exports, this);
     PublicKey::Init(env, exports, this);
     Signature::Init(env, exports, this);
-    // functions::Init(env, exports, this);
+    functions::Init(env, exports, this);
 };
 
 NODE_API_ADDON(BlstTsAddon)

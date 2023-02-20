@@ -39,9 +39,12 @@ public:
                                                       _module{_env.GetInstanceData<BlstTsAddon>()},
                                                       _deferred{_env},
                                                       _use_deferred{false},
-                                                      _threw_error{false} {};
+                                                      _error{} {};
     Napi::Value RunSync();
     Napi::Value Run();
+    void ThrowJsException() { Napi::Error::New(_env, _error).ThrowAsJavaScriptException(); };
+    bool HasError() { return _error.size() > 0; };
+    std::string GetError() { return _error; };
 
 protected:
     const Napi::CallbackInfo &_info;
@@ -60,7 +63,7 @@ protected:
 private:
     Napi::Promise::Deferred _deferred;
     bool _use_deferred;
-    bool _threw_error;
+    std::string _error;
 };
 
 class Uint8ArrayArg
@@ -95,7 +98,7 @@ public:
 
     const uint8_t *Data();
     size_t ByteLength();
-    void ThrowJsException();
+    void ThrowJsException()  { Napi::Error::New(_env, _error).ThrowAsJavaScriptException(); };
     bool HasError() { return _error.size() > 0; };
     std::string GetError() { return _error; };
     bool ValidateLength(size_t length1, size_t length2 = 0);
@@ -154,7 +157,7 @@ public:
 #include "secret_key.h"
 #include "public_key.h"
 #include "signature.h"
-// #include "functions.h"
+#include "functions.h"
 
 class GlobalState
 {

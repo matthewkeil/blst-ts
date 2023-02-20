@@ -1,10 +1,14 @@
+#ifndef BLST_TS_FUNCTIONS_H__
+#define BLST_TS_FUNCTIONS_H__
 
 #include <sstream>
+#include <vector>
 #include <memory>
 #include "napi.h"
+#include "blst.hpp"
 #include "addon.h"
-#include "utils.h"
 #include "public_key.h"
+#include "signature.h"
 
 namespace functions
 {
@@ -22,3 +26,5 @@ namespace functions
     Napi::Value VerifyMultipleAggregateSignaturesSync(const Napi::CallbackInfo &info);
     void Init(const Napi::Env &env, Napi::Object &exports, BlstTsAddon *addon);
 }
+
+#endif /* BLST_TS_FUNCTIONS_H__ */
