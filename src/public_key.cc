@@ -201,25 +201,35 @@ Napi::Value PublicKey::KeyValidateSync(const Napi::CallbackInfo &info)
  */
 PublicKeyArg::PublicKeyArg(const BlstTsAddon *addon, const Napi::Env &env, const Napi::Value &raw_arg)
     : _addon{addon},
-      _jacobian{nullptr},
-      _affine{nullptr},
+      _jacobian{new blst::P1()},
+      _affine{new blst::P1_Affine()},
       _public_key{nullptr},
       _bytes{env}
 {
     if (raw_arg.IsObject())
     {
         Napi::Object raw_obj = raw_arg.As<Napi::Object>();
-        if (!raw_obj.Has("__type") || (raw_obj.Get("__type").As<Napi::String>().Utf8Value().compare(_addon->_global_state->_public_key_type) != 0))
+        if (raw_obj.Has("__type") &&
+            !raw_obj
+                 .Get("__type")
+                 .As<Napi::String>()
+                 .Utf8Value()
+                 .compare(_addon->_global_state->_public_key_type))
         {
             _public_key = PublicKey::Unwrap(raw_obj);
             return;
         }
     }
+    else if (!raw_arg.IsTypedArray())
+    {
+        throw Napi::TypeError::New(env, "PublicKeyArg must be a PublicKey instance or a 48/96 byte Uint8Array");
+    }
+
     _bytes = Uint8ArrayArg{env, raw_arg, "PublicKeyArg"};
     _bytes.ValidateLength(_addon->_global_state->_public_key_compressed_length, _addon->_global_state->_public_key_uncompressed_length);
     if (_bytes.HasError())
     {
-        throw Napi::TypeError::New(env, "PublicKeyArg must be a PublicKey instance or a 48/96 byte Uint8Array");
+        _bytes.ThrowJsException();
     }
 };
 
@@ -235,7 +245,7 @@ blst::P1 *PublicKeyArg::AsJacobian()
         }
         return _public_key->_jacobian.get();
     }
-    if (_jacobian.get() == nullptr)
+    if (_jacobian.get()->is_inf())
     {
         _jacobian.reset(new blst::P1{_bytes.Data(), _bytes.ByteLength()});
     }
@@ -253,7 +263,7 @@ blst::P1_Affine *PublicKeyArg::AsAffine()
         }
         return _public_key->_affine.get();
     }
-    if (_affine.get() == nullptr)
+    if (_affine.get()->is_inf())
     {
         _affine.reset(new blst::P1_Affine{_bytes.Data(), _bytes.ByteLength()});
     }
@@ -267,15 +277,17 @@ blst::P1_Affine *PublicKeyArg::AsAffine()
  *
  *
  */
-PublicKeyArgArray::PublicKeyArgArray(const BlstTsAddon *module, const Napi::Env &env, const Napi::Value &raw_arg) : PublicKeyArgArray{}
+PublicKeyArgArray::PublicKeyArgArray(const BlstTsAddon *module, const Napi::Env &env, const Napi::Value &raw_arg) : _keys{}
 {
     if (!raw_arg.IsArray())
     {
         throw Napi::TypeError::New(env, "publicKeys argument must be of type PublicKeyArg[]");
     }
     Napi::Array arr = raw_arg.As<Napi::Array>();
-    for (size_t i = 0; i < arr.Length(); i++)
+    uint32_t length = arr.Length();
+    _keys.reserve(length);
+    for (uint32_t i = 0; i < length; i++)
     {
-        (*this)[i] = PublicKeyArg{module, env, arr[i]};
+        _keys.push_back(PublicKeyArg{module, env, arr[i]});
     }
 }

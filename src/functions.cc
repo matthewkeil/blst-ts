@@ -17,14 +17,13 @@ namespace
         AggregatePublicKeysWorker(const Napi::CallbackInfo &info, size_t arg_position)
             : BlstAsyncWorker(info),
               _result{},
-              _arg_position{arg_position},
               _public_keys{_module, info, arg_position} {}
 
         void Setup() override{};
 
         void Execute() override
         {
-            for (size_t i = 0; i < _public_keys.size(); i++)
+            for (size_t i = 0; i < _public_keys.Size(); i++)
             {
                 try
                 {
@@ -49,7 +48,6 @@ namespace
         };
 
     private:
-        size_t _arg_position;
         PublicKeyArgArray _public_keys;
     };
     /**
@@ -333,7 +331,7 @@ namespace functions
     Napi::Value AggregatePublicKeysSync(const Napi::CallbackInfo &info)
     {
         AggregatePublicKeysWorker worker{info, 0};
-        return worker.Run();
+        return worker.RunSync();
     }
     Napi::Value AggregateSignatures(const Napi::CallbackInfo &info)
     {
@@ -345,7 +343,7 @@ namespace functions
     {
         return info.Env().Undefined();
         // AggregateSignaturesWorker worker{info};
-        // return worker.Run();
+        // return worker.RunSync();
     }
     Napi::Value Verify(const Napi::CallbackInfo &info)
     {
@@ -357,7 +355,7 @@ namespace functions
     {
         return info.Env().Undefined();
         // VerifyWorker worker{info};
-        // return worker.Run();
+        // return worker.RunSync();
     }
     Napi::Value AggregateVerify(const Napi::CallbackInfo &info)
     {
@@ -369,7 +367,7 @@ namespace functions
     {
         return info.Env().Undefined();
         // AggregateVerifyWorker worker{info};
-        // return worker.Run();
+        // return worker.RunSync();
     }
     Napi::Value FastAggregateVerify(const Napi::CallbackInfo &info)
     {
@@ -381,7 +379,7 @@ namespace functions
     {
         return info.Env().Undefined();
         // FastAggregateVerifyWorker worker{info};
-        // return worker.Run();
+        // return worker.RunSync();
     }
     Napi::Value VerifyMultipleAggregateSignatures(const Napi::CallbackInfo &info)
     {
@@ -393,7 +391,7 @@ namespace functions
     {
         return info.Env().Undefined();
         // VerifyMultipleAggregateSignaturesWorker worker{info};
-        // return worker.Run();
+        // return worker.RunSync();
     }
 
     void Init(const Napi::Env &env, Napi::Object &exports, BlstTsAddon *addon)

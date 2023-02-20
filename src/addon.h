@@ -98,7 +98,7 @@ public:
 
     const uint8_t *Data();
     size_t ByteLength();
-    void ThrowJsException()  { Napi::Error::New(_env, _error).ThrowAsJavaScriptException(); };
+    void ThrowJsException() { Napi::Error::New(_env, _error).ThrowAsJavaScriptException(); };
     bool HasError() { return _error.size() > 0; };
     std::string GetError() { return _error; };
     bool ValidateLength(size_t length1, size_t length2 = 0);
