@@ -14,11 +14,11 @@ describe("Signature", () => {
     });
     describe("Signature.deserialize()", () => {
       it("should only take Uint8Array or Buffer", () => {
-        expect(() => Signature.deserialize(3 as any)).to.throw("'sigBytes' must be a Uint8Array");
+        expect(() => Signature.deserialize(3 as any)).to.throw("sigBytes must be of type BlstBuffer");
       });
       it("should only take 48 or 96 bytes", () => {
         expect(() => Signature.deserialize(Buffer.alloc(32, "*"))).to.throw(
-          "'sigBytes' is 32 bytes, but must be 96 or 192 bytes long"
+          "sigBytes is 32 bytes, but must be 96 or 192 bytes long"
         );
       });
       it("should take uncompressed byte arrays", () => {

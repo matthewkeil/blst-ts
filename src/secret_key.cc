@@ -46,7 +46,8 @@ namespace
         {
             if (!_info[0].IsUndefined()) // no entropy passed
             {
-                _entropy = Uint8ArrayArg{_env, _info[0], "ikm", _module->_global_state->_secret_key_length};
+                _entropy = Uint8ArrayArg{_env, _info[0], "ikm"};
+                _entropy.ValidateLength( _module->_global_state->_secret_key_length);
                 if (_entropy.HasError())
                 {
                     SetError(_entropy.GetError());
@@ -103,35 +104,29 @@ namespace
     {
     public:
         SignWorker(const Napi::CallbackInfo &info, const blst::SecretKey &key)
-            : BlstAsyncWorker{info}, _key{key}, _point{}, _msg_array_ref{}, _msg{}, _msg_length{} {};
-        void Setup() override
-        {
-            ARG_TO_UINT8_RETURN_VOID(_info, _env, 0, msg, "msg to sign");
-            _msg_array_ref = Napi::Reference<Napi::TypedArrayOf<u_int8_t>>::New(msg, 1);
-            _msg = msg.Data();
-            _msg_length = msg.ByteLength();
-        };
+            : BlstAsyncWorker{info},
+              _key{key},
+              _point{},
+              _msg{_env, info[0], "msg to sign"} {};
+        void Setup() override{};
         void Execute() override
         {
-            _point.hash_to(_msg, _msg_length, _module->_global_state->_dst);
+            _point.hash_to(_msg.Data(), _msg.ByteLength(), _module->_global_state->_dst);
             _point.sign_with(_key);
         };
         Napi::Value GetReturnValue() override
         {
-            // Napi::Object wrapped = _module->_signature_ctr.New({Napi::External<void *>::New(Env(), nullptr)});
-            // Signature *sig = Signature::Unwrap(wrapped);
-            // sig->_jacobian.reset(new blst::P2{_point});
-            // sig->_is_jacobian = true;
-            // return wrapped;
-            return _env.Undefined();
+            Napi::Object wrapped = _module->_signature_ctr.New({Napi::External<void *>::New(Env(), nullptr)});
+            Signature *sig = Signature::Unwrap(wrapped);
+            sig->_jacobian.reset(new blst::P2{_point});
+            sig->_is_jacobian = true;
+            return wrapped;
         };
 
     private:
         const blst::SecretKey &_key;
         blst::P2 _point;
-        Napi::Reference<Napi::TypedArrayOf<u_int8_t>> _msg_array_ref;
-        uint8_t *_msg;
-        size_t _msg_length;
+        Uint8ArrayArg _msg;
     };
 } // namespace (anonymous)
 
@@ -159,9 +154,10 @@ Napi::Value SecretKey::Deserialize(const Napi::CallbackInfo &info)
 {
     Napi::Env env = info.Env();
     BlstTsAddon *module = env.GetInstanceData<BlstTsAddon>();
-    ARG_UINT8_OF_LENGTH_RETURN_UNDEFINED(info, env, 0, skBytes, module->_global_state->_secret_key_length, "skBytes");
     Napi::Object wrapped = module->_secret_key_ctr.New({Napi::External<void>::New(env, nullptr)});
     SecretKey *sk = SecretKey::Unwrap(wrapped);
+    Uint8ArrayArg skBytes{info, 0, "skBytes"};
+    skBytes.ValidateLength(module->_global_state->_secret_key_length);
     sk->_key->from_bendian(skBytes.Data());
     return wrapped;
 }
@@ -189,12 +185,11 @@ Napi::Value SecretKey::Serialize(const Napi::CallbackInfo &info)
 
 Napi::Value SecretKey::ToPublicKey(const Napi::CallbackInfo &info)
 {
-    // Napi::Object wrapped = _module->_public_key_ctr.New({Napi::External<void *>::New(Env(), nullptr)});
-    // PublicKey *pk = PublicKey::Unwrap(wrapped);
-    // pk->_jacobian.reset(new blst::P1{*_key});
-    // pk->_is_jacobian = true;
-    // return wrapped;
-    return info.Env().Undefined();
+    Napi::Object wrapped = _module->_public_key_ctr.New({Napi::External<void *>::New(Env(), nullptr)});
+    PublicKey *pk = PublicKey::Unwrap(wrapped);
+    pk->_jacobian.reset(new blst::P1{*_key});
+    pk->_is_jacobian = true;
+    return wrapped;
 }
 
 Napi::Value SecretKey::Sign(const Napi::CallbackInfo &info)

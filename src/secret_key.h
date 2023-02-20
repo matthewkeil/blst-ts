@@ -1,12 +1,12 @@
 #ifndef BLST_TS_SECRET_KEY_H__
 #define BLST_TS_SECRET_KEY_H__
 
+#include <memory>
 #include "napi.h"
 #include "blst.hpp"
 #include "addon.h"
-#include "utils.h"
-// #include "public_key.h"
-// #include "signature.h"
+#include "public_key.h"
+#include "signature.h"
 
 class SecretKey : public Napi::ObjectWrap<SecretKey>
 {

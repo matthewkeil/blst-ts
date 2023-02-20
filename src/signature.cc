@@ -82,14 +82,6 @@ Napi::Value Signature::Deserialize(const Napi::CallbackInfo &info)
 {
     Napi::Env env = info.Env();
     BlstTsAddon *module = env.GetInstanceData<BlstTsAddon>();
-    UINT8_ARG_CHECK_2_LENGTHS_UNDEFINED(
-        info,
-        env,
-        0,
-        sigBytes,
-        module->_global_state->_signature_compressed_length,
-        module->_global_state->_signature_uncompressed_length,
-        'sigBytes')
     Napi::Object wrapped = module->_signature_ctr.New({Napi::External<void>::New(env, nullptr)});
     Signature *sig = Signature::Unwrap(wrapped);
     sig->_is_jacobian = true;
@@ -106,15 +98,27 @@ Napi::Value Signature::Deserialize(const Napi::CallbackInfo &info)
             sig->_is_jacobian = false;
         }
     }
+
+    Uint8ArrayArg sig_bytes{
+        info,
+        0,
+        "sigBytes",
+    };
+    sig_bytes.ValidateLength(module->_global_state->_signature_compressed_length, module->_global_state->_signature_uncompressed_length);
+    if (sig_bytes.HasError())
+    {
+        sig_bytes.ThrowJsException();
+        return env.Undefined();
+    }
     try
     {
         if (sig->_is_jacobian)
         {
-            sig->_jacobian.reset(new blst::P2{sigBytes.Data(), sigBytes.ByteLength()});
+            sig->_jacobian.reset(new blst::P2{sig_bytes.Data(), sig_bytes.ByteLength()});
         }
         else
         {
-            sig->_affine.reset(new blst::P2_Affine{sigBytes.Data(), sigBytes.ByteLength()});
+            sig->_affine.reset(new blst::P2_Affine{sig_bytes.Data(), sig_bytes.ByteLength()});
         }
     }
     catch (blst::BLST_ERROR err)
@@ -177,4 +181,93 @@ Napi::Value Signature::SigValidateSync(const Napi::CallbackInfo &info)
 {
     SigValidateWorker worker{info, _is_jacobian, *_jacobian, *_affine};
     return worker.RunSync();
+}
+
+/**
+ *
+ *
+ * SignatureArg
+ *
+ *
+ */
+SignatureArg::SignatureArg(const BlstTsAddon *addon, const Napi::Env &env, const Napi::Value &raw_arg)
+    : _addon{addon},
+      _signature{nullptr},
+      _bytes_ref{},
+      _bytes_data{nullptr},
+      _bytes_length{0}
+{
+    if (raw_arg.IsTypedArray() && raw_arg.As<Napi::TypedArray>().TypedArrayType() == napi_uint8_array)
+    {
+        _bytes_ref = Napi::Persistent(raw_arg.As<Napi::Uint8Array>());
+        _bytes_data = _bytes_ref.Value().Data();
+        _bytes_length = _bytes_ref.Value().ByteLength();
+        return;
+    }
+    if (raw_arg.IsObject())
+    {
+        Napi::Object raw_obj = raw_arg.As<Napi::Object>();
+        if (!raw_obj.Has("__type") || (raw_obj.Get("__type").As<Napi::String>().Utf8Value().compare(_addon->_global_state->_signature_type) != 0))
+        {
+            _signature = Signature::Unwrap(raw_obj);
+            return;
+        }
+    }
+    throw Napi::TypeError::New(env, "SignatureArg must be a Signature instance or a serialized Uint8Array");
+};
+
+const blst::P2 *SignatureArg::AsJacobian()
+{
+    if (_signature)
+    {
+        if (!_signature->_is_jacobian)
+        {
+            _signature->_jacobian.reset(new blst::P2{_signature->_affine->to_jacobian()});
+            _signature->_is_jacobian = true;
+        }
+        return _signature->_jacobian.get();
+    }
+    if (_jacobian.get() == nullptr)
+    {
+        _jacobian.reset(new blst::P2{_bytes_data, _bytes_length});
+    }
+    return _jacobian.get();
+}
+
+const blst::P2_Affine *SignatureArg::AsAffine()
+{
+    if (_signature)
+    {
+        // need to check this works to not duplicate if affine is already build
+        if (_signature->_is_jacobian /* && _signature->_jacobian->is_inf() */)
+        {
+            _signature->_affine.reset(new blst::P2_Affine{_signature->_jacobian->to_affine()});
+        }
+        return _signature->_affine.get();
+    }
+    if (_affine.get() == nullptr)
+    {
+        _affine.reset(new blst::P2_Affine{_bytes_data, _bytes_length});
+    }
+    return _affine.get();
+}
+
+/**
+ *
+ *
+ * SignatureArgArray
+ *
+ *
+ */
+SignatureArgArray::SignatureArgArray(const BlstTsAddon *module, const Napi::Env &env, const Napi::Value &raw_arg) : SignatureArgArray{}
+{
+    if (!raw_arg.IsArray())
+    {
+        throw Napi::TypeError::New(env, "publicKeys argument must be of type SignatureArg[]");
+    }
+    Napi::Array arr = raw_arg.As<Napi::Array>();
+    for (size_t i = 0; i < arr.Length(); i++)
+    {
+        (*this)[i] = SignatureArg{module, env, arr[i]};
+    }
 }

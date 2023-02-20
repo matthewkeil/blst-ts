@@ -6,11 +6,10 @@
         'deps/blst/src/server.c',
         'deps/blst/build/assembly.S',
         'src/addon.cc',
-        'src/utils.cc',
         # 'src/functions.cc',
-        # 'src/public_key.cc',
+        'src/public_key.cc',
         'src/secret_key.cc',
-        # 'src/signature.cc',
+        'src/signature.cc',
       ],
       'dependencies': [ "<!(node -p \"require('node-addon-api').gyp\")" ],
       'include_dirs': [

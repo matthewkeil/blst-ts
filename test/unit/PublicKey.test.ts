@@ -22,11 +22,11 @@ describe("PublicKey", () => {
     });
     describe("deserialize", () => {
       it("should only take Uint8Array or Buffer", () => {
-        expect(() => PublicKey.deserialize(3 as any)).to.throw("'pkBytes' must be a Uint8Array");
+        expect(() => PublicKey.deserialize(3 as any)).to.throw("pkBytes must be of type BlstBuffer");
       });
       it("should only take 48 or 96 bytes", () => {
         expect(() => PublicKey.deserialize(Buffer.alloc(32, "*"))).to.throw(
-          "'pkBytes' is 32 bytes, but must be 48 or 96 bytes long"
+          "pkBytes is 32 bytes, but must be 48 or 96 bytes long"
         );
       });
       it("should take uncompressed byte arrays", () => {

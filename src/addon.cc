@@ -1,5 +1,175 @@
 #include "addon.h"
 
+Napi::Value BlstAsyncWorker::RunSync()
+{
+    Napi::HandleScope scope(_env);
+    Setup();
+    if (true)
+    {
+        /**
+         *
+         *
+         *
+         *
+         *
+         *
+         *
+         *
+         *
+         */
+    }
+    OnExecute(_env);
+    SuppressDestruct();
+    OnWorkComplete(_env, napi_ok);
+    Napi::Value return_val = _threw_error ? _env.Undefined() : GetReturnValue();
+    return return_val;
+}
+
+Napi::Value BlstAsyncWorker::Run()
+{
+    _use_deferred = true;
+    Setup();
+    Queue();
+    return GetPromise();
+};
+
+void BlstAsyncWorker::SetError(const std::string &err)
+{
+    _threw_error = true;
+    Napi::AsyncWorker::SetError(err);
+}
+
+void BlstAsyncWorker::OnOK()
+{
+    if (_use_deferred)
+    {
+        _deferred.Resolve(GetReturnValue());
+    }
+}
+
+void BlstAsyncWorker::OnError(Napi::Error const &err)
+{
+    if (_use_deferred)
+    {
+        _deferred.Reject(err.Value());
+    }
+    else
+    {
+        err.ThrowAsJavaScriptException();
+    }
+}
+
+Napi::Promise BlstAsyncWorker::GetPromise()
+{
+    return _deferred.Promise();
+}
+
+Uint8ArrayArg::Uint8ArrayArg(
+    const Napi::Env &env,
+    const Napi::Value &val,
+    const std::string &err_prefix) : _env{env},
+                                     _error_prefix{err_prefix},
+                                     _error{},
+                                     _data{nullptr},
+                                     _byte_length{0}
+{
+    if (val.IsTypedArray())
+    {
+        Napi::TypedArray untyped = val.As<Napi::TypedArray>();
+        if (untyped.TypedArrayType() == napi_uint8_array)
+        {
+            auto a = untyped.As<Napi::TypedArrayOf<u_int8_t>>();
+            _ref = Napi::Persistent(a);
+            _data = _ref.Value().Data();
+            _byte_length = _ref.Value().ByteLength();
+            return;
+        }
+    }
+    SetError(err_prefix + " must be of type BlstBuffer");
+};
+
+const uint8_t *Uint8ArrayArg::Data()
+{
+    if (HasError())
+    {
+        return nullptr;
+    }
+    return _data;
+};
+
+size_t Uint8ArrayArg::ByteLength()
+{
+    if (HasError())
+    {
+        return 0;
+    }
+    return _byte_length;
+};
+
+void Uint8ArrayArg::ThrowJsException()
+{
+    Napi::Error::New(_env, _error).ThrowAsJavaScriptException();
+}
+
+bool Uint8ArrayArg::ValidateLength(size_t length1, size_t length2)
+{
+    bool is_valid = false;
+    if (_error_prefix.size() == 0) // hasn't been fully initialized
+    {
+        return is_valid;
+    }
+    if (_error.size() != 0) // already an error, don't overwrite
+    {
+        return is_valid;
+    }
+    if (ByteLength() == length1 || (length2 != 0 && ByteLength() == length2))
+    {
+        is_valid = true;
+    }
+    if (!is_valid)
+    {
+        std::ostringstream msg;
+        msg << _error_prefix << " is " << ByteLength() << " bytes, but must be ";
+        if (length1 != 0)
+        {
+            msg << length1;
+        };
+        if (length2 != 0)
+        {
+            if (length1 != 0)
+            {
+                msg << " or ";
+            }
+            msg << length2;
+        };
+        msg << " bytes long";
+        SetError(msg.str());
+    }
+    return is_valid;
+};
+
+Uint8ArrayArgArray::Uint8ArrayArgArray(
+    const Napi::Env &env,
+    const Napi::Value &arr_val,
+    const std::string &err_prefix_singular,
+    const std::string &err_prefix_plural,
+    size_t length1,
+    size_t length2)
+    : Uint8ArrayArgArray{}
+{
+    if (!arr_val.IsArray())
+    {
+        throw Napi::TypeError::New(env, err_prefix_plural + " must be of type BlstBuffer[]");
+    }
+    Napi::Array arr = arr_val.As<Napi::Array>();
+    for (size_t i = 0; i < arr.Length(); i++)
+    {
+        (*this)[i] = Uint8ArrayArg{env, arr[i], err_prefix_singular};
+        (*this)[i].ValidateLength(length1, length2);
+    }
+}
+
+// NOTE: This should be the ONLY static, global scope variable
 std::mutex GlobalState::_lock;
 
 GlobalState::GlobalState()
@@ -71,8 +241,8 @@ BlstTsAddon::BlstTsAddon(Napi::Env env, Napi::Object exports)
     DefineAddon(exports, {InstanceValue("BLST_CONSTANTS", _js_constants, napi_enumerable)});
     env.SetInstanceData(this);
     SecretKey::Init(env, exports, this);
-    // PublicKey::Init(env, exports, this);
-    // Signature::Init(env, exports, this);
+    PublicKey::Init(env, exports, this);
+    Signature::Init(env, exports, this);
     // functions::Init(env, exports, this);
 };
 

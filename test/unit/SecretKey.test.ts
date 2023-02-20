@@ -85,12 +85,12 @@ describe("SecretKey", () => {
         expect(SecretKey.deserialize(serialized).serialize().toString()).to.equal(serialized.toString());
       });
     });
-    describe.skip("toPublicKey", () => {
+    describe("toPublicKey", () => {
       it("should create a PublicKey", () => {
         expect(SecretKey.fromKeygenSync().toPublicKey()).to.be.instanceOf(PublicKey);
       });
     });
-    describe.skip("sign", () => {
+    describe("sign", () => {
       it("should create a Signature", () => {
         const sig = SecretKey.fromKeygenSync().signSync(Buffer.from("some fancy message"));
         expect(sig).to.be.instanceOf(Signature);
