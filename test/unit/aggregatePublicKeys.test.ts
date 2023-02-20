@@ -28,6 +28,11 @@ describe("Aggregate Public Keys", () => {
         "publicKeys argument must be of type PublicKeyArg[]"
       );
     });
+    it("should throw for PublicKeyArg inputs", () => {
+      expect(() => aggregatePublicKeysSync([0] as any)).to.throw(
+        "PublicKeyArg must be a PublicKey instance or a 48/96 byte Uint8Array"
+      );
+    });
     it("should throw for invalid key", () => {
       expect(badKey.length).to.equal(96);
       try {
@@ -57,6 +62,11 @@ describe("Aggregate Public Keys", () => {
     });
     it("should throw for non-array inputs", () => {
       expect(() => aggregatePublicKeys(keys[0] as any)).to.throw("publicKeys argument must be of type PublicKeyArg[]");
+    });
+    it("should throw for PublicKeyArg inputs", () => {
+      expect(() => aggregatePublicKeys([0] as any)).to.throw(
+        "PublicKeyArg must be a PublicKey instance or a 48/96 byte Uint8Array"
+      );
     });
     it("should throw for invalid key", async () => {
       expect(badKey.length).to.equal(96);

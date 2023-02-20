@@ -19,7 +19,13 @@ namespace
               _result{},
               _public_keys{_module, info, arg_position} {}
 
-        void Setup() override{};
+        void Setup() override
+        {
+            if (_public_keys.HasError())
+            {
+                SetError(_public_keys.GetError());
+            }
+        };
 
         void Execute() override
         {

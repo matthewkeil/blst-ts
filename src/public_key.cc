@@ -201,10 +201,12 @@ Napi::Value PublicKey::KeyValidateSync(const Napi::CallbackInfo &info)
  */
 PublicKeyArg::PublicKeyArg(const BlstTsAddon *addon, const Napi::Env &env, const Napi::Value &raw_arg)
     : _addon{addon},
+      _env{env},
+      _error{},
       _jacobian{new blst::P1()},
       _affine{new blst::P1_Affine()},
       _public_key{nullptr},
-      _bytes{env}
+      _bytes{_env}
 {
     if (raw_arg.IsObject())
     {
@@ -222,23 +224,23 @@ PublicKeyArg::PublicKeyArg(const BlstTsAddon *addon, const Napi::Env &env, const
     }
     else if (!raw_arg.IsTypedArray())
     {
-        throw Napi::TypeError::New(env, "PublicKeyArg must be a PublicKey instance or a 48/96 byte Uint8Array");
+        SetError("PublicKeyArg must be a PublicKey instance or a 48/96 byte Uint8Array");
+        return;
     }
 
-    _bytes = Uint8ArrayArg{env, raw_arg, "PublicKeyArg"};
+    _bytes = Uint8ArrayArg{_env, raw_arg, "PublicKeyArg"};
     _bytes.ValidateLength(_addon->_global_state->_public_key_compressed_length, _addon->_global_state->_public_key_uncompressed_length);
     if (_bytes.HasError())
     {
-        _bytes.ThrowJsException();
+        SetError(_bytes.GetError());
     }
 };
 
 blst::P1 *PublicKeyArg::AsJacobian()
 {
-    if (_public_key)
+    if (_public_key != nullptr)
     {
-        // need to check this works to not duplicate if affine is already build
-        if (!_public_key->_is_jacobian /* && !_public_key->_affine->is_inf() */)
+        if (!_public_key->_is_jacobian && !_public_key->_affine->is_inf())
         {
             _public_key->_jacobian.reset(new blst::P1{_public_key->_affine->to_jacobian()});
             _public_key->_is_jacobian = true;
@@ -254,10 +256,9 @@ blst::P1 *PublicKeyArg::AsJacobian()
 
 blst::P1_Affine *PublicKeyArg::AsAffine()
 {
-    if (_public_key)
+    if (_public_key != nullptr)
     {
-        // need to check this works to not duplicate if affine is already build
-        if (_public_key->_is_jacobian /* && !_public_key->_jacobian->is_inf() */)
+        if (_public_key->_is_jacobian && !_public_key->_jacobian->is_inf())
         {
             _public_key->_affine.reset(new blst::P1_Affine{_public_key->_jacobian->to_affine()});
         }
@@ -277,7 +278,13 @@ blst::P1_Affine *PublicKeyArg::AsAffine()
  *
  *
  */
-PublicKeyArgArray::PublicKeyArgArray(const BlstTsAddon *module, const Napi::Env &env, const Napi::Value &raw_arg) : _keys{}
+PublicKeyArgArray::PublicKeyArgArray(
+    const BlstTsAddon *module,
+    const Napi::Env &env,
+    const Napi::Value &raw_arg)
+    : _env{env},
+      _error{},
+      _keys{}
 {
     if (!raw_arg.IsArray())
     {
@@ -289,5 +296,10 @@ PublicKeyArgArray::PublicKeyArgArray(const BlstTsAddon *module, const Napi::Env 
     for (uint32_t i = 0; i < length; i++)
     {
         _keys.push_back(PublicKeyArg{module, env, arr[i]});
+        if (_keys[i].HasError())
+        {
+            SetError(_keys[i].GetError());
+            return;
+        }
     }
 }

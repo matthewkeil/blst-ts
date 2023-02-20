@@ -36,13 +36,20 @@ public:
 
     blst::P1 *AsJacobian();
     blst::P1_Affine *AsAffine();
+    void ThrowJsException() { Napi::Error::New(_env, _error).ThrowAsJavaScriptException(); };
+    bool HasError() { return _error.size() > 0; };
+    std::string GetError() { return _error; };
 
 private:
     const BlstTsAddon *_addon;
+    Napi::Env _env;
+    std::string _error;
     std::unique_ptr<blst::P1> _jacobian;
     std::unique_ptr<blst::P1_Affine> _affine;
     PublicKey *_public_key;
     Uint8ArrayArg _bytes;
+
+    void SetError(const std::string &err) { _error = err; };
 };
 
 class PublicKeyArgArray
@@ -69,9 +76,16 @@ public:
 
     size_t Size() { return _keys.size(); }
     void Reserve(size_t size) { return _keys.reserve(size); }
+    void ThrowJsException() { Napi::Error::New(_env, _error).ThrowAsJavaScriptException(); };
+    bool HasError() { return _error.size() > 0; };
+    std::string GetError() { return _error; };
 
 private:
+    Napi::Env _env;
+    std::string _error;
     std::vector<PublicKeyArg> _keys;
+
+    void SetError(const std::string &err) { _error = err; };
 };
 
 #endif /* BLST_TS_PUBLIC_KEY_H__ */
