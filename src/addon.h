@@ -1,16 +1,6 @@
 #ifndef BLST_TS_ADDON_H__
 #define BLST_TS_ADDON_H__
 
-#ifdef DEBUG
-#define DEBUG_HEADER fprintf(stderr, "blst-ts [%s:%s() %d]: ", __FILE__, __FUNCTION__, __LINE__);
-#define DEBUG_FOOTER fprintf(stderr, "\n");
-#define DEBUG_LOG(...)                         \
-    DEBUG_HEADER fprintf(stderr, __VA_ARGS__); \
-    DEBUG_FOOTER
-#else
-#define DEBUG_LOG(...)
-#endif
-
 #include <iostream>
 #include <memory>
 #include <mutex>
@@ -19,6 +9,7 @@
 #include "napi.h"
 #include "blst.hpp"
 
+// TODO: these should come out post PR review
 using std::cout;
 using std::endl;
 

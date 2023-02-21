@@ -73,8 +73,7 @@ Uint8ArrayArg::Uint8ArrayArg(
         Napi::TypedArray untyped = val.As<Napi::TypedArray>();
         if (untyped.TypedArrayType() == napi_uint8_array)
         {
-            auto a = untyped.As<Napi::TypedArrayOf<u_int8_t>>();
-            _ref = Napi::Persistent(a);
+            _ref = Napi::Persistent(untyped.As<Napi::TypedArrayOf<u_int8_t>>());
             _data = _ref.Value().Data();
             _byte_length = _ref.Value().ByteLength();
             return;
@@ -103,20 +102,20 @@ size_t Uint8ArrayArg::ByteLength()
 
 bool Uint8ArrayArg::ValidateLength(size_t length1, size_t length2)
 {
-    bool is_valid = false;
     if (_error_prefix.size() == 0) // hasn't been fully initialized
     {
-        return is_valid;
+        return false;
     }
     if (_error.size() != 0) // already an error, don't overwrite
     {
-        return is_valid;
+        return false;
     }
+    bool is_valid = false;
     if (ByteLength() == length1 || (length2 != 0 && ByteLength() == length2))
     {
         is_valid = true;
     }
-    if (!is_valid)
+    else
     {
         std::ostringstream msg;
         msg << _error_prefix << " is " << ByteLength() << " bytes, but must be ";
