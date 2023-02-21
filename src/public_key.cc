@@ -203,14 +203,16 @@ Napi::Value PublicKey::KeyValidateSync(const Napi::CallbackInfo &info)
  *
  *
  */
+PublicKeyArg::PublicKeyArg(const BlstTsAddon *addon, const Napi::Env &env) : _addon{addon},
+                                                                             _env{env},
+                                                                             _error{},
+                                                                             _jacobian{new blst::P1()},
+                                                                             _affine{new blst::P1_Affine()},
+                                                                             _public_key{nullptr},
+                                                                             _bytes{_env} {};
+                                                                             
 PublicKeyArg::PublicKeyArg(const BlstTsAddon *addon, const Napi::Env &env, const Napi::Value &raw_arg)
-    : _addon{addon},
-      _env{env},
-      _error{},
-      _jacobian{new blst::P1()},
-      _affine{new blst::P1_Affine()},
-      _public_key{nullptr},
-      _bytes{_env}
+    : PublicKeyArg{addon, env}
 {
     if (raw_arg.IsObject())
     {

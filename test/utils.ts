@@ -1,4 +1,5 @@
 import {expect} from "chai";
+import {randomFillSync} from "crypto";
 import {BlstBuffer, Serializable, SecretKey, PublicKey, Signature} from "../lib";
 
 type Bufferish = BlstBuffer | Serializable;
@@ -77,7 +78,7 @@ export interface NapiTestSet {
 }
 
 export function makeNapiTestSet(msg: Uint8Array): NapiTestSet {
-  const secretKey = SecretKey.fromKeygenSync(Buffer.from("*".repeat(32)));
+  const secretKey = SecretKey.fromKeygenSync(randomFillSync(Buffer.alloc(32)));
   const publicKey = secretKey.toPublicKey();
   const signature = secretKey.signSync(msg);
   return {

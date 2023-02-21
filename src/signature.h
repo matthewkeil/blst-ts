@@ -27,6 +27,7 @@ private:
 class SignatureArg
 {
 public:
+    SignatureArg(const BlstTsAddon *addon, const Napi::Env &env);
     SignatureArg(const BlstTsAddon *addon, const Napi::Env &env, const Napi::Value &raw_arg);
     SignatureArg(const SignatureArg &source) = delete;
     SignatureArg(SignatureArg &&source) = default;

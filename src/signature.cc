@@ -192,14 +192,22 @@ Napi::Value Signature::SigValidateSync(const Napi::CallbackInfo &info)
  *
  *
  */
-SignatureArg::SignatureArg(const BlstTsAddon *addon, const Napi::Env &env, const Napi::Value &raw_arg)
+SignatureArg::SignatureArg(
+    const BlstTsAddon *addon,
+    const Napi::Env &env)
     : _addon{addon},
       _env{env},
       _error{},
       _jacobian{new blst::P2()},
       _affine{new blst::P2_Affine()},
       _signature{nullptr},
-      _bytes{_env}
+      _bytes{_env} {};
+
+SignatureArg::SignatureArg(
+    const BlstTsAddon *addon,
+    const Napi::Env &env,
+    const Napi::Value &raw_arg)
+    : SignatureArg{addon, env}
 {
     if (raw_arg.IsObject())
     {

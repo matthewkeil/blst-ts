@@ -140,25 +140,31 @@ bool Uint8ArrayArg::ValidateLength(size_t length1, size_t length2)
 
 Uint8ArrayArgArray::Uint8ArrayArgArray(
     const Napi::Env &env,
-    const Napi::Value &arr_val,
+    const Napi::Value &raw_arg,
     const std::string &err_prefix_singular,
-    const std::string &err_prefix_plural,
-    size_t length1,
-    size_t length2)
-    : Uint8ArrayArgArray{}
+    const std::string &err_prefix_plural)
+    : _env{env},
+      _error{},
+      _args{}
 {
-    if (!arr_val.IsArray())
+    if (!raw_arg.IsArray())
     {
-        throw Napi::TypeError::New(env, err_prefix_plural + " must be of type BlstBuffer[]");
+        SetError(err_prefix_plural + " must be of type BlstBuffer[]");
+        return;
     }
-    Napi::Array arr = arr_val.As<Napi::Array>();
-    for (size_t i = 0; i < arr.Length(); i++)
+    Napi::Array arr = raw_arg.As<Napi::Array>();
+    uint32_t length = arr.Length();
+    _args.reserve(length);
+    for (uint32_t i = 0; i < length; i++)
     {
-        (*this)[i] = Uint8ArrayArg{env, arr[i], err_prefix_singular};
-        // TODO: This call needs to be moved into a method
-        (*this)[i].ValidateLength(length1, length2);
+        _args.push_back(Uint8ArrayArg{env, arr[i], err_prefix_singular});
+        if (_args[i].HasError())
+        {
+            SetError(_args[i].GetError());
+            return;
+        }
     }
-}
+};
 
 // NOTE: This should be the ONLY static, global scope variable
 std::mutex GlobalState::_lock;

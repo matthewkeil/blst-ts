@@ -116,42 +116,45 @@ private:
     Napi::Reference<Napi::Uint8Array> _ref;
 };
 
-class Uint8ArrayArgArray : public std::vector<Uint8ArrayArg>
+class Uint8ArrayArgArray
 {
 public:
-    Uint8ArrayArgArray() : std::vector<Uint8ArrayArg>{} {}
     Uint8ArrayArgArray(
         const Napi::Env &env,
         const Napi::Value &arr_val,
         const std::string &err_prefix_singular,
-        const std::string &err_prefix_plural,
-        size_t length1 = 0,
-        size_t length2 = 0);
+        const std::string &err_prefix_plural);
     Uint8ArrayArgArray(
         const Napi::CallbackInfo &info,
         size_t arg_position,
         const std::string &err_prefix_singular,
-        const std::string &err_prefix_plural,
-        size_t length1 = 0,
-        size_t length2 = 0)
+        const std::string &err_prefix_plural)
         : Uint8ArrayArgArray{info.Env(),
                              info[arg_position],
                              err_prefix_singular,
-                             err_prefix_plural,
-                             length1,
-                             length2} {}
-
-    /**
-     * NOTE: There are some places in the code where it looks like there is a
-     * copy operation but they are strictly disallowed, this is a move only class.
-     * The compiler recognizes the ares with elision and will allow them to compile
-     */
-    Uint8ArrayArgArray(Uint8ArrayArgArray &&source) = default;
-    Uint8ArrayArgArray &operator=(Uint8ArrayArgArray &&source) = default;
+                             err_prefix_plural} {}
     Uint8ArrayArgArray(const Uint8ArrayArgArray &source) = delete;
-    Uint8ArrayArgArray &operator=(const Uint8ArrayArgArray &source) = delete;
+    Uint8ArrayArgArray(Uint8ArrayArgArray &&source) = default;
 
-    bool ValidateLength(const std::string &_error_prefix, size_t length1, size_t length2);
+    Uint8ArrayArgArray &operator=(const Uint8ArrayArgArray &source) = delete;
+    Uint8ArrayArgArray &operator=(Uint8ArrayArgArray &&source) = default;
+    Uint8ArrayArg &operator[](size_t index)
+    {
+        return _args[index];
+    }
+
+    size_t Size() { return _args.size(); }
+    void Reserve(size_t size) { return _args.reserve(size); }
+    void ThrowJsException() { Napi::Error::New(_env, _error).ThrowAsJavaScriptException(); };
+    bool HasError() { return _error.size() > 0; };
+    std::string GetError() { return _error; };
+
+private:
+    Napi::Env _env;
+    std::string _error;
+    std::vector<Uint8ArrayArg> _args;
+
+    void SetError(const std::string &err) { _error = err; };
 };
 
 #include "secret_key.h"

@@ -27,6 +27,7 @@ private:
 class PublicKeyArg
 {
 public:
+    PublicKeyArg(const BlstTsAddon *addon, const Napi::Env &env);
     PublicKeyArg(const BlstTsAddon *addon, const Napi::Env &env, const Napi::Value &raw_arg);
     PublicKeyArg(const PublicKeyArg &source) = delete;
     PublicKeyArg(PublicKeyArg &&source) = default;
