@@ -51,11 +51,13 @@ namespace
                 if (!_jacobian.in_group())
                 {
                     SetError("blst::BLST_POINT_NOT_IN_GROUP");
+                    return;
                 }
             }
             else if (!_affine.in_group())
             {
                 SetError("blst::BLST_POINT_NOT_IN_GROUP");
+                return;
             }
         };
 
@@ -98,13 +100,10 @@ Napi::Value Signature::Deserialize(const Napi::CallbackInfo &info)
             sig->_is_jacobian = false;
         }
     }
-
-    Uint8ArrayArg sig_bytes{
-        info,
-        0,
-        "sigBytes",
-    };
-    sig_bytes.ValidateLength(module->_global_state->_signature_compressed_length, module->_global_state->_signature_uncompressed_length);
+    Uint8ArrayArg sig_bytes{info, 0, "sigBytes"};
+    sig_bytes.ValidateLength(
+        module->_global_state->_signature_compressed_length,
+        module->_global_state->_signature_uncompressed_length);
     if (sig_bytes.HasError())
     {
         sig_bytes.ThrowJsException();
@@ -152,8 +151,11 @@ Napi::Value Signature::Serialize(const Napi::CallbackInfo &info)
     {
         compressed = info[0].ToBoolean().Value();
     }
-    size_t length = compressed ? _module->_global_state->_signature_compressed_length : _module->_global_state->_signature_uncompressed_length;
-    Napi::Buffer<uint8_t> serialized = Napi::Buffer<uint8_t>::New(env, length);
+    Napi::Buffer<uint8_t> serialized = Napi::Buffer<uint8_t>::New(
+        env,
+        compressed
+            ? _module->_global_state->_signature_compressed_length
+            : _module->_global_state->_signature_uncompressed_length);
     if (compressed)
     {
         if (_is_jacobian)
@@ -192,44 +194,57 @@ Napi::Value Signature::SigValidateSync(const Napi::CallbackInfo &info)
  */
 SignatureArg::SignatureArg(const BlstTsAddon *addon, const Napi::Env &env, const Napi::Value &raw_arg)
     : _addon{addon},
+      _env{env},
+      _error{},
+      _jacobian{new blst::P2()},
+      _affine{new blst::P2_Affine()},
       _signature{nullptr},
-      _bytes_ref{},
-      _bytes_data{nullptr},
-      _bytes_length{0}
+      _bytes{_env}
 {
-    if (raw_arg.IsTypedArray() && raw_arg.As<Napi::TypedArray>().TypedArrayType() == napi_uint8_array)
-    {
-        _bytes_ref = Napi::Persistent(raw_arg.As<Napi::Uint8Array>());
-        _bytes_data = _bytes_ref.Value().Data();
-        _bytes_length = _bytes_ref.Value().ByteLength();
-        return;
-    }
     if (raw_arg.IsObject())
     {
         Napi::Object raw_obj = raw_arg.As<Napi::Object>();
-        if (!raw_obj.Has("__type") || (raw_obj.Get("__type").As<Napi::String>().Utf8Value().compare(_addon->_global_state->_signature_type) != 0))
+        if (raw_obj.Has("__type") &&
+            !raw_obj
+                 .Get("__type")
+                 .As<Napi::String>()
+                 .Utf8Value()
+                 .compare(_addon->_global_state->_signature_type))
         {
             _signature = Signature::Unwrap(raw_obj);
             return;
         }
     }
-    throw Napi::TypeError::New(env, "SignatureArg must be a Signature instance or a serialized Uint8Array");
+    else if (!(raw_arg.IsTypedArray() && raw_arg.As<Napi::TypedArray>().TypedArrayType() == napi_uint8_array))
+    {
+        SetError("SignatureArg must be a Signature instance or a 96/192 byte Uint8Array");
+        return;
+    }
+
+    _bytes = Uint8ArrayArg{_env, raw_arg, "SignatureArg"};
+    _bytes.ValidateLength(
+        _addon->_global_state->_signature_compressed_length,
+        _addon->_global_state->_signature_uncompressed_length);
+    if (_bytes.HasError())
+    {
+        SetError(_bytes.GetError());
+    }
 };
 
 const blst::P2 *SignatureArg::AsJacobian()
 {
     if (_signature)
     {
-        if (!_signature->_is_jacobian)
+        if (!_signature->_is_jacobian && !_signature->_affine->is_inf())
         {
             _signature->_jacobian.reset(new blst::P2{_signature->_affine->to_jacobian()});
             _signature->_is_jacobian = true;
         }
         return _signature->_jacobian.get();
     }
-    if (_jacobian.get() == nullptr)
+    if (_jacobian.get()->is_inf())
     {
-        _jacobian.reset(new blst::P2{_bytes_data, _bytes_length});
+        _jacobian.reset(new blst::P2{_bytes.Data(), _bytes.ByteLength()});
     }
     return _jacobian.get();
 }
@@ -238,16 +253,15 @@ const blst::P2_Affine *SignatureArg::AsAffine()
 {
     if (_signature)
     {
-        // need to check this works to not duplicate if affine is already build
-        if (_signature->_is_jacobian /* && _signature->_jacobian->is_inf() */)
+        if (_signature->_is_jacobian && _signature->_jacobian->is_inf())
         {
             _signature->_affine.reset(new blst::P2_Affine{_signature->_jacobian->to_affine()});
         }
         return _signature->_affine.get();
     }
-    if (_affine.get() == nullptr)
+    if (_affine.get()->is_inf())
     {
-        _affine.reset(new blst::P2_Affine{_bytes_data, _bytes_length});
+        _affine.reset(new blst::P2_Affine{_bytes.Data(), _bytes.ByteLength()});
     }
     return _affine.get();
 }
@@ -259,15 +273,29 @@ const blst::P2_Affine *SignatureArg::AsAffine()
  *
  *
  */
-SignatureArgArray::SignatureArgArray(const BlstTsAddon *module, const Napi::Env &env, const Napi::Value &raw_arg) : SignatureArgArray{}
+SignatureArgArray::SignatureArgArray(
+    const BlstTsAddon *module,
+    const Napi::Env &env,
+    const Napi::Value &raw_arg)
+    : _env{env},
+      _error{},
+      _signatures{}
 {
     if (!raw_arg.IsArray())
     {
-        throw Napi::TypeError::New(env, "publicKeys argument must be of type SignatureArg[]");
+        SetError("signatures argument must be of type SignatureArg[]");
+        return;
     }
     Napi::Array arr = raw_arg.As<Napi::Array>();
-    for (size_t i = 0; i < arr.Length(); i++)
+    uint32_t length = arr.Length();
+    _signatures.reserve(length);
+    for (uint32_t i = 0; i < length; i++)
     {
-        (*this)[i] = SignatureArg{module, env, arr[i]};
+        _signatures.push_back(SignatureArg{module, env, arr[i]});
+        if (_signatures[i].HasError())
+        {
+            SetError(_signatures[i].GetError());
+            return;
+        }
     }
 }

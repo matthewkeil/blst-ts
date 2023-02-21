@@ -63,59 +63,53 @@ namespace
      *
      *
      */
-    // class AggregateSignaturesWorker : public BlstAsyncWorker
-    // {
-    // public:
-    //     AggregateSignaturesWorker(
-    //         const Napi::CallbackInfo &info)
-    //         : BlstAsyncWorker(info),
-    //           _result{},
-    //           _signatures{} {}
+    class AggregateSignaturesWorker : public BlstAsyncWorker
+    {
+    public:
+        AggregateSignaturesWorker(const Napi::CallbackInfo &info, size_t arg_position)
+            : BlstAsyncWorker(info),
+              _result{},
+              _signatures{_module, info, arg_position} {}
 
-    // protected:
-    //     void Setup() override
-    //     {
-    //         if (!_info[0].IsArray())
-    //         {
-    //             SetError("signatures argument must be of type SignatureArg[]");
-    //         }
-    //         Napi::Array arr = _info[0].As<Napi::Array>();
-    //         for (size_t i = 0; i < arr.Length(); i++)
-    //         {
-    //             _signatures[i] = std::move(SignatureArg{_module, _env, arr[i]});
-    //         }
-    //     };
+    protected:
+        void Setup() override
+        {
+            if (_signatures.HasError())
+            {
+                SetError(_signatures.GetError());
+            }
+        };
 
-    //     void Execute() override
-    //     {
-    //         for (size_t i = 0; i < _signatures.size(); i++)
-    //         {
-    //             try
-    //             {
-    //                 _result.add(*_signatures[i].AsJacobian());
-    //             }
-    //             catch (const blst::BLST_ERROR &err)
-    //             {
-    //                 std::ostringstream msg;
-    //                 msg << "BLST_ERROR::" << _module->GetBlstErrorString(err) << ": Invalid signature at index " << i;
-    //                 SetError(msg.str());
-    //             }
-    //         }
-    //     }
+        void Execute() override
+        {
+            for (size_t i = 0; i < _signatures.Size(); i++)
+            {
+                try
+                {
+                    _result.add(*_signatures[i].AsJacobian());
+                }
+                catch (const blst::BLST_ERROR &err)
+                {
+                    std::ostringstream msg;
+                    msg << "BLST_ERROR::" << _module->GetBlstErrorString(err) << ": Invalid signature at index " << i;
+                    SetError(msg.str());
+                }
+            }
+        }
 
-    //     Napi::Value GetReturnValue() override
-    //     {
-    //         Napi::Object wrapped = _module->_signature_ctr.New({Napi::External<void *>::New(Env(), nullptr)});
-    //         Signature *sig = Signature::Unwrap(wrapped);
-    //         sig->_jacobian.reset(new blst::P2{_result});
-    //         sig->_is_jacobian = true;
-    //         return wrapped;
-    //     };
+        Napi::Value GetReturnValue() override
+        {
+            Napi::Object wrapped = _module->_signature_ctr.New({Napi::External<void *>::New(Env(), nullptr)});
+            Signature *sig = Signature::Unwrap(wrapped);
+            sig->_jacobian.reset(new blst::P2{_result});
+            sig->_is_jacobian = true;
+            return wrapped;
+        };
 
-    // private:
-    //     blst::P2 _result;
-    //     std::vector<SignatureArg> _signatures;
-    // };
+    private:
+        blst::P2 _result;
+        SignatureArgArray _signatures;
+    };
     // /**
     //  *
     //  *
@@ -341,15 +335,13 @@ namespace functions
     }
     Napi::Value AggregateSignatures(const Napi::CallbackInfo &info)
     {
-        return info.Env().Undefined();
-        // AggregateSignaturesWorker *worker = new AggregateSignaturesWorker{info};
-        // return worker->Run();
+        AggregateSignaturesWorker *worker = new AggregateSignaturesWorker{info, 0};
+        return worker->Run();
     }
     Napi::Value AggregateSignaturesSync(const Napi::CallbackInfo &info)
     {
-        return info.Env().Undefined();
-        // AggregateSignaturesWorker worker{info};
-        // return worker.RunSync();
+        AggregateSignaturesWorker worker{info, 0};
+        return worker.RunSync();
     }
     Napi::Value Verify(const Napi::CallbackInfo &info)
     {

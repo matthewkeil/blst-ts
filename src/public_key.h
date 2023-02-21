@@ -28,11 +28,11 @@ class PublicKeyArg
 {
 public:
     PublicKeyArg(const BlstTsAddon *addon, const Napi::Env &env, const Napi::Value &raw_arg);
+    PublicKeyArg(const PublicKeyArg &source) = delete;
+    PublicKeyArg(PublicKeyArg &&source) = default;
 
     PublicKeyArg &operator=(const PublicKeyArg &source) = delete;
-    PublicKeyArg(const PublicKeyArg &source) = delete;
     PublicKeyArg &operator=(PublicKeyArg &&source) = default;
-    PublicKeyArg(PublicKeyArg &&source) = default;
 
     blst::P1 *AsJacobian();
     blst::P1_Affine *AsAffine();
@@ -64,11 +64,11 @@ public:
         const Napi::CallbackInfo &info,
         const size_t arg_position)
         : PublicKeyArgArray{module, info.Env(), info[arg_position]} {}
+    PublicKeyArgArray(const PublicKeyArgArray &source) = delete;
+    PublicKeyArgArray(PublicKeyArgArray &&source) = default;
 
     PublicKeyArgArray &operator=(const PublicKeyArgArray &source) = delete;
-    PublicKeyArgArray(const PublicKeyArgArray &source) = delete;
     PublicKeyArgArray &operator=(PublicKeyArgArray &&source) = default;
-    PublicKeyArgArray(PublicKeyArgArray &&source) = default;
     PublicKeyArg &operator[](size_t index)
     {
         return _keys[index];

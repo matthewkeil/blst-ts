@@ -28,36 +28,61 @@ class SignatureArg
 {
 public:
     SignatureArg(const BlstTsAddon *addon, const Napi::Env &env, const Napi::Value &raw_arg);
-
-    SignatureArg(SignatureArg &&source) = default;
-    SignatureArg &operator=(SignatureArg &&source) = default;
     SignatureArg(const SignatureArg &source) = delete;
+    SignatureArg(SignatureArg &&source) = default;
+
     SignatureArg &operator=(const SignatureArg &source) = delete;
+    SignatureArg &operator=(SignatureArg &&source) = default;
 
     const blst::P2 *AsJacobian();
-
     const blst::P2_Affine *AsAffine();
+    void ThrowJsException() { Napi::Error::New(_env, _error).ThrowAsJavaScriptException(); };
+    bool HasError() { return _error.size() > 0; };
+    std::string GetError() { return _error; };
 
 private:
     const BlstTsAddon *_addon;
+    Napi::Env _env;
+    std::string _error;
     std::unique_ptr<blst::P2> _jacobian;
     std::unique_ptr<blst::P2_Affine> _affine;
     Signature *_signature;
-    Napi::Reference<Napi::Uint8Array> _bytes_ref;
-    uint8_t *_bytes_data;
-    size_t _bytes_length;
+    Uint8ArrayArg _bytes;
+
+    void SetError(const std::string &err) { _error = err; };
 };
 
-class SignatureArgArray : public std::vector<SignatureArg>
+class SignatureArgArray
 {
 public:
-    SignatureArgArray() : std::vector<SignatureArg>{} {};
     SignatureArgArray(const BlstTsAddon *module, const Napi::Env &env, const Napi::Value &raw_arg);
-
-    SignatureArgArray(SignatureArgArray &&source) = default;
-    SignatureArgArray &operator=(SignatureArgArray &&source) = default;
+    SignatureArgArray(
+        const BlstTsAddon *module,
+        const Napi::CallbackInfo &info,
+        const size_t arg_position)
+        : SignatureArgArray{module, info.Env(), info[arg_position]} {}
     SignatureArgArray(const SignatureArgArray &source) = delete;
+    SignatureArgArray(SignatureArgArray &&source) = default;
+
     SignatureArgArray &operator=(const SignatureArgArray &source) = delete;
+    SignatureArgArray &operator=(SignatureArgArray &&source) = default;
+    SignatureArg &operator[](size_t index)
+    {
+        return _signatures[index];
+    }
+
+    size_t Size() { return _signatures.size(); }
+    void Reserve(size_t size) { return _signatures.reserve(size); }
+    void ThrowJsException() { Napi::Error::New(_env, _error).ThrowAsJavaScriptException(); };
+    bool HasError() { return _error.size() > 0; };
+    std::string GetError() { return _error; };
+
+private:
+    Napi::Env _env;
+    std::string _error;
+    std::vector<SignatureArg> _signatures;
+
+    void SetError(const std::string &err) { _error = err; };
 };
 
 #endif /* BLST_TS_SIGNATURE_H__ */

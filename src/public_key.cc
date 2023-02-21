@@ -50,10 +50,12 @@ namespace
                 if (_jacobian.is_inf())
                 {
                     SetError("blst::BLST_PK_IS_INFINITY");
+                    return;
                 }
                 if (!_jacobian.in_group())
                 {
                     SetError("blst::BLST_POINT_NOT_IN_GROUP");
+                    return;
                 }
             }
             else
@@ -61,10 +63,12 @@ namespace
                 if (_affine.is_inf())
                 {
                     SetError("blst::BLST_PK_IS_INFINITY");
+                    return;
                 }
                 if (!_affine.in_group())
                 {
                     SetError("blst::BLST_POINT_NOT_IN_GROUP");
+                    return;
                 }
             }
         };
@@ -108,12 +112,9 @@ Napi::Value PublicKey::Deserialize(const Napi::CallbackInfo &info)
             pk->_is_jacobian = false;
         }
     }
-
-    Uint8ArrayArg pk_bytes{
-        info,
-        0,
-        "pkBytes"};
-    pk_bytes.ValidateLength(module->_global_state->_public_key_compressed_length, module->_global_state->_public_key_uncompressed_length);
+    Uint8ArrayArg pk_bytes{info, 0, "pkBytes"};
+    pk_bytes.ValidateLength(module->_global_state->_public_key_compressed_length,
+                            module->_global_state->_public_key_uncompressed_length);
     if (pk_bytes.HasError())
     {
         pk_bytes.ThrowJsException();
@@ -161,8 +162,11 @@ Napi::Value PublicKey::Serialize(const Napi::CallbackInfo &info)
     {
         compressed = info[0].ToBoolean().Value();
     }
-    size_t length = compressed ? _module._global_state->_public_key_compressed_length : _module._global_state->_public_key_uncompressed_length;
-    Napi::Buffer<uint8_t> serialized = Napi::Buffer<uint8_t>::New(env, length);
+    Napi::Buffer<uint8_t> serialized = Napi::Buffer<uint8_t>::New(
+        env,
+        compressed
+            ? _module._global_state->_public_key_compressed_length
+            : _module._global_state->_public_key_uncompressed_length);
     if (compressed)
     {
         if (_is_jacobian)
@@ -222,7 +226,7 @@ PublicKeyArg::PublicKeyArg(const BlstTsAddon *addon, const Napi::Env &env, const
             return;
         }
     }
-    else if (!raw_arg.IsTypedArray())
+    else if (!(raw_arg.IsTypedArray() && raw_arg.As<Napi::TypedArray>().TypedArrayType() == napi_uint8_array))
     {
         SetError("PublicKeyArg must be a PublicKey instance or a 48/96 byte Uint8Array");
         return;
@@ -288,7 +292,8 @@ PublicKeyArgArray::PublicKeyArgArray(
 {
     if (!raw_arg.IsArray())
     {
-        throw Napi::TypeError::New(env, "publicKeys argument must be of type PublicKeyArg[]");
+        SetError("publicKeys argument must be of type PublicKeyArg[]");
+        return;
     }
     Napi::Array arr = raw_arg.As<Napi::Array>();
     uint32_t length = arr.Length();
