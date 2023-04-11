@@ -21,11 +21,102 @@ const char *get_blst_error_string(blst::BLST_ERROR err)
     return BLST_ERROR_STRINGS[err];
 };
 
+std::string stringify_error_ptr(std::exception_ptr p_error)
+{
+    try
+    {
+        if (p_error)
+        {
+            std::rethrow_exception(p_error);
+        }
+    }
+    catch (const std::exception &e)
+    {
+        std::ostringstream errorMsg;
+        errorMsg << "Caught exception \"" << e.what() << "\"\n";
+        return errorMsg.str();
+    }
+    return "Unknown Error";
+}
+
+Napi::Object ArrayIndexToObject(const Napi::Env &env,
+                                const Napi::Array &arr,
+                                const size_t index,
+                                const std::string &obj_name)
+{
+    Napi::Value val = arr[index];
+    if (!val.IsObject())
+    {
+        throw Napi::Error::New(env, obj_name + " must be an object");
+    }
+    return val.As<Napi::Object>();
+}
+
+Napi::String ArrayIndexToString(const Napi::Env &env,
+                                const Napi::Array &arr,
+                                const size_t index,
+                                const std::string &obj_name)
+{
+    Napi::Value val = arr[index];
+    if (!val.IsString())
+    {
+        throw Napi::Error::New(env, obj_name + " must be a string");
+    }
+    return val.As<Napi::String>();
+}
+
+Napi::Array InfoIndexToArray(const Napi::Env &env,
+                             const Napi::CallbackInfo &info,
+                             const size_t index,
+                             const std::string &error_msg)
+{
+    Napi::Value val = info[index];
+    if (!val.IsArray())
+    {
+        throw Napi::Error::New(env, error_msg);
+    }
+    return val.As<Napi::Array>();
+}
+
+Napi::Value GetNapiValueAtKey(
+    const Napi::Env &env,
+    const Napi::Object &obj,
+    const std::string &obj_name,
+    const std::string &key_name)
+{
+    if (!obj.Has(key_name))
+    {
+        throw Napi::Error::New(env, obj_name + " must have a '" + key_name + "' property");
+    }
+    return obj.Get(key_name);
+}
+
+ByteArray TryAsStringOrUint8Array(
+    const Napi::Env &env,
+    const Napi::Value &value,
+    const std::string &obj_name,
+    const bool should_throw)
+{
+    if (value.IsString())
+    {
+        return ByteArray{value.As<Napi::String>().Utf8Value()};
+    }
+    else if (value.IsTypedArray())
+    {
+        return ByteArray{value.As<Napi::Uint8Array>()};
+    }
+    else if (should_throw)
+    {
+        throw Napi::Error::New(env, obj_name + " is not a string or Uint8Array");
+    }
+    return ByteArray{};
+}
 
 ByteArray ByteArray::RandomBytes(size_t length, bool non_zero)
 {
     blst::byte bytes[length];
-    randombytes_buf(bytes, length);
+    RAND_bytes(bytes, length);
+    // randombytes_buf(bytes, length);
     if (non_zero)
     {
         for (size_t i = 0; i < length; i++)

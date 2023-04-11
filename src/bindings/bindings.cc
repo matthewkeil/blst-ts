@@ -1,20 +1,20 @@
 #include <napi.h>
-#include <sodium.h>
+// #include <sodium.h>
 #include "blst_ts_utils.hpp"
 #include "secret_key.hpp"
 #include "public_key.hpp"
 #include "signature.hpp"
-#include "functions/functions.hpp"
+#include "functions/functions.h"
 
 Napi::Object InitFunctions(Napi::Env env, Napi::Object exports);
 
 Napi::Object Init(Napi::Env env, Napi::Object exports)
 {
-    if (sodium_init() < 0)
-    {
-        Napi::Error err = Napi::Error::New(env, "Error initializing libsodium");
-        err.ThrowAsJavaScriptException();
-    }
+    // if (sodium_init() < 0)
+    // {
+    //     Napi::Error err = Napi::Error::New(env, "Error initializing libsodium");
+    //     err.ThrowAsJavaScriptException();
+    // }
 
     InitFunctions(env, exports);
     SecretKey::Init(env, exports);

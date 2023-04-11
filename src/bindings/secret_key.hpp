@@ -12,12 +12,14 @@ class SecretKey : public Napi::ObjectWrap<SecretKey>
 {
 
 public:
+    static const std::string kType_;
+
     static Napi::Object Init(Napi::Env env, Napi::Object exports);
-    static Napi::Value Keygen(const Napi::CallbackInfo &info);
+    static Napi::Value FromKeygen(const Napi::CallbackInfo &info);
     static Napi::Value FromBytes(const Napi::CallbackInfo &info);
     SecretKey(const Napi::CallbackInfo &info);
 
-    Napi::Value GetPublicKey(const Napi::CallbackInfo &info);
+    Napi::Value ToPublicKey(const Napi::CallbackInfo &info);
     Napi::Value Sign(const Napi::CallbackInfo &info);
     Napi::Value ToBytes(const Napi::CallbackInfo &info);
     Napi::Value Serialize(const Napi::CallbackInfo &info);
@@ -27,5 +29,6 @@ private:
     friend class PublicKey;
     std::unique_ptr<blst::SecretKey> key;
 };
+
 
 #endif /* __BLST_TS_SECRET_KEY_HPP__ */

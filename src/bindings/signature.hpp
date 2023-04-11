@@ -8,6 +8,8 @@
 class Signature : public Napi::ObjectWrap<Signature>
 {
 public:
+    static const std::string kType_;
+
     static Napi::Object Init(Napi::Env env, Napi::Object exports);
     static Napi::Value FromBytes(const Napi::CallbackInfo &info);
     static Napi::Value Create(Napi::Env env, blst::P2 *point, blst::P2_Affine *affine);
@@ -15,6 +17,7 @@ public:
 
     Signature(const Napi::CallbackInfo &info);
 
+    blst::P2_Affine AsAffine();
     Napi::Value SigValidate(const Napi::CallbackInfo &info);
     Napi::Value Serialize(const Napi::CallbackInfo &info, int length);
     Napi::Value Serialize(const Napi::CallbackInfo &info);

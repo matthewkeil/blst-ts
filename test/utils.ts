@@ -1,4 +1,6 @@
 import {expect} from "chai";
+import napiBindings from "../src/lib/bindings";
+import {SecretKey, PublicKey, Signature} from "../src/lib/bindings.types";
 
 interface BaseSerializable {
   serialize(): Uint8Array;
@@ -68,4 +70,39 @@ export function runInstanceTestCases<InstanceType extends {[key: string]: any}>(
       });
     }
   }
+}
+
+const DEFAULT_TEST_MESSAGE = Uint8Array.from(Buffer.from("test-message"));
+
+export interface NapiTestSet {
+  msg: Uint8Array;
+  secretKey: SecretKey;
+  publicKey: PublicKey;
+  signature: Signature;
+}
+
+export function makeNapiTestSet(msg: Uint8Array): NapiTestSet {
+  const secretKey = napiBindings.SecretKey.fromKeygen(Buffer.from("*".repeat(32)));
+  const publicKey = secretKey.toPublicKey();
+  const signature = secretKey.sign(msg);
+  return {
+    msg,
+    secretKey,
+    publicKey,
+    signature,
+  };
+}
+
+export function makeNapiTestSets(numSets: number, msg = DEFAULT_TEST_MESSAGE): NapiTestSet[] {
+  const sets: NapiTestSet[] = [];
+  for (let i = 0; i < numSets; i++) {
+    sets.push(makeNapiTestSet(msg));
+  }
+  return sets;
+}
+
+export function linspace(start: number, stop: number): number[] {
+  const arr: number[] = [];
+  for (let i = start; i <= stop; i++) arr.push(i);
+  return arr;
 }

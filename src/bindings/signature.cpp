@@ -1,5 +1,6 @@
 #include "signature.hpp"
 
+const std::string Signature::kType_{"Signature"};
 Napi::FunctionReference Signature::constructor;
 
 Napi::Object Signature::Init(Napi::Env env, Napi::Object exports)
@@ -113,6 +114,15 @@ Napi::Value Signature::FromBytes(const Napi::CallbackInfo &info)
     }
 
     return Create(env, point, affine);
+}
+
+blst::P2_Affine Signature::AsAffine()
+{
+    if (is_point)
+    {
+        affine.reset(new blst::P2_Affine{point->to_affine()});
+    }
+    return blst::P2_Affine{*affine};
 }
 
 Napi::Value Signature::SigValidate(const Napi::CallbackInfo &info)

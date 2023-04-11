@@ -29,8 +29,5 @@ void watchWithCallback({
 void watchWithCallback({
   path: TESTS_FOLDER,
   debounceTime: DEBOUNCE_TIME,
-  cb: () =>
-    cmdStringExec("npm run test:bindings", false)
-      .then(console.log)
-      .catch(() => void 0),
+  cb: () => cmdStringExec("npm run test:bindings", false).then(console.log).catch(console.error),
 });

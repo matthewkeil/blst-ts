@@ -22,6 +22,8 @@
     "bootstrap": "yarn install --ignore-scripts && yarn build && yarn install",
     "clean": "rm -rf prebuild/*.node dist blst/libblst.a blst/bindings/libblst.a blst/bindings/node.js/blst.node blst/bindings/node.js/blst_wrap.cpp",
     "test": "yarn test:unit && yarn test:spec",
+    "test:benchmark": "benchmark test/perf/**/*.perf.ts",
+    "test:bindings": "mocha test/unit/newBindings/*.test.ts",
     "test:unit": "mocha test/unit/**/*.test.ts",
     "test:spec": "mocha 'test/spec/**/*.test.ts'",
     "test:bindings": "mocha test/unit/newBindings/*.test.ts",
@@ -40,6 +42,7 @@
   },
   "homepage": "https://github.com/ChainSafe/blst-ts#readme",
   "devDependencies": {
+    "@dapplion/benchmark": "^0.2.2",
     "@types/chai": "^4.2.13",
     "@types/js-yaml": "^4.0.5",
     "@types/mocha": "^8.0.3",

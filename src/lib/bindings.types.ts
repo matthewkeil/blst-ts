@@ -41,11 +41,11 @@ export type ByteArray = NapiBuffer | string;
  */
 export declare class SecretKey {
   constructor();
-  static keygen(ikm?: NapiBuffer): SecretKey;
+  static fromKeygen(ikm?: NapiBuffer): SecretKey;
   // static keygenAsync(ikm?: Uint8Array| Buffer): Promise<SecretKey>;
   static fromBytes(skBytes: NapiBuffer): SecretKey;
   // static fromBytesAsync(skBytes: Uint8Array| Buffer): Promise<SecretKey>;
-  getPublicKey(): PublicKey;
+  toPublicKey(): PublicKey;
   // toPublicKeyAsync(): Promise<PublicKey>;
   sign(msg: NapiBuffer): Signature;
   // signAsync(msg: Uint8Array| Buffer): Promise<Signature>;
@@ -56,7 +56,7 @@ export declare class SecretKey {
 }
 export interface SecretKeyConstructor {
   new (): SecretKey;
-  keygen(ikm?: NapiBuffer): SecretKey;
+  fromKeygen(ikm?: NapiBuffer): SecretKey;
   // keygenAsync(ikm?: Uint8Array| Buffer): Promise<SecretKey>;
   fromBytes(skBytes: NapiBuffer): SecretKey;
   // fromBytesAsync(skBytes: Uint8Array| Buffer): Promise<SecretKey>;
@@ -100,10 +100,12 @@ export interface SignatureConstructor {
   // fromBytesAsync(): Promise<Signature>;
 }
 
+export type PublicKeyArg = ByteArray | PublicKey;
+export type SignatureArg = ByteArray | Signature;
 export interface SignatureSet {
-  msg: Uint8Array;
-  publicKey: Uint8Array;
-  signature: Uint8Array;
+  msg: ByteArray;
+  publicKey: PublicKeyArg;
+  signature: SignatureArg;
 }
 
 export interface TestFunctions {
@@ -116,6 +118,10 @@ export interface TestFunctions {
 
 export interface BlstTsFunctions {
   tests: TestFunctions;
-  aggregatePublicKeys(keys: ByteArray[]): Promise<PublicKey>;
-  verifyMultipleAggregateSignatures(sets: SignatureSet[]): Promise<boolean>;
+  aggregatePublicKeys(keys: PublicKeyArg[]): PublicKey;
+  aggregatePublicKeysAsync(keys: PublicKeyArg[]): Promise<PublicKey>;
+  aggregateVerify(msgs: ByteArray[], publicKeys: PublicKeyArg[], signature: SignatureArg): boolean;
+  aggregateVerifyAsync(msgs: ByteArray[], publicKeys: PublicKeyArg[], signature: SignatureArg): Promise<boolean>;
+  verifyMultipleAggregateSignatures(sets: SignatureSet[]): boolean;
+  verifyMultipleAggregateSignaturesAsync(sets: SignatureSet[]): Promise<boolean>;
 }
