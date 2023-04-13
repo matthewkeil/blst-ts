@@ -1,55 +1,56 @@
-import {expect} from "chai";
+import chai, {expect} from "chai";
+import deepEqualInAnyOrder from "deep-equal-in-any-order";
 import fs from "fs";
 import path from "path";
 import jsYaml from "js-yaml";
-import {SPEC_TEST_LOCATION} from "./specTestVersioning";
-import * as blst from "../../src/lib";
-import {fromHex, toHex} from "../utils";
+import {SPEC_TEST_LOCATION, SPEC_TEST_TO_DOWNLOAD} from "./specTestVersioning";
+import {BlsTestType, SPEC_TEST_FORKS, SPEC_TEST_ROOT_DIR, TestFork} from "./constants";
+import {testFnByType, isBlstError} from "./testFunctions";
+
+chai.use(deepEqualInAnyOrder);
 
 // Example full path
-// blst-ts/spec-tests/tests/general/altair/bls/eth_aggregate_pubkeys/small/eth_aggregate_pubkeys_empty_list
+// blst-ts/spec-tests/SPEC_TEST_ROOT_DIR/SPEC_TEST_TO_DOWNLOAD/SPEC_TEST_FORK/bls/TEST_TYPE/small/SPEC_NAME/data.yaml
+// blst-ts/spec-tests/tests/general/altair/bls/eth_aggregate_pubkeys/small/eth_aggregate_pubkeys_empty_list/data.yaml
 
-const G2_POINT_AT_INFINITY =
-  "0xc00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
-const G1_POINT_AT_INFINITY =
-  "0xc00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
+const testedTypes = [] as BlsTestType[];
 
-const testRootDirByFork = path.join(SPEC_TEST_LOCATION, "tests/general");
-for (const fork of fs.readdirSync(testRootDirByFork)) {
-  // fork = "phase0" | "altair"
-  const testRootDirFork = path.join(testRootDirByFork, fork, "bls");
+const forkDirectory = path.join(SPEC_TEST_LOCATION, SPEC_TEST_ROOT_DIR, SPEC_TEST_TO_DOWNLOAD[0]); // blst-ts/spec-tests/tests/general
+const testForks = fs.readdirSync(forkDirectory) as TestFork[];
+before("Known testForks", () => {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+  expect(testForks).to.deep.equalInAnyOrder(
+    SPEC_TEST_FORKS,
+    `Unknown/Missing testForks\nknown: ${SPEC_TEST_FORKS}\ntested: ${testForks}`
+  );
+});
 
-  for (const testType of fs.readdirSync(testRootDirFork)) {
-    // testType = "eth_aggregate_pubkeys" | "fast_aggregate_verify" | ...
-    const testTypeDir = path.join(testRootDirFork, testType);
-    describe(path.join(fork, testType), () => {
-      const testFnByType: Record<string, (data: any) => any> = {
-        aggregate,
-        aggregate_verify,
-        eth_aggregate_pubkeys,
-        eth_fast_aggregate_verify,
-        fast_aggregate_verify,
-        sign,
-        verify,
-      };
-      const testFn = testFnByType[testType];
-
+for (const forkName of testForks) {
+  const blsTestDir = path.join(forkDirectory, forkName, "bls"); // blst-ts/spec-tests/tests/general/altair/bls
+  const blstTestTypes = fs.readdirSync(blsTestDir) as BlsTestType[];
+  for (const testType of blstTestTypes) {
+    testedTypes.push(testType);
+    const testTypeDir = path.join(blsTestDir, testType); // blst-ts/spec-tests/tests/general/altair/bls/eth_aggregate_pubkeys
+    const testFn = testFnByType[testType]; // eth_aggregate_pubkeys = () => { ... }
+    const testName = path.join(forkName, testType); // altair/eth_aggregate_pubkeys
+    describe(testName, () => {
       before("Known testFn", () => {
         if (!testFn) throw Error(`Unknown testFn ${testType}`);
       });
 
-      for (const testCaseGroup of fs.readdirSync(testTypeDir)) {
-        // testCaseGroup = "small"
-        const testCaseGroupDir = path.join(testTypeDir, testCaseGroup);
+      const specGroups = fs.readdirSync(testTypeDir);
+      for (const specGroup of specGroups) {
+        // specGroup = "small"
+        const specGroupDir = path.join(testTypeDir, specGroup); // blst-ts/spec-tests/tests/general/altair/bls/eth_aggregate_pubkeys/small
 
-        for (const testCase of fs.readdirSync(testCaseGroupDir)) {
-          // testCase = "eth_aggregate_pubkeys_empty_list"
-          const testCaseDir = path.join(testCaseGroupDir, testCase);
+        for (const specName of fs.readdirSync(specGroupDir)) {
+          // specName = "eth_aggregate_pubkeys_empty_list"
+          const specDir = path.join(specGroupDir, specName); // blst-ts/spec-tests/tests/general/altair/bls/eth_aggregate_pubkeys/small/eth_aggregate_pubkeys_empty_list
 
-          it(testCase, () => {
+          it(specName, () => {
             // Ensure there are no unknown files
-            const files = fs.readdirSync(testCaseDir);
-            expect(files).to.deep.equal(["data.yaml"], `Unknown files in ${testCaseDir}`);
+            const files = fs.readdirSync(specDir);
+            expect(files).to.deep.equal(["data.yaml"], `Unknown files in ${specDir}`);
 
             // Examples of parsed YAML
             // {
@@ -71,7 +72,7 @@ for (const fork of fs.readdirSync(testRootDirByFork)) {
             //   output: false
             // }
 
-            const testData = jsYaml.load(fs.readFileSync(path.join(testCaseDir, "data.yaml"), "utf8")) as {
+            const testData = jsYaml.load(fs.readFileSync(path.join(specDir, "data.yaml"), "utf8")) as {
               input: unknown;
               output: unknown;
             };
@@ -96,132 +97,11 @@ for (const fork of fs.readdirSync(testRootDirByFork)) {
   }
 }
 
-/**
- * ```
- * input: List[BLS Signature] -- list of input BLS signatures
- * output: BLS Signature -- expected output, single BLS signature or empty.
- * ```
- */
-function aggregate(input: string[]): string | null {
-  const agg = blst.aggregateSignatures(input.map((hex) => blst.Signature.fromBytes(fromHex(hex))));
-  return toHex(agg.toBytes());
-}
-
-/**
- * ```
- * input:
- *   pubkeys: List[BLS Pubkey] -- the pubkeys
- *   messages: List[bytes32] -- the messages
- *   signature: BLS Signature -- the signature to verify against pubkeys and messages
- * output: bool  --  true (VALID) or false (INVALID)
- * ```
- */
-function aggregate_verify(input: {pubkeys: string[]; messages: string[]; signature: string}): boolean {
-  const {pubkeys, messages, signature} = input;
-  return blst.aggregateVerify(
-    messages.map(fromHex),
-    pubkeys.map((hex) => blst.PublicKey.fromBytes(fromHex(hex))),
-    blst.Signature.fromBytes(fromHex(signature))
+after("Known testTypes", () => {
+  const knownTestTypes = Object.keys(testFnByType);
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+  expect(testedTypes).to.deep.equalInAnyOrder(
+    knownTestTypes,
+    `Unknown/Missing testTypes\nknown: ${knownTestTypes}\ntested: ${testedTypes}`
   );
-}
-
-/**
- * ```
- * input: List[BLS Signature] -- list of input BLS signatures
- * output: BLS Signature -- expected output, single BLS signature or empty.
- * ```
- */
-function eth_aggregate_pubkeys(input: string[]): string | null {
-  // Don't add this checks in the source as beacon nodes check the pubkeys for inf when onboarding
-  for (const pk of input) {
-    if (pk === G1_POINT_AT_INFINITY) return null;
-  }
-
-  const agg = blst.aggregatePubkeys(input.map((hex) => blst.PublicKey.fromBytes(fromHex(hex))));
-  return toHex(agg.toBytes());
-}
-
-/**
- * ```
- * input:
- *   pubkeys: List[BLS Pubkey] -- list of input BLS pubkeys
- *   message: bytes32 -- the message
- *   signature: BLS Signature -- the signature to verify against pubkeys and message
- * output: bool  --  true (VALID) or false (INVALID)
- * ```
- */
-function eth_fast_aggregate_verify(input: {pubkeys: string[]; message: string; signature: string}): boolean {
-  const {pubkeys, message, signature} = input;
-
-  if (pubkeys.length === 0 && signature === G2_POINT_AT_INFINITY) {
-    return true;
-  }
-
-  // Don't add this checks in the source as beacon nodes check the pubkeys for inf when onboarding
-  for (const pk of pubkeys) {
-    if (pk === G1_POINT_AT_INFINITY) return false;
-  }
-
-  return blst.fastAggregateVerify(
-    fromHex(message),
-    pubkeys.map((hex) => blst.PublicKey.fromBytes(fromHex(hex))),
-    blst.Signature.fromBytes(fromHex(signature))
-  );
-}
-
-/**
- * ```
- * input:
- *   pubkeys: List[BLS Pubkey] -- list of input BLS pubkeys
- *   message: bytes32 -- the message
- *   signature: BLS Signature -- the signature to verify against pubkeys and message
- * output: bool  --  true (VALID) or false (INVALID)
- * ```
- */
-function fast_aggregate_verify(input: {pubkeys: string[]; message: string; signature: string}): boolean | null {
-  const {pubkeys, message, signature} = input;
-
-  // Don't add this checks in the source as beacon nodes check the pubkeys for inf when onboarding
-  for (const pk of pubkeys) {
-    if (pk === G1_POINT_AT_INFINITY) return false;
-  }
-
-  return blst.fastAggregateVerify(
-    fromHex(message),
-    pubkeys.map((hex) => blst.PublicKey.fromBytes(fromHex(hex))),
-    blst.Signature.fromBytes(fromHex(signature))
-  );
-}
-
-/**
- * input:
- *   privkey: bytes32 -- the private key used for signing
- *   message: bytes32 -- input message to sign (a hash)
- * output: BLS Signature -- expected output, single BLS signature or empty.
- */
-function sign(input: {privkey: string; message: string}): string | null {
-  const {privkey, message} = input;
-  const sk = blst.SecretKey.fromBytes(fromHex(privkey));
-  const signature = sk.sign(fromHex(message));
-  return toHex(signature.toBytes());
-}
-
-/**
- * input:
- *   pubkey: bytes48 -- the pubkey
- *   message: bytes32 -- the message
- *   signature: bytes96 -- the signature to verify against pubkey and message
- * output: bool  -- VALID or INVALID
- */
-function verify(input: {pubkey: string; message: string; signature: string}): boolean {
-  const {pubkey, message, signature} = input;
-  return blst.verify(
-    fromHex(message),
-    blst.PublicKey.fromBytes(fromHex(pubkey)),
-    blst.Signature.fromBytes(fromHex(signature))
-  );
-}
-
-function isBlstError(e: unknown): boolean {
-  return (e as Error).message.includes("BLST_ERROR") || e instanceof blst.ErrorBLST;
-}
+});

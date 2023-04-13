@@ -9,6 +9,6 @@ import path from "path";
 
 export const SPEC_TEST_REPO_URL = "https://github.com/ethereum/consensus-spec-tests";
 export const SPEC_TEST_VERSION = "v1.1.8";
-export const SPEC_TEST_TO_DOWNLOAD = ["general" as const];
-// Target directory is the host package root: '<roo>/spec-tests'
+export const SPEC_TEST_TO_DOWNLOAD = ["general"] as const;
+// Target directory is the host package root: '<root>/spec-tests'
 export const SPEC_TEST_LOCATION = path.join(__dirname, "../../spec-tests");
